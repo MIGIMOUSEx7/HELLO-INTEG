@@ -15,12 +15,15 @@
         .list-item:hover { color: var(--shopee-orange); }
         .voucher-input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 2px; font-size: 13px; outline: none; }
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
-        .card { background: white; border-radius: 2px; transition: 0.2s; border: 1px solid transparent; overflow: hidden; padding: 10px; }
+        .card { background: white; border-radius: 2px; transition: 0.2s; border: 1px solid transparent; overflow: hidden; padding: 10px; position: relative; }
         .card:hover { border-color: var(--shopee-orange); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .price { color: var(--shopee-orange); font-size: 18px; font-weight: bold; margin: 10px 0; }
         .order-btn { background: var(--shopee-orange); color: white; border: none; width: 100%; padding: 10px; cursor: pointer; font-weight: bold; transition: background 0.3s; }
         .order-btn:disabled { background: #ccc; cursor: not-allowed; }
         .order-btn.success { background: #28a745; }
+        /* Sold Out styling */
+        .sold-out-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 160px; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ee4d2d; font-size: 18px; }
+        .stock-label { font-size: 11px; color: #888; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -71,23 +74,36 @@
                     `<div class="list-item" onclick="initShop('store=${s.id}')">${s.store_name} ⭐ ${s.rating}</div>`
                 ).join('') || "No stores found.";
 
-                // 3. Fetch Filtered Products
+                // 3. Fetch Products
                 const url = filterQuery ? `${API_URL}products/?${filterQuery}` : `${API_URL}products/`;
                 const prodRes = await fetch(url);
                 const products = await prodRes.json();
+                
                 const grid = document.getElementById('product-grid');
-                grid.innerHTML = products.map(p => `
-                    <div class="card">
-                        <div style="height:160px; background:#f9f9f9; display:flex; align-items:center; justify-content:center; color:#ddd;">No Photo</div>
-                        <div style="font-size:13px; margin-top:10px; height:34px; overflow:hidden;">${p.name}</div>
-                        <div class="price">₱${parseFloat(p.price || 1500).toLocaleString()}</div>
-                        <button class="order-btn" id="btn-${p.id}" onclick="placeOrder(${p.id}, ${p.price || 1500})">ORDER NOW</button>
-                    </div>
-                `).join('') || "<h3>No products found for this selection.</h3>";
+                grid.innerHTML = products.map(p => {
+                    // Logic to check if item is sold out
+                    const isSoldOut = p.stock_quantity <= 0;
+                    
+                    return `
+                        <div class="card">
+                            ${isSoldOut ? '<div class="sold-out-overlay">SOLD OUT</div>' : ''}
+                            <div style="height:160px; background:#f9f9f9; display:flex; align-items:center; justify-content:center; color:#ddd;">No Photo</div>
+                            <div style="font-size:13px; margin-top:10px; height:34px; overflow:hidden;">${p.name}</div>
+                            <div class="price">₱${parseFloat(p.price || 1500).toLocaleString()}</div>
+                            <div class="stock-label">${isSoldOut ? 'Out of Stock' : 'Stock: ' + p.stock_quantity}</div>
+                            <button class="order-btn" 
+                                id="btn-${p.id}" 
+                                onclick="placeOrder(${p.id}, ${p.price || 1500})"
+                                ${isSoldOut ? 'disabled' : ''}>
+                                ${isSoldOut ? 'SOLD OUT' : 'ORDER NOW'}
+                            </button>
+                        </div>
+                    `;
+                }).join('') || "<h3>No products found for this selection.</h3>";
 
             } catch (err) {
                 console.error(err);
-                alert("Backend Connection Failed!");
+                alert("Backend Connection Failed! Ensure Django is running.");
             }
         }
 
@@ -97,8 +113,13 @@
             btn.disabled = true;
             btn.innerText = "Saving...";
 
+            // Payload now includes product_id for inventory deduction in the backend
             const payload = {
-                user: 1, address: 1, payment: 1, status: "Pending",
+                user: 1, 
+                address: 1, 
+                payment: 1, 
+                status: "Pending",
+                product_id: productId,
                 total_amount: price.toString(),
                 voucher_code: voucherInput.value.trim()
             };
@@ -110,10 +131,13 @@
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
+                
                 if (response.ok) {
                     alert(`✅ Order #${result.id} Placed!\nTotal: ₱${result.total_amount}`);
                     btn.innerText = "Success!";
                     btn.classList.add("success");
+                    // Refresh shop to show updated stock levels
+                    setTimeout(() => initShop(), 1500); 
                 } else {
                     alert(`❌ Error: ${result.error || "Order Failed."}`);
                     btn.disabled = false;
