@@ -9,13 +9,18 @@ router.register(r'orders', views.OrderViewSet)
 router.register(r'users', views.UserViewSet)
 router.register(r'categories', views.CategoryViewSet)
 router.register(r'stores', views.StoreViewSet)
-router.register(r'vouchers', views.VoucherViewSet)   # Matches image_02ec24.png
-router.register(r'shipments', views.ShipmentViewSet) # Matches image_02ec24.png
-router.register(r'addresses', views.AddressViewSet)  # Matches image_02ec24.png
-router.register(r'payments', views.PaymentViewSet)    # Matches image_02ec24.png
+router.register(r'vouchers', views.VoucherViewSet)
+router.register(r'shipments', views.ShipmentViewSet)
+router.register(r'addresses', views.AddressViewSet)
+router.register(r'payments', views.PaymentViewSet)
+
+# Registered ViewSets for the Cart system
+router.register(r'carts', views.CartViewSet)
+router.register(r'cartitems', views.CartItemViewSet)
 
 # The API URLs are now determined automatically by the router
 urlpatterns = [
-    path('shop/', views.home, name='shop'), # Your frontend storefront
+    path('shop/', views.home, name='shop'), # Your main storefront
+    path('cart/', views.view_cart, name='cart'), # NEW: The path to your cart page
     path('', include(router.urls)),         # The API Root at /api/
 ]

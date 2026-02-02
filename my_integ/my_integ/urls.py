@@ -1,9 +1,14 @@
 from django.contrib import admin
-from django.urls import path, include # <--- Make sure both are here
-from api.views import home 
+from django.urls import path, include
+from api import views
 
 urlpatterns = [
-    path('', home), 
-    path('admin/', admin.site.urls), # Fixed from previous typo
-    path('api/', include('api.urls')), 
+    path('admin/', admin.site.urls), #
+    path('api/', include('api.urls')), #
+    
+    # NEW: This makes the shop your home page
+    path('', views.home, name='home'), 
+    
+    path('shop/', views.home, name='shop'), #
+    path('cart/', views.view_cart, name='cart'), #
 ]

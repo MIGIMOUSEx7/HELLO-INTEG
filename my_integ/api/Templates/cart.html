@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Floating Cart</title>
+    <style>
+        :root { --shopee-orange: #ee4d2d; --bg: #f5f5f5; }
+        
+        /* Floating Container Styling */
+        #draggable-cart {
+            position: fixed;
+            top: 50px;
+            right: 50px;
+            width: 450px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 9999;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+        }
+
+        /* Drag Handle Header */
+        .cart-drag-header {
+            background: var(--shopee-orange);
+            color: white;
+            padding: 12px;
+            cursor: move; /* Indicates it can be dragged */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .cart-content { padding: 15px; max-height: 400px; overflow-y: auto; background: white; }
+        
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .qty-controls { display: flex; align-items: center; gap: 8px; }
+        .qty-btn { background: #eee; border: none; width: 22px; height: 22px; cursor: pointer; border-radius: 2px; }
+        
+        .checkout-bar { padding: 15px; border-top: 1px solid #eee; background: #fafafa; }
+        .voucher-row { display: flex; gap: 5px; margin-bottom: 10px; }
+        .cart-voucher-input { flex: 1; padding: 6px; border: 1px solid #ddd; }
+        .btn-order { background: var(--shopee-orange); color: white; border: none; width: 100%; padding: 10px; cursor: pointer; font-weight: bold; }
+        .btn-order:disabled { background: #ccc; }
+
+        .close-cart { cursor: pointer; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="draggable-cart">
+        <div class="cart-drag-header" id="cart-header">
+            <span>🛒 Shopping Cart</span>
+            <span class="close-cart" onclick="window.location.href='/shop/'">×</span>
+        </div>
+
+        <div class="cart-content" id="cart-list">
+            Syncing with MySQL...
+        </div>
+
+        <div class="checkout-bar">
+            <div class="voucher-row">
+                <input type="text" id="cart-voucher-input" class="cart-voucher-input" placeholder="Voucher Code">
+                <button style="background:#555; color:white; border:none; padding:0 10px;" onclick="loadCart()">Apply</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span id="subtotal-display" style="font-size:12px; color:#999;"></span>
+                <span style="font-weight:bold; color:var(--shopee-orange);">Total: <span id="grand-total">₱0</span></span>
+            </div>
+            <button class="btn-order" id="checkout-btn" onclick="processCheckout()">CHECKOUT</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000/api/";
+        let currentTotal = 0;
+
+        // --- Drag Logic ---
+        const cart = document.getElementById("draggable-cart");
+        const header = document.getElementById("cart-header");
+
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+        header.onmousedown = dragMouseDown;
+
+        function dragMouseDown(e) {
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        }
+
+        function elementDrag(e) {
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            cart.style.top = (cart.offsetTop - pos2) + "px";
+            cart.style.left = (cart.offsetLeft - pos1) + "px";
+        }
+
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
+
+        // --- Cart Logic (MySQL Sync) ---
+        async function loadCart() {
+            try {
+                const res = await fetch(`${API_URL}cartitems/`);
+                const items = await res.json();
+                const list = document.getElementById('cart-list');
+                const voucherInput = document.getElementById('cart-voucher-input').value.trim();
+                let subtotal = 0;
+
+                if (items.length === 0) {
+                    list.innerHTML = "<p style='text-align:center; color:#999;'>Empty Cart</p>";
+                    document.getElementById('grand-total').innerText = "₱0";
+                    return;
+                }
+
+                list.innerHTML = items.map(item => {
+                    const price = parseFloat(item.product_price || 0);
+                    subtotal += price * item.quantity;
+                    return `
+                        <div class="cart-item">
+                            <div style="font-size:13px;">
+                                <b>${item.product_name}</b><br>
+                                <small style="color:#ee4d2d; cursor:pointer;" onclick="removeItem(${item.id})">Delete</small>
+                            </div>
+                            <div class="qty-controls">
+                                <button class="qty-btn" onclick="updateQty(${item.id}, ${item.quantity - 1})">-</button>
+                                <span>${item.quantity}</span>
+                                <button class="qty-btn" onclick="updateQty(${item.id}, ${item.quantity + 1})">+</button>
+                                <b style="min-width:60px; text-align:right;">₱${(price * item.quantity).toLocaleString()}</b>
+                            </div>
+                        </div>`;
+                }).join('');
+
+                let finalTotal = subtotal;
+                if (voucherInput === "SAVE50") {
+                    finalTotal = subtotal * 0.5;
+                    document.getElementById('subtotal-display').innerText = `Disc: -₱${(subtotal * 0.5).toLocaleString()}`;
+                } else {
+                    document.getElementById('subtotal-display').innerText = "";
+                }
+
+                currentTotal = finalTotal;
+                document.getElementById('grand-total').innerText = `₱${finalTotal.toLocaleString()}`;
+            } catch (err) { console.error(err); }
+        }
+
+        async function updateQty(itemId, newQty) {
+            if (newQty < 1) return removeItem(itemId);
+            await fetch(`${API_URL}cartitems/${itemId}/`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: newQty })
+            });
+            loadCart();
+        }
+
+        async function removeItem(itemId) {
+            await fetch(`${API_URL}cartitems/${itemId}/`, { method: 'DELETE' });
+            loadCart();
+        }
+
+        async function processCheckout() {
+            const btn = document.getElementById('checkout-btn');
+            btn.disabled = true;
+            btn.innerText = "Saving Order...";
+
+            try {
+                const res = await fetch(`${API_URL}cartitems/`);
+                const items = await res.json();
+                
+                // Aggregate into ONE single order
+                const orderPayload = {
+                    user: 1, 
+                    address: 1, 
+                    payment: 1,
+                    product_id: items[0].product, 
+                    total_amount: currentTotal.toString(),
+                    voucher_code: document.getElementById('cart-voucher-input').value,
+                    status: "Pending"
+                };
+
+                const orderRes = await fetch(`${API_URL}orders/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderPayload)
+                });
+
+                if (orderRes.ok) {
+                    for (let item of items) await fetch(`${API_URL}cartitems/${item.id}/`, { method: 'DELETE' });
+                    alert(`✅ Order confirmed at ₱${currentTotal.toLocaleString()}`);
+                    loadCart();
+                }
+            } catch (err) { alert("Checkout failed."); }
+            finally { btn.disabled = false; btn.innerText = "CHECKOUT"; }
+        }
+
+        loadCart();
+    </script>
+</body>
+</html>

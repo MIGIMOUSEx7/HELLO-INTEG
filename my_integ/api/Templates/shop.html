@@ -2,35 +2,81 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ivan Jeff's Shopee Clone</title>
+    <title>Ivan Gao's Shopee Clone</title>
     <style>
         :root { --shopee-orange: #ee4d2d; --bg: #f5f5f5; }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
         .navbar { background: var(--shopee-orange); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .logo { font-size: 26px; font-weight: bold; cursor: pointer; }
+        
+        /* Navbar Cart Styling */
+        .cart-icon { position: relative; cursor: pointer; font-size: 24px; }
+        .cart-badge { position: absolute; top: -5px; right: -10px; background: white; color: var(--shopee-orange); border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold; }
+        
         .container { max-width: 1200px; margin: 20px auto; display: grid; grid-template-columns: 240px 1fr; gap: 20px; padding: 0 10px; }
         .sidebar-card { background: white; padding: 15px; border-radius: 2px; margin-bottom: 20px; box-shadow: 0 1px 1px rgba(0,0,0,0.05); }
         .sidebar-card h4 { margin: 0 0 15px 0; border-bottom: 1px solid #f2f2f2; padding-bottom: 10px; font-size: 14px; color: #555; text-transform: uppercase; }
         .list-item { padding: 8px 0; font-size: 13px; color: #333; border-bottom: 1px solid #fafafa; cursor: pointer; transition: color 0.2s; }
         .list-item:hover { color: var(--shopee-orange); }
         .voucher-input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 2px; font-size: 13px; outline: none; }
+        
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
         .card { background: white; border-radius: 2px; transition: 0.2s; border: 1px solid transparent; overflow: hidden; padding: 10px; position: relative; }
         .card:hover { border-color: var(--shopee-orange); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .price { color: var(--shopee-orange); font-size: 18px; font-weight: bold; margin: 10px 0; }
-        .order-btn { background: var(--shopee-orange); color: white; border: none; width: 100%; padding: 10px; cursor: pointer; font-weight: bold; transition: background 0.3s; }
-        .order-btn:disabled { background: #ccc; cursor: not-allowed; }
-        .order-btn.success { background: #28a745; }
-        /* Sold Out styling */
+        
+        .btn-group { display: flex; gap: 5px; margin-top: 10px; }
+        .order-btn { background: var(--shopee-orange); color: white; border: none; flex: 3; padding: 10px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s; }
+        .cart-btn { background: white; color: var(--shopee-orange); border: 1px solid var(--shopee-orange); flex: 1; padding: 10px; cursor: pointer; font-size: 16px; }
+        .order-btn:disabled, .cart-btn:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
+
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; }
+        .modal-content { background:white; width:350px; margin:100px auto; padding:25px; border-radius:4px; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
+        
         .sold-out-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 160px; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ee4d2d; font-size: 18px; }
         .stock-label { font-size: 11px; color: #888; margin-bottom: 5px; }
+
+        /* Floating Draggable Cart Styling */
+        #draggable-cart {
+            position: fixed;
+            top: 100px;
+            right: 50px;
+            width: 380px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            border: 1px solid #ddd;
+        }
+        .cart-drag-header {
+            background: #ee4d2d;
+            color: white;
+            padding: 10px 15px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        /* Quantity and Remove Button styles */
+        .qty-btn { width: 22px; height: 22px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+        .qty-btn:hover { background: #f5f5f5; }
+        .remove-link { color: #ee4d2d; cursor: pointer; font-size: 11px; text-decoration: underline; margin-left: 10px; }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
         <div class="logo" onclick="initShop()">ShopeeClone</div>
-        <div style="font-size: 14px; opacity: 0.8;">MySQL System | User: van plaza</div>
+        <div style="display:flex; align-items:center; gap:30px;">
+            <div class="cart-icon" onclick="toggleCart()">
+                🛒<span id="cart-count" class="cart-badge">0</span>
+            </div>
+            <div style="font-size: 14px; opacity: 0.8;">MySQL System | User: van Gao</div>
+        </div>
     </nav>
 
     <div class="container">
@@ -55,99 +101,254 @@
         </main>
     </div>
 
+    <div id="draggable-cart">
+        <div class="cart-drag-header" id="cart-header">
+            <span>🛒 Shopping Cart</span>
+            <span onclick="toggleCart()" style="cursor: pointer; font-size: 20px;">×</span>
+        </div>
+        <div id="floating-cart-list" style="padding: 15px; max-height: 300px; overflow-y: auto; background: #fff;">
+            <p style="text-align: center; color: #999;">Syncing with MySQL...</p>
+        </div>
+        <div style="padding: 15px; border-top: 1px solid #eee; background: #fafafa;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <span style="font-weight: bold; color: #555;">Total Amount:</span>
+                <span id="floating-grand-total" style="color: #ee4d2d; font-weight: bold; font-size: 18px;">₱0</span>
+            </div>
+            <button onclick="processCheckout()" style="width: 100%; background: #ee4d2d; color: white; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 2px;">
+                CHECKOUT ALL
+            </button>
+        </div>
+    </div>
+
+    <div id="checkout-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; font-size: 18px;">Confirm Order</h3>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-size:11px; color:#999; text-transform:uppercase;">Shipping Address</label>
+                <div style="font-weight:bold;">van - cdc (Default)</div>
+            </div>
+            <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
+                <span id="modal-price" style="font-size:20px; font-weight:bold; color:#ee4d2d;">₱0.00</span>
+                <div>
+                    <button onclick="closeModal()" style="padding:8px 12px; border:none; background:#eee; cursor:pointer; font-size:12px;">Cancel</button>
+                    <button id="confirm-btn" style="padding:8px 12px; border:none; background:#ee4d2d; color:white; font-weight:bold; cursor:pointer; font-size:12px;">CONFIRM</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = "http://127.0.0.1:8000/api/";
+        let currentProduct = null;
+
+        // --- 1. Draggable & Toggle Logic ---
+        function toggleCart() {
+            const cart = document.getElementById("draggable-cart");
+            if (cart.style.display === "none" || cart.style.display === "") {
+                cart.style.display = "flex";
+                loadFloatingCart(); 
+            } else {
+                cart.style.display = "none";
+            }
+        }
+
+        const cartBox = document.getElementById("draggable-cart");
+        const dragHandle = document.getElementById("cart-header");
+        let p1 = 0, p2 = 0, p3 = 0, p4 = 0;
+
+        dragHandle.onmousedown = (e) => {
+            e.preventDefault();
+            p3 = e.clientX; p4 = e.clientY;
+            document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
+            document.onmousemove = (e) => {
+                e.preventDefault();
+                p1 = p3 - e.clientX; p2 = p4 - e.clientY;
+                p3 = e.clientX; p4 = e.clientY;
+                cartBox.style.top = (cartBox.offsetTop - p2) + "px";
+                cartBox.style.left = (cartBox.offsetLeft - p1) + "px";
+            };
+        };
+
+        // --- 2. Data Sync Functions (Quantity and Remove Integrated) ---
+        async function loadFloatingCart() {
+            try {
+                const res = await fetch(`${API_URL}cartitems/`);
+                const items = await res.json();
+                const list = document.getElementById('floating-cart-list');
+                const badge = document.getElementById('cart-count'); 
+                
+                badge.innerText = items.length;
+                let total = 0;
+
+                if (items.length === 0) {
+                    list.innerHTML = "<p style='text-align:center; padding:20px; color:#999;'>Your cart is empty.</p>";
+                    document.getElementById('floating-grand-total').innerText = "₱0";
+                    return;
+                }
+
+                list.innerHTML = items.map(item => {
+                    const itemPrice = parseFloat(item.product_price || 0);
+                    total += itemPrice * item.quantity;
+                    return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f2f2f2; font-size:13px;">
+                            <div style="flex:1;">
+                                <div style="font-weight:bold; color:#333;">${item.product_name}</div>
+                                <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+                                    <button class="qty-btn" onclick="updateQuantity(${item.id}, ${item.quantity - 1})">-</button>
+                                    <span style="min-width:20px; text-align:center;">${item.quantity}</span>
+                                    <button class="qty-btn" onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
+                                    <span class="remove-link" onclick="removeCartItem(${item.id})">Remove</span>
+                                </div>
+                            </div>
+                            <div style="font-weight:bold; color:#ee4d2d;">₱${(itemPrice * item.quantity).toLocaleString()}</div>
+                        </div>`;
+                }).join('');
+                
+                document.getElementById('floating-grand-total').innerText = `₱${total.toLocaleString()}`;
+            } catch (err) { console.error("Sync error:", err); }
+        }
+
+        // --- 3. Quantity Update Logic (PATCH) ---
+        async function updateQuantity(itemId, newQty) {
+            if (newQty < 1) return removeCartItem(itemId);
+            
+            try {
+                const res = await fetch(`${API_URL}cartitems/${itemId}/`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quantity: newQty })
+                });
+                if (res.ok) loadFloatingCart();
+            } catch (err) { console.error(err); }
+        }
+
+        // --- 4. Remove Item Logic (DELETE) ---
+        async function removeCartItem(itemId) {
+            if (confirm("Remove this item from your cart?")) {
+                try {
+                    const res = await fetch(`${API_URL}cartitems/${itemId}/`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) loadFloatingCart();
+                } catch (err) { console.error(err); }
+            }
+        }
 
         async function initShop(filterQuery = "") {
             try {
-                // 1. Fetch Categories
+                await loadFloatingCart();
+
                 const catRes = await fetch(`${API_URL}categories/`);
                 const categories = await catRes.json();
                 document.getElementById('category-list').innerHTML = categories.map(c => 
                     `<div class="list-item" onclick="initShop('category=${c.id}')">${c.category_name}</div>`
-                ).join('') || "No categories found.";
+                ).join('');
 
-                // 2. Fetch Stores
                 const storeRes = await fetch(`${API_URL}stores/`);
                 const stores = await storeRes.json();
                 document.getElementById('store-list').innerHTML = stores.map(s => 
                     `<div class="list-item" onclick="initShop('store=${s.id}')">${s.store_name} ⭐ ${s.rating}</div>`
-                ).join('') || "No stores found.";
+                ).join('');
 
-                // 3. Fetch Products
                 const url = filterQuery ? `${API_URL}products/?${filterQuery}` : `${API_URL}products/`;
                 const prodRes = await fetch(url);
                 const products = await prodRes.json();
                 
-                const grid = document.getElementById('product-grid');
-                grid.innerHTML = products.map(p => {
-                    // Logic to check if item is sold out
+                document.getElementById('product-grid').innerHTML = products.map(p => {
                     const isSoldOut = p.stock_quantity <= 0;
-                    
                     return `
                         <div class="card">
                             ${isSoldOut ? '<div class="sold-out-overlay">SOLD OUT</div>' : ''}
                             <div style="height:160px; background:#f9f9f9; display:flex; align-items:center; justify-content:center; color:#ddd;">No Photo</div>
                             <div style="font-size:13px; margin-top:10px; height:34px; overflow:hidden;">${p.name}</div>
                             <div class="price">₱${parseFloat(p.price || 1500).toLocaleString()}</div>
-                            <div class="stock-label">${isSoldOut ? 'Out of Stock' : 'Stock: ' + p.stock_quantity}</div>
-                            <button class="order-btn" 
-                                id="btn-${p.id}" 
-                                onclick="placeOrder(${p.id}, ${p.price || 1500})"
-                                ${isSoldOut ? 'disabled' : ''}>
-                                ${isSoldOut ? 'SOLD OUT' : 'ORDER NOW'}
-                            </button>
-                        </div>
-                    `;
-                }).join('') || "<h3>No products found for this selection.</h3>";
-
-            } catch (err) {
-                console.error(err);
-                alert("Backend Connection Failed! Ensure Django is running.");
-            }
+                            <div class="stock-label">Stock: ${p.stock_quantity}</div>
+                            <div class="btn-group">
+                                <button class="cart-btn" onclick="addToCart(${p.id})" ${isSoldOut ? 'disabled' : ''}>🛒</button>
+                                <button class="order-btn" onclick="openModal(${p.id}, ${p.price || 1500})" ${isSoldOut ? 'disabled' : ''}>Buy Now</button>
+                            </div>
+                        </div>`;
+                }).join('');
+            } catch (err) { console.error(err); }
         }
 
-        async function placeOrder(productId, price) {
-            const btn = document.getElementById(`btn-${productId}`);
-            const voucherInput = document.getElementById('voucher-code');
+        async function addToCart(productId) {
+            try {
+                const res = await fetch(`${API_URL}cartitems/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cart: 1, product: productId, quantity: 1 })
+                });
+                if (res.ok) {
+                    alert("✅ Added to cart!");
+                    loadFloatingCart(); 
+                }
+            } catch (err) { alert("Network Error."); }
+        }
+
+        // Updated Checkout Logic to correctly affect MySQL Stock for each item purchase
+        async function processCheckout() {
+            const res = await fetch(`${API_URL}cartitems/`);
+            const items = await res.json();
+            if (items.length === 0) return alert("Cart is empty!");
+
+            try {
+                for (let item of items) {
+                    const payload = {
+                        user: 1, address: 1, payment: 1,
+                        product_id: item.product, 
+                        total_amount: (parseFloat(item.product_price) * item.quantity).toString(),
+                        voucher_code: document.getElementById('voucher-code').value.trim(),
+                        status: "Pending"
+                    };
+
+                    const orderRes = await fetch(`${API_URL}orders/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (orderRes.ok) {
+                        await fetch(`${API_URL}cartitems/${item.id}/`, { method: 'DELETE' });
+                    }
+                }
+                alert("✅ Checkout Complete! Stock levels updated.");
+                toggleCart();
+                initShop(); 
+            } catch (err) { alert("Checkout failed."); }
+        }
+
+        function openModal(productId, price) {
+            currentProduct = { id: productId, price: price };
+            document.getElementById('modal-price').innerText = `₱${parseFloat(price).toLocaleString()}`;
+            document.getElementById('checkout-modal').style.display = 'block';
+            document.getElementById('confirm-btn').onclick = () => finalizeOrder();
+        }
+
+        function closeModal() { document.getElementById('checkout-modal').style.display = 'none'; }
+
+        async function finalizeOrder() {
+            const btn = document.getElementById('confirm-btn');
             btn.disabled = true;
-            btn.innerText = "Saving...";
-
-            // Payload now includes product_id for inventory deduction in the backend
-            const payload = {
-                user: 1, 
-                address: 1, 
-                payment: 1, 
-                status: "Pending",
-                product_id: productId,
-                total_amount: price.toString(),
-                voucher_code: voucherInput.value.trim()
-            };
-
             try {
                 const response = await fetch(`${API_URL}orders/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        user: 1, address: 1, payment: 1,
+                        product_id: currentProduct.id,
+                        total_amount: currentProduct.price.toString(),
+                        voucher_code: document.getElementById('voucher-code').value.trim(),
+                        status: "Pending"
+                    })
                 });
-                const result = await response.json();
-                
                 if (response.ok) {
-                    alert(`✅ Order #${result.id} Placed!\nTotal: ₱${result.total_amount}`);
-                    btn.innerText = "Success!";
-                    btn.classList.add("success");
-                    // Refresh shop to show updated stock levels
-                    setTimeout(() => initShop(), 1500); 
-                } else {
-                    alert(`❌ Error: ${result.error || "Order Failed."}`);
-                    btn.disabled = false;
-                    btn.innerText = "ORDER NOW";
+                    alert("✅ Order Placed!");
+                    closeModal();
+                    initShop();
                 }
-            } catch (err) {
-                alert("Network Error.");
-                btn.disabled = false;
-                btn.innerText = "ORDER NOW";
-            }
+            } catch (err) { alert("Error."); }
+            finally { btn.disabled = false; }
         }
 
         initShop();

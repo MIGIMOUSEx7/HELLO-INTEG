@@ -8,20 +8,28 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import (
     Product, Order, User, Category, Store, 
-    Voucher, Shipment, Address, Payment
+    Voucher, Shipment, Address, Payment,
+    Cart, CartItem 
 )
 from .serializers import (
     ProductSerializer, OrderSerializer, UserSerializer, 
     CategorySerializer, StoreSerializer, VoucherSerializer, 
-    ShipmentSerializer, AddressSerializer, PaymentSerializer
+    ShipmentSerializer, AddressSerializer, PaymentSerializer,
+    CartSerializer, CartItemSerializer 
 )
 
-# 1. Main Storefront View
 def home(request):
-    """
-    Serves the shop.html frontend.
-    """
+    """Serves the main storefront with the integrated floating cart."""
     return render(request, 'shop.html')
+
+# 1. Frontend Template Views
+def home(request):
+    """Serves the main shop.html frontend storefront."""
+    return render(request, 'shop.html')
+
+def view_cart(request):
+    """Serves the cart.html page."""
+    return render(request, 'cart.html')
 
 # 2. Order Endpoint with Business, Voucher, and Inventory Logic
 @method_decorator(csrf_exempt, name='dispatch')
@@ -29,16 +37,16 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer 
 
+    
+
     def create(self, request, *args, **kwargs):
-        # Extract data from the frontend request
-        product_id = request.data.get('product_id') # Ensure frontend sends this
+        product_id = request.data.get('product_id')
         voucher_code = request.data.get('voucher_code')
+        # Use the aggregate total sent from the frontend
         total_amount = float(request.data.get('total_amount', 0))
         
-        # --- Inventory Check Logic ---
         try:
             product = Product.objects.get(id=product_id)
-            # Prevent order if stock is zero or less
             if product.stock_quantity <= 0:
                 return Response(
                     {"error": f"Sorry, {product.name} is sold out!"}, 
@@ -47,7 +55,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         except Product.DoesNotExist:
             return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
         
-        # --- Voucher Validation Logic ---
+        # Voucher Logic: Fixed vs Percentage
         if voucher_code:
             try:
                 voucher = Voucher.objects.get(
@@ -56,12 +64,17 @@ class OrderViewSet(viewsets.ModelViewSet):
                     end_date__gte=timezone.now()
                 )
                 
-                if voucher.discount_type == 'Fixed':
-                    total_amount -= float(voucher.discount_value)
-                else:
-                    total_amount -= (total_amount * (float(voucher.discount_value) / 100))
+                discount_val = float(voucher.discount_value)
                 
-                total_amount = max(0, total_amount) # Prevent negative prices
+                if voucher.discount_type == 'Fixed':
+                    # Flat subtraction
+                    total_amount -= discount_val
+                else:
+                    # Percentage math: total * (1 - discount/100)
+                    total_amount = total_amount * (1 - (discount_val / 100))
+                
+                # Guardrail: Ensure price never drops below 0 and round for MySQL
+                total_amount = max(0, round(total_amount, 2))
                 
             except Voucher.DoesNotExist:
                 return Response(
@@ -69,25 +82,34 @@ class OrderViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        # --- Save Order and Update Stock ---
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        # Perform save and decrement stock in one process
+        # Save order with combined total and update stock count
         order = serializer.save(total_amount=total_amount)
         product.stock_quantity -= 1
-        product.save() # Persist the new stock count to MySQL
+        product.save()
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-# 3. Product ViewSet with RELATIONAL FILTERING
+# 3. Cart ViewSets
+class CartViewSet(viewsets.ModelViewSet):
+    queryset = Cart.objects.all()
+    serializer_class = CartSerializer
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CartItemViewSet(viewsets.ModelViewSet):
+    queryset = CartItem.objects.all()
+    serializer_class = CartItemSerializer
+
+# 4. Product ViewSet with RELATIONAL FILTERING
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['category', 'store'] 
 
-# 4. Standard Supporting ViewSets
+# 5. Standard Supporting ViewSets
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
