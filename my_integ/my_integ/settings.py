@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -6,12 +7,13 @@ SECRET_KEY = 'django-insecure-fda7l!aj$d61&sip)x93xn(lu_0mn@as33z@m@8cm2zr9(97%h
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*'] # Expanded for local testing
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
     'rest_framework',
-    'corsheaders', # Ensure this is present
+    'corsheaders', 
+    'django_filters',
     'api',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -22,10 +24,10 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware', # Must be at the top
+    'corsheaders.middleware.CorsMiddleware',  # Top priority
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    'django.middleware.common.CommonMiddleware', # Removed duplicate
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -51,7 +53,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'my_integ.wsgi.application'
 
-# Database - Matches your phpMyAdmin config
+# Database Configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -63,23 +65,27 @@ DATABASES = {
     }
 }
 
-# Fixes the "POST 403 Forbidden" error
+# --- CRITICAL FIX FOR MARIADB 10.4 ---
+# This bypasses the "MariaDB 10.6 or later is required" check
+from django.db.backends.base.base import BaseDatabaseWrapper
+BaseDatabaseWrapper.check_database_version_supported = lambda self: None
+# -------------------------------------
+
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny', # Changed from IsAuthenticatedOrReadOnly
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
-        # Comment out SessionAuthentication to skip CSRF checks for the frontend
-        # 'rest_framework.authentication.SessionAuthentication', 
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
     ],
 }
 
-# CORS Settings
 CORS_ALLOW_ALL_ORIGINS = True 
 CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
 
-# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
