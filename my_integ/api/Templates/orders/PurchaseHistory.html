@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase History | Shopee Clone</title>
+    <style>
+        :root { --shopee-orange: #ee4d2d; --bg: #f5f5f5; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; }
+        
+        .navbar { background: var(--shopee-orange); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 26px; font-weight: bold; cursor: pointer; text-decoration: none; color: white; }
+        
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
+        
+        /* Header Section */
+        .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: white; padding: 20px; border-radius: 2px; }
+        .back-link { color: var(--shopee-orange); text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+
+        /* Order Cards */
+        .order-card { background: white; margin-bottom: 15px; padding: 0; border-radius: 2px; box-shadow: 0 1px 1px rgba(0,0,0,0.05); overflow: hidden; }
+        .order-top-bar { padding: 15px 20px; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; align-items: center; }
+        .order-id { font-size: 13px; color: #888; }
+        .status-badge { color: #ee4d2d; font-weight: bold; text-transform: uppercase; font-size: 13px; }
+        
+        .order-content { padding: 20px; display: flex; gap: 15px; }
+        .prod-img { width: 80px; height: 80px; background: #fafafa; border: 1px solid #eee; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 10px; }
+        
+        .order-footer { padding: 15px 20px; background: #fffcf5; border-top: 1px dotted #e8e8e8; text-align: right; }
+        .total-label { font-size: 14px; color: #555; }
+        .total-amount { color: var(--shopee-orange); font-size: 24px; font-weight: 500; margin-left: 10px; }
+        
+        .empty-history { text-align: center; padding: 100px 0; color: #888; }
+        .btn-reorder { background: var(--shopee-orange); color: white; border: none; padding: 8px 20px; border-radius: 2px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="logo">ShopeeClone</a>
+        <div style="font-size: 14px; opacity: 0.9;">User: van Gao</div>
+    </nav>
+
+    <div class="container">
+        <div class="history-header">
+            <a href="/" class="back-link">&larr; Back to Shopping</a>
+            <h2 style="margin:0; font-size: 20px;">My Purchase History</h2>
+        </div>
+
+        <div id="history-container">
+            <div class="empty-history">Syncing with MySQL...</div>
+        </div>
+    </div>
+
+    <script>
+        // FIXED: Removed the extra 'orders/' from the constant to avoid double-pathing
+        const API_URL = "http://127.0.0.1:8000/api/orders/";
+
+        async function loadPurchaseHistory() {
+            const container = document.getElementById('history-container');
+            
+            try {
+                // FIXED: Changed fetch call to point to the correct endpoint directly
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("API Error");
+                
+                const orders = await response.json();
+
+                // Filter for van Gao (User #1)
+                const myOrders = orders.filter(o => o.user === 1);
+
+                if (myOrders.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-history">
+                            <p>No orders found.</p>
+                            <a href="/" style="color:var(--shopee-orange);">Start Shopping</a>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = myOrders.reverse().map(order => `
+                    <div class="order-card">
+                        <div class="order-top-bar">
+                            <span class="order-id">Order Reference: #${order.id}</span>
+                            <span class="status-badge">${order.status || 'Processing'}</span>
+                        </div>
+                        <div class="order-content">
+                            <div class="prod-img">NO IMAGE</div>
+                            <div style="flex:1;">
+                                <div style="font-size: 16px; color: #222;">Product ID: ${order.product}</div>
+                                <div style="font-size: 13px; color: #999; margin-top: 5px;">
+                                    Voucher Applied: ${order.voucher_code || 'None'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-footer">
+                            <span class="total-label">Order Total:</span>
+                            <span class="total-amount">P${parseFloat(order.total_amount).toLocaleString()}</span>
+                            <br>
+                            <button class="btn-reorder" onclick="window.location.href='/'">Buy Again</button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                container.innerHTML = `
+                    <div class="empty-history">
+                        <p style="color:red;">Error connecting to MySQL Database.</p>
+                    </div>`;
+            }
+        }
+
+        loadPurchaseHistory();
+    </script>
+</body>
+</html>

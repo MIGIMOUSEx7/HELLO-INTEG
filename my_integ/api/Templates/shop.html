@@ -9,7 +9,6 @@
         .navbar { background: var(--shopee-orange); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .logo { font-size: 26px; font-weight: bold; cursor: pointer; }
         
-        /* Navbar Cart Styling */
         .cart-icon { position: relative; cursor: pointer; font-size: 24px; }
         .cart-badge { position: absolute; top: -5px; right: -10px; background: white; color: var(--shopee-orange); border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold; }
         
@@ -30,13 +29,12 @@
         .cart-btn { background: white; color: var(--shopee-orange); border: 1px solid var(--shopee-orange); flex: 1; padding: 10px; cursor: pointer; font-size: 16px; }
         .order-btn:disabled, .cart-btn:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:3000; }
         .modal-content { background:white; width:350px; margin:100px auto; padding:25px; border-radius:4px; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
         
         .sold-out-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 160px; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ee4d2d; font-size: 18px; }
         .stock-label { font-size: 11px; color: #888; margin-bottom: 5px; }
 
-        /* Floating Draggable Cart Styling */
         #draggable-cart {
             position: fixed;
             top: 100px;
@@ -55,13 +53,9 @@
             color: white;
             padding: 10px 15px;
             cursor: move;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: bold;
+            display: flex; justify-content: space-between; align-items: center; font-weight: bold;
         }
 
-        /* Quantity and Remove Button styles */
         .qty-btn { width: 22px; height: 22px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
         .qty-btn:hover { background: #f5f5f5; }
         .remove-link { color: #ee4d2d; cursor: pointer; font-size: 11px; text-decoration: underline; margin-left: 10px; }
@@ -71,11 +65,23 @@
 
     <nav class="navbar">
         <div class="logo" onclick="initShop()">ShopeeClone</div>
-        <div style="display:flex; align-items:center; gap:30px;">
+        <div style="display:flex; align-items:center; gap:20px;">
+            <a href="/api/history/" style="color:white; text-decoration:none; font-size:14px; border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; border-radius: 2px;">
+                My Purchase History
+            </a>
+
+            {% if user.is_authenticated %}
+                <div style="font-size: 14px; opacity: 0.9;">
+                    User: {{ user.username }} | 
+                    <a href="{% url 'logout' %}" style="color: white; text-decoration: underline; margin-left: 5px;">Logout</a>
+                </div>
+            {% else %}
+                <a href="{% url 'login' %}" style="color: white; text-decoration: none; font-size: 14px;">Login</a>
+            {% endif %}
+
             <div class="cart-icon" onclick="toggleCart()">
-                🛒<span id="cart-count" class="cart-badge">0</span>
+                Cart <span id="cart-count" class="cart-badge">0</span>
             </div>
-            <div style="font-size: 14px; opacity: 0.8;">MySQL System | User: van Gao</div>
         </div>
     </nav>
 
@@ -85,7 +91,6 @@
                 <h4>Apply Voucher</h4>
                 <input type="text" id="voucher-code" class="voucher-input" placeholder="Enter Code (e.g. SAVE50)">
             </div>
-
             <div class="sidebar-card">
                 <h4>Categories</h4>
                 <div id="category-list">Searching...</div>
@@ -95,7 +100,6 @@
                 <div id="store-list">Searching...</div>
             </div>
         </aside>
-
         <main>
             <div id="product-grid" class="product-grid"></div>
         </main>
@@ -103,8 +107,8 @@
 
     <div id="draggable-cart">
         <div class="cart-drag-header" id="cart-header">
-            <span>🛒 Shopping Cart</span>
-            <span onclick="toggleCart()" style="cursor: pointer; font-size: 20px;">×</span>
+            <span>Shopping Cart</span>
+            <span onclick="toggleCart()" style="cursor: pointer; font-size: 20px;">x</span>
         </div>
         <div id="floating-cart-list" style="padding: 15px; max-height: 300px; overflow-y: auto; background: #fff;">
             <p style="text-align: center; color: #999;">Syncing with MySQL...</p>
@@ -112,7 +116,7 @@
         <div style="padding: 15px; border-top: 1px solid #eee; background: #fafafa;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                 <span style="font-weight: bold; color: #555;">Total Amount:</span>
-                <span id="floating-grand-total" style="color: #ee4d2d; font-weight: bold; font-size: 18px;">₱0</span>
+                <span id="floating-grand-total" style="color: #ee4d2d; font-weight: bold; font-size: 18px;">P0</span>
             </div>
             <button onclick="processCheckout()" style="width: 100%; background: #ee4d2d; color: white; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 2px;">
                 CHECKOUT ALL
@@ -125,10 +129,10 @@
             <h3 style="margin-top:0; font-size: 18px;">Confirm Order</h3>
             <div style="margin-bottom:15px;">
                 <label style="display:block; font-size:11px; color:#999; text-transform:uppercase;">Shipping Address</label>
-                <div style="font-weight:bold;">van - cdc (Default)</div>
+                <div style="font-weight:bold;">{{ user.username }} - Default Address</div>
             </div>
             <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                <span id="modal-price" style="font-size:20px; font-weight:bold; color:#ee4d2d;">₱0.00</span>
+                <span id="modal-price" style="font-size:20px; font-weight:bold; color:#ee4d2d;">P0.00</span>
                 <div>
                     <button onclick="closeModal()" style="padding:8px 12px; border:none; background:#eee; cursor:pointer; font-size:12px;">Cancel</button>
                     <button id="confirm-btn" style="padding:8px 12px; border:none; background:#ee4d2d; color:white; font-weight:bold; cursor:pointer; font-size:12px;">CONFIRM</button>
@@ -141,15 +145,10 @@
         const API_URL = "http://127.0.0.1:8000/api/";
         let currentProduct = null;
 
-        // --- 1. Draggable & Toggle Logic ---
         function toggleCart() {
             const cart = document.getElementById("draggable-cart");
-            if (cart.style.display === "none" || cart.style.display === "") {
-                cart.style.display = "flex";
-                loadFloatingCart(); 
-            } else {
-                cart.style.display = "none";
-            }
+            cart.style.display = (cart.style.display === "none" || cart.style.display === "") ? "flex" : "none";
+            if (cart.style.display === "flex") loadFloatingCart(); 
         }
 
         const cartBox = document.getElementById("draggable-cart");
@@ -157,32 +156,26 @@
         let p1 = 0, p2 = 0, p3 = 0, p4 = 0;
 
         dragHandle.onmousedown = (e) => {
-            e.preventDefault();
             p3 = e.clientX; p4 = e.clientY;
             document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
             document.onmousemove = (e) => {
-                e.preventDefault();
-                p1 = p3 - e.clientX; p2 = p4 - e.clientY;
-                p3 = e.clientX; p4 = e.clientY;
+                p1 = p3 - e.clientX; p2 = p4 - e.clientY; p3 = e.clientX; p4 = e.clientY;
                 cartBox.style.top = (cartBox.offsetTop - p2) + "px";
                 cartBox.style.left = (cartBox.offsetLeft - p1) + "px";
             };
         };
 
-        // --- 2. Data Sync Functions (Quantity and Remove Integrated) ---
         async function loadFloatingCart() {
             try {
                 const res = await fetch(`${API_URL}cartitems/`);
                 const items = await res.json();
                 const list = document.getElementById('floating-cart-list');
-                const badge = document.getElementById('cart-count'); 
-                
-                badge.innerText = items.length;
+                document.getElementById('cart-count').innerText = items.length;
                 let total = 0;
 
                 if (items.length === 0) {
                     list.innerHTML = "<p style='text-align:center; padding:20px; color:#999;'>Your cart is empty.</p>";
-                    document.getElementById('floating-grand-total').innerText = "₱0";
+                    document.getElementById('floating-grand-total').innerText = "P0";
                     return;
                 }
 
@@ -195,65 +188,48 @@
                                 <div style="font-weight:bold; color:#333;">${item.product_name}</div>
                                 <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
                                     <button class="qty-btn" onclick="updateQuantity(${item.id}, ${item.quantity - 1})">-</button>
-                                    <span style="min-width:20px; text-align:center;">${item.quantity}</span>
+                                    <span>${item.quantity}</span>
                                     <button class="qty-btn" onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
                                     <span class="remove-link" onclick="removeCartItem(${item.id})">Remove</span>
                                 </div>
                             </div>
-                            <div style="font-weight:bold; color:#ee4d2d;">₱${(itemPrice * item.quantity).toLocaleString()}</div>
+                            <div style="font-weight:bold; color:#ee4d2d;">P${(itemPrice * item.quantity).toLocaleString()}</div>
                         </div>`;
                 }).join('');
-                
-                document.getElementById('floating-grand-total').innerText = `₱${total.toLocaleString()}`;
+                document.getElementById('floating-grand-total').innerText = `P${total.toLocaleString()}`;
             } catch (err) { console.error("Sync error:", err); }
         }
 
-        // --- 3. Quantity Update Logic (PATCH) ---
         async function updateQuantity(itemId, newQty) {
             if (newQty < 1) return removeCartItem(itemId);
-            
-            try {
-                const res = await fetch(`${API_URL}cartitems/${itemId}/`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ quantity: newQty })
-                });
-                if (res.ok) loadFloatingCart();
-            } catch (err) { console.error(err); }
+            await fetch(`${API_URL}cartitems/${itemId}/`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: newQty })
+            });
+            loadFloatingCart();
         }
 
-        // --- 4. Remove Item Logic (DELETE) ---
         async function removeCartItem(itemId) {
-            if (confirm("Remove this item from your cart?")) {
-                try {
-                    const res = await fetch(`${API_URL}cartitems/${itemId}/`, {
-                        method: 'DELETE'
-                    });
-                    if (res.ok) loadFloatingCart();
-                } catch (err) { console.error(err); }
+            if (confirm("Remove this item?")) {
+                await fetch(`${API_URL}cartitems/${itemId}/`, { method: 'DELETE' });
+                loadFloatingCart();
             }
         }
 
         async function initShop(filterQuery = "") {
             try {
                 await loadFloatingCart();
-
-                const catRes = await fetch(`${API_URL}categories/`);
+                const [catRes, storeRes, prodRes] = await Promise.all([
+                    fetch(`${API_URL}categories/`), fetch(`${API_URL}stores/`),
+                    fetch(filterQuery ? `${API_URL}products/?${filterQuery}` : `${API_URL}products/`)
+                ]);
                 const categories = await catRes.json();
                 document.getElementById('category-list').innerHTML = categories.map(c => 
-                    `<div class="list-item" onclick="initShop('category=${c.id}')">${c.category_name}</div>`
-                ).join('');
-
-                const storeRes = await fetch(`${API_URL}stores/`);
+                    `<div class="list-item" onclick="initShop('category=${c.id}')">${c.category_name}</div>`).join('');
                 const stores = await storeRes.json();
                 document.getElementById('store-list').innerHTML = stores.map(s => 
-                    `<div class="list-item" onclick="initShop('store=${s.id}')">${s.store_name} ⭐ ${s.rating}</div>`
-                ).join('');
-
-                const url = filterQuery ? `${API_URL}products/?${filterQuery}` : `${API_URL}products/`;
-                const prodRes = await fetch(url);
+                    `<div class="list-item" onclick="initShop('store=${s.id}')">${s.store_name} Rating: ${s.rating}</div>`).join('');
                 const products = await prodRes.json();
-                
                 document.getElementById('product-grid').innerHTML = products.map(p => {
                     const isSoldOut = p.stock_quantity <= 0;
                     return `
@@ -261,11 +237,11 @@
                             ${isSoldOut ? '<div class="sold-out-overlay">SOLD OUT</div>' : ''}
                             <div style="height:160px; background:#f9f9f9; display:flex; align-items:center; justify-content:center; color:#ddd;">No Photo</div>
                             <div style="font-size:13px; margin-top:10px; height:34px; overflow:hidden;">${p.name}</div>
-                            <div class="price">₱${parseFloat(p.price || 1500).toLocaleString()}</div>
+                            <div class="price">P${parseFloat(p.price).toLocaleString()}</div>
                             <div class="stock-label">Stock: ${p.stock_quantity}</div>
                             <div class="btn-group">
-                                <button class="cart-btn" onclick="addToCart(${p.id})" ${isSoldOut ? 'disabled' : ''}>🛒</button>
-                                <button class="order-btn" onclick="openModal(${p.id}, ${p.price || 1500})" ${isSoldOut ? 'disabled' : ''}>Buy Now</button>
+                                <button class="cart-btn" onclick="addToCart(${p.id})" ${isSoldOut ? 'disabled' : ''}>Cart</button>
+                                <button class="order-btn" onclick="openModal(${p.id}, ${p.price})" ${isSoldOut ? 'disabled' : ''}>Buy Now</button>
                             </div>
                         </div>`;
                 }).join('');
@@ -273,82 +249,57 @@
         }
 
         async function addToCart(productId) {
-            try {
-                const res = await fetch(`${API_URL}cartitems/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cart: 1, product: productId, quantity: 1 })
-                });
-                if (res.ok) {
-                    alert("✅ Added to cart!");
-                    loadFloatingCart(); 
-                }
-            } catch (err) { alert("Network Error."); }
+            const res = await fetch(`${API_URL}cartitems/`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cart: 1, product: productId, quantity: 1 })
+            });
+            if (res.ok) { alert("Added to cart!"); loadFloatingCart(); }
         }
 
-        // Updated Checkout Logic to correctly affect MySQL Stock for each item purchase
         async function processCheckout() {
             const res = await fetch(`${API_URL}cartitems/`);
             const items = await res.json();
             if (items.length === 0) return alert("Cart is empty!");
-
-            try {
-                for (let item of items) {
-                    const payload = {
-                        user: 1, address: 1, payment: 1,
-                        product_id: item.product, 
-                        total_amount: (parseFloat(item.product_price) * item.quantity).toString(),
-                        voucher_code: document.getElementById('voucher-code').value.trim(),
-                        status: "Pending"
-                    };
-
-                    const orderRes = await fetch(`${API_URL}orders/`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (orderRes.ok) {
-                        await fetch(`${API_URL}cartitems/${item.id}/`, { method: 'DELETE' });
-                    }
-                }
-                alert("✅ Checkout Complete! Stock levels updated.");
-                toggleCart();
-                initShop(); 
-            } catch (err) { alert("Checkout failed."); }
+            for (let item of items) {
+                const payload = {
+                    user: 1, address: 1, payment: 1,
+                    product: item.product, 
+                    total_amount: (parseFloat(item.product_price) * item.quantity).toString(),
+                    voucher_code: document.getElementById('voucher-code').value.trim(),
+                    status: "Pending"
+                };
+                const orderRes = await fetch(`${API_URL}orders/`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (orderRes.ok) await fetch(`${API_URL}cartitems/${item.id}/`, { method: 'DELETE' });
+            }
+            alert("Checkout Complete!");
+            toggleCart(); initShop(); 
         }
 
         function openModal(productId, price) {
             currentProduct = { id: productId, price: price };
-            document.getElementById('modal-price').innerText = `₱${parseFloat(price).toLocaleString()}`;
+            document.getElementById('modal-price').innerText = `P${parseFloat(price).toLocaleString()}`;
             document.getElementById('checkout-modal').style.display = 'block';
-            document.getElementById('confirm-btn').onclick = () => finalizeOrder();
+            document.getElementById('confirm-btn').onclick = finalizeOrder;
         }
 
         function closeModal() { document.getElementById('checkout-modal').style.display = 'none'; }
 
         async function finalizeOrder() {
-            const btn = document.getElementById('confirm-btn');
-            btn.disabled = true;
-            try {
-                const response = await fetch(`${API_URL}orders/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user: 1, address: 1, payment: 1,
-                        product_id: currentProduct.id,
-                        total_amount: currentProduct.price.toString(),
-                        voucher_code: document.getElementById('voucher-code').value.trim(),
-                        status: "Pending"
-                    })
-                });
-                if (response.ok) {
-                    alert("✅ Order Placed!");
-                    closeModal();
-                    initShop();
-                }
-            } catch (err) { alert("Error."); }
-            finally { btn.disabled = false; }
+            const payload = {
+                user: 1, address: 1, payment: 1,
+                product: currentProduct.id,
+                total_amount: currentProduct.price.toString(),
+                voucher_code: document.getElementById('voucher-code').value.trim(),
+                status: "Pending"
+            };
+            const response = await fetch(`${API_URL}orders/`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (response.ok) { alert("Order Placed!"); closeModal(); initShop(); }
         }
 
         initShop();
