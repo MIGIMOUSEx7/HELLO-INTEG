@@ -12,6 +12,12 @@ from django.contrib import messages
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .forms import UserCreationForm
+from .forms import RegisterForm
+
+
 
 from .models import (
     Product, Order, User, Category, Store, 
@@ -27,17 +33,20 @@ from .serializers import (
 
 # --- 1. AUTHENTICATION VIEWS ---
 
-def signup_view(request):
-    """Handles new user registration for your shop."""
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+
+def register_view(request):
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
         if form.is_valid():
-            form.save() # Saves to MySQL auth_user table
-            messages.success(request, "Account created successfully! You can now log in.")
-            return redirect('login')
+            form.save()
+            username = form.cleaned_data.get('username')
+            messages.success(request, f'Account created for {username}! You can now log in.')
+            return redirect("login")
     else:
-        form = UserCreationForm()
-    return render(request, 'login/signup.html', {'form': form})
+        form = RegisterForm()
+
+        
+    return render(request, 'login/register.html', {'form': form})
 
 def login_view(request):
     """Handles user login and session creation."""
@@ -52,7 +61,7 @@ def login_view(request):
         else:
             messages.error(request, "Invalid username or password")
             
-    return render(request, 'login.html')
+    return render(request, 'login/login.html')
 
 def logout_view(request):
     """Logs the user out and redirects to login page."""
@@ -159,15 +168,3 @@ class CartViewSet(viewsets.ModelViewSet):
 
 
 
-def register_view(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            form.save()  # This saves the user to your MariaDB/MySQL database
-            username = form.cleaned_data.get('username')
-            messages.success(request, f'Account created for {username}! You can now log in.')
-            return redirect('login')  # Redirect to login page after success
-    else:
-        form = UserCreationForm()
-    
-    return render(request, 'login/signup.html', {'form': form})
