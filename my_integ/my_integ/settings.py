@@ -1,5 +1,10 @@
 from pathlib import Path
 import sys
+import pymysql
+
+# --- DATABASE DRIVER INITIALIZATION ---
+# This allows Django to use PyMySQL as the MySQL driver
+pymysql.install_as_MySQLdb()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,10 +29,10 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # Top priority
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware', # Removed duplicate
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -39,7 +44,7 @@ ROOT_URLCONF = 'my_integ.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'api' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -53,7 +58,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'my_integ.wsgi.application'
 
-# Database Configuration
+# --- DATABASE CONFIGURATION ---
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -62,13 +67,22 @@ DATABASES = {
         'PASSWORD': '',
         'HOST': '127.0.0.1',
         'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
+        },
     }
 }
 
-# --- CRITICAL FIX FOR MARIADB 10.4 ---
-# This bypasses the "MariaDB 10.6 or later is required" check
+# --- CRITICAL FIX FOR MARIADB ---
+# 1. Bypass the version support check for older MariaDB versions
 from django.db.backends.base.base import BaseDatabaseWrapper
 BaseDatabaseWrapper.check_database_version_supported = lambda self: None
+
+# 2. Fix the "RETURNING" syntax error for Django 6.0 + MariaDB 10.4-10.5
+from django.db.backends.mysql.features import DatabaseFeatures
+DatabaseFeatures.can_return_rows_from_bulk_insert = property(lambda self: False)
+DatabaseFeatures.can_return_columns_from_insert = property(lambda self: False)
 # -------------------------------------
 
 REST_FRAMEWORK = {
@@ -93,3 +107,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Fixes for older MariaDB versions
+from django.db.backends.mysql.features import DatabaseFeatures
+DatabaseFeatures.can_return_rows_from_bulk_insert = property(lambda self: False)
+DatabaseFeatures.can_return_columns_from_insert = property(lambda self: False)

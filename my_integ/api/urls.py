@@ -31,5 +31,6 @@ urlpatterns = [
     path('history/', views.purchase_history, name='purchase_history'),
     path('', include(router.urls)),         # The API Root at /api/
     path('signup/', views.signup_view, name='signup'),
-    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
+    
 ]
