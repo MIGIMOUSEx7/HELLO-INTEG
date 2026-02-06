@@ -1,8 +1,11 @@
 from django.contrib import admin
 from .models import (
-    User, Address, Category, Product, Store, 
+    Address, Category, Product, Store, 
     Voucher, Shipment, Payment, Order, Cart, CartItem
 )
+
+# NOTE: We do NOT import or register 'User' here because
+# Django's built-in Auth system already registers it for you.
 
 # 1. Product Admin with Bulk Restock
 @admin.register(Product)
@@ -29,7 +32,6 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ('status', 'order_date')
 
 # 3. Simple registration for the remaining ERD tables
-admin.site.register(User)
 admin.site.register(Address)
 admin.site.register(Category)
 admin.site.register(Store)

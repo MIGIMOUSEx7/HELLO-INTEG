@@ -1,11 +1,8 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from . import views
-from django.urls import path
-from api import views
 from django.conf import settings
 from django.conf.urls.static import static
-
+from rest_framework.routers import DefaultRouter
+from . import views
 
 # Create a router and register our viewsets
 router = DefaultRouter()
@@ -21,21 +18,26 @@ router.register(r'payments', views.PaymentViewSet)
 
 # Registered ViewSets for the Cart system
 router.register(r'carts', views.CartViewSet)
-router.register(r'cartitems', views.CartItemViewSet)
+router.register(r'cartitems', views.CartItemViewSet, basename='cartitem')
 
-
-
-# The API URLs are now determined automatically by the router
 urlpatterns = [
+    # --- Authentication ---
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('', views.home, name='home'), # Your Shop
-    path('shop/', views.home, name='shop'), # Your main storefront
-    path('cart/', views.view_cart, name='cart'), # NEW: The path to your cart page
-    path('history/', views.purchase_history, name='purchase_history'),
-    path('', include(router.urls)),         # The API Root at /api/
-    path('register/', views.register_view, name='register')
+    path('register/', views.register_view, name='register'),
     
+    # FIXED: Point 'signup' to 'register_view' since they do the same thing
+    path('signup/', views.register_view, name='signup'), 
+
+    # --- Frontend Pages ---
+    path('', views.home, name='home'),
+    path('shop/', views.home, name='shop'),
+    path('cart/', views.view_cart, name='cart'),
+    path('history/', views.purchase_history, name='purchase_history'),
+    path('checkout/', views.checkout_view, name='checkout'),
+
+    # --- API Root ---
+    path('', include(router.urls)),
 ]
 
 if settings.DEBUG:

@@ -2,18 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase History | Shopee Clone</title>
     <style>
-        :root { 
-            --shopee-orange: #ee4d2d; 
-            --bg: #f5f5f5; 
-            --white: #ffffff;
-            --border: #f2f2f2;
+        :root {
+            --shopee-orange: #ee4d2d;
+            --text-black: #222;
+            --text-grey: #888;
+            --bg-grey: #f5f5f5;
+            --border-color: #eaeaea;
         }
 
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; color: #333; }
-        
-        /* Navbar Styling */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-grey);
+            margin: 0;
+            padding: 0;
+            color: var(--text-black);
+        }
+
+        /* --- NAVBAR (From your existing code) --- */
         .navbar { 
             background: var(--shopee-orange); 
             color: white; 
@@ -22,183 +30,287 @@
             z-index: 1000; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
         .navbar-top {
-            padding: 10px 5%;
+            padding: 10px 15%; /* Centered alignment */
+            display: flex;
+            justify-content: space-between; /* Space between links and user info */
+            align-items: center;
+            font-size: 13px;
+        }
+        .navbar-top a { color: white; text-decoration: none; margin-left: 20px; }
+        .navbar-top a:hover { opacity: 0.8; }
+
+        /* --- TABS --- */
+        .nav-tabs {
+            background: white;
+            display: flex;
+            justify-content: center;
+            border-bottom: 1px solid rgba(0,0,0,0.09);
+            margin-top: 1px;
+        }
+        .nav-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--text-black);
+            text-align: center;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s;
+        }
+        .nav-item:hover { color: var(--shopee-orange); }
+        .nav-item.active {
+            color: var(--shopee-orange);
+            border-bottom: 2px solid var(--shopee-orange);
+        }
+
+        /* --- SEARCH BAR --- */
+        .search-container {
+            background: #eaeaea;
+            padding: 10px 0;
+        }
+        .search-box {
+            background: white;
+            width: 100%;
+            max-width: 980px; /* Shopee standard width */
+            margin: 0 auto;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+            border-radius: 2px;
+        }
+        .search-box input {
+            border: none;
+            width: 100%;
+            outline: none;
+            margin-left: 10px;
+            font-size: 14px;
+        }
+
+        /* --- LAYOUT --- */
+        .main-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 10px;
+        }
+
+        /* --- ORDER CARD --- */
+        .order-card {
+            background: white;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 1px 0 rgba(0,0,0,0.05);
+            border-radius: 2px;
+        }
+        
+        /* Card Header */
+        .card-header {
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .store-section { display: flex; align-items: center; gap: 10px; }
+        .store-name { font-weight: bold; font-size: 14px; }
+        .btn-chat {
+            background: var(--shopee-orange);
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .btn-view-shop {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: 2px;
+            color: #555;
+            cursor: pointer;
+        }
+        .order-status { 
+            color: var(--shopee-orange); 
+            text-transform: uppercase; 
+            font-size: 14px; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .separator { border-left: 1px solid #e0e0e0; height: 15px; margin: 0 5px; }
+
+        /* Card Body (Product) */
+        .card-body {
+            padding: 12px 24px;
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .card-body:hover { background-color: #fafafa; }
+        
+        .product-img {
+            width: 80px;
+            height: 80px;
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #aaa;
+        }
+        .product-details { margin-left: 12px; flex: 1; }
+        .product-name { font-size: 16px; margin-bottom: 5px; color: var(--text-black); }
+        .product-variant { color: var(--text-grey); font-size: 14px; margin-bottom: 5px; }
+        .product-qty { font-size: 14px; }
+        .product-price { color: var(--shopee-orange); font-size: 14px; }
+
+        /* Card Footer */
+        .card-footer {
+            padding: 24px;
+            background: #fffefb; /* Slight off-white like Shopee */
+            text-align: right;
+        }
+        .total-section {
+            font-size: 14px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            gap: 20px;
-            font-size: 13px;
+            gap: 10px;
         }
+        .total-price {
+            font-size: 24px;
+            color: var(--shopee-orange);
+            font-weight: 500;
+        }
+        
+        /* Buttons */
+        .action-buttons { display: flex; justify-content: flex-end; gap: 10px; }
+        .btn {
+            padding: 8px 40px;
+            border-radius: 2px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: var(--shopee-orange);
+            color: white;
+            border: 1px solid var(--shopee-orange);
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary {
+            background: white;
+            color: #555;
+            border: 1px solid #ddd;
+        }
+        .btn-secondary:hover { background: #f8f8f8; }
 
-        .navbar-top a { color: white; text-decoration: none; }
-        .navbar-top a:hover { opacity: 0.8; }
-
-        .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
-        
-        /* Header Section */
-        .history-header { 
-            display: flex; 
-            align-items: center; 
-            background: var(--white); 
-            padding: 20px; 
-            border-radius: 2px; 
-            margin-bottom: 20px; 
-            border-bottom: 1px solid var(--border);
-        }
-
-        /* Order Cards */
-        .order-card { 
-            background: var(--white); 
-            margin-bottom: 15px; 
-            border-radius: 2px; 
-            box-shadow: 0 1px 1px rgba(0,0,0,0.05); 
-            overflow: hidden; 
-        }
-        
-        .order-top-bar { 
-            padding: 15px 20px; 
-            border-bottom: 1px solid var(--border); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        
-        .order-id { font-size: 13px; color: #888; text-transform: uppercase; }
-        .status-badge { color: var(--shopee-orange); font-weight: bold; text-transform: uppercase; font-size: 13px; }
-        
-        .order-content { padding: 20px; display: flex; gap: 15px; }
-        .prod-img { 
-            width: 80px; 
-            height: 80px; 
-            background: #fafafa; 
-            border: 1px solid #eee; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            color: #ccc; 
-            font-size: 10px; 
+        /* Empty State */
+        .no-orders {
             text-align: center;
+            padding: 100px 0;
+            background: white;
+            margin-top: 20px;
         }
-        
-        .order-footer { 
-            padding: 15px 20px; 
-            background: #fffcf5; 
-            border-top: 1px dotted #e8e8e8; 
-            text-align: right; 
-        }
-        
-        .total-label { font-size: 14px; color: #555; }
-        .total-amount { color: var(--shopee-orange); font-size: 24px; font-weight: 500; margin-left: 10px; }
-        
-        .empty-history { text-align: center; padding: 80px 0; color: #888; }
-        .btn-reorder { 
-            background: var(--shopee-orange); 
-            color: white; 
-            border: none; 
-            padding: 10px 25px; 
-            border-radius: 2px; 
-            cursor: pointer; 
-            margin-top: 10px;
-            transition: background 0.2s;
-        }
-        .btn-reorder:hover { background: #d73211; }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
         <div class="navbar-top">
-            <a href="/">🏠 Home</a>
-            <a href="/api/history/">📋 Purchase History</a>
-            {% if user.is_authenticated %}
-                <span>👤 {{ user.username }}</span>
-                <a href="{% url 'logout' %}">Logout</a>
-            {% else %}
-                <a href="{% url 'login' %}">Login / Sign Up</a>
-            {% endif %}
+            <div style="font-weight: bold; font-size: 18px;">Shopee Clone</div>
+            <div>
+                <a href="/">Home</a>
+                {% if user.is_authenticated %}
+                    <a href="#">{{ user.username }}</a>
+                    <a href="{% url 'logout' %}">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Login</a>
+                {% endif %}
+            </div>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="history-header">
-            <h2 style="margin:0; font-size: 20px;">My Purchase History</h2>
-        </div>
+    <div class="nav-tabs">
+        <div class="nav-item active">All</div>
+        <div class="nav-item">To Pay</div>
+        <div class="nav-item">To Ship</div>
+        <div class="nav-item">To Receive</div>
+        <div class="nav-item">Completed</div>
+        <div class="nav-item">Cancelled</div>
+        <div class="nav-item">Return Refund</div>
+    </div>
 
-        <div id="history-container">
-            <div class="empty-history">
-                <p>Connecting to server...</p>
-            </div>
+    <div class="search-container">
+        <div class="search-box">
+            <span>🔍</span>
+            <input type="text" placeholder="You can search by Seller Name, Order ID or Product name">
         </div>
     </div>
 
-    <script>
-        const API_URL = "http://127.0.0.1:8000/api/orders/";
-
-        async function loadPurchaseHistory() {
-            const container = document.getElementById('history-container');
-            
-            try {
-                // Use credentials if you're dealing with Django sessions
-                const response = await fetch(API_URL);
-                
-                if (!response.ok) throw new Error("Could not fetch orders");
-                
-                const orders = await response.json();
-
-                // Logic: In a real app, the API should filter by the logged-in user.
-                // If your API returns all orders, this filter works for Demo User #1.
-                const myOrders = orders.filter(o => o.user === 1);
-
-                if (myOrders.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-history">
-                            <p>You haven't placed any orders yet.</p>
-                            <a href="/" style="color:var(--shopee-orange); text-decoration: none;">Start Shopping Now</a>
-                        </div>`;
-                    return;
-                }
-
-                container.innerHTML = myOrders.reverse().map(order => {
-                    const amount = parseFloat(order.total_amount || 0).toLocaleString();
-                    
-                    return `
-                    <div class="order-card">
-                        <div class="order-top-bar">
-                            <span class="order-id">Order Reference: #${order.id}</span>
-                            <span class="status-badge">${order.status || 'Processing'}</span>
-                        </div>
-                        <div class="order-content">
-                            <div class="prod-img">IMAGE<br>COMING SOON</div>
-                            <div style="flex:1;">
-                                <div style="font-size: 16px; color: #222; font-weight: 500;">Product ID: ${order.product}</div>
-                                <div style="font-size: 13px; color: #999; margin-top: 5px;">
-                                    Voucher: <span style="color:#26aa99">${order.voucher_code || 'None'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="order-footer">
-                            <span class="total-label">Order Total:</span>
-                            <span class="total-amount">₱${amount}</span>
-                            <br>
-                            <button class="btn-reorder" onclick="location.href='/'">Buy Again</button>
-                        </div>
+    <div class="main-container">
+        
+        {% if orders %}
+            {% for order in orders %}
+            <div class="order-card">
+                <div class="card-header">
+                    <div class="store-section">
+                        <span class="store-name">{{ order.product.store.store_name|default:"SariSariStore" }}</span>
+                        <button class="btn-chat">Chat</button>
+                        <button class="btn-view-shop">View Shop</button>
                     </div>
-                `}).join('');
+                    <div class="order-status">
+                        <span>Parcel has been delivered</span>
+                        <div class="separator"></div>
+                        <span style="color:var(--shopee-orange);">{{ order.status|upper }}</span>
+                    </div>
+                </div>
 
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = `
-                    <div class="empty-history">
-                        <p style="color:#ee4d2d; font-weight:bold;">Offline</p>
-                        <p>Unable to reach the MySQL database. Please ensure your Django server is running.</p>
-                    </div>`;
-            }
+                <div class="card-body" onclick="window.location.href='/'">
+                    <div class="product-img">
+                        Product<br>Image
+                    </div>
+                    <div class="product-details">
+                        <div class="product-name">{{ order.product.product_name }}</div>
+                        <div class="product-variant">Variation: Default</div>
+                        <div class="product-qty">x1</div>
+                    </div>
+                    </div>
+
+                <div class="card-footer">
+                    <div class="total-section">
+                        <span>Order Total:</span>
+                        <span class="total-price">₱{{ order.total_amount }}</span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary">Contact Seller</button>
+                        <button class="btn btn-primary" onclick="buyAgain('{{ order.product.id }}')">Buy Again</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+        {% else %}
+            <div class="no-orders">
+                <div style="font-size: 50px; color: #ddd; margin-bottom: 20px;">📄</div>
+                <div style="color:var(--text-black);">No orders found</div>
+                <a href="/" style="color:var(--shopee-orange); text-decoration: none; margin-top: 10px; display: inline-block;">Go Shopping</a>
+            </div>
+        {% endif %}
+
+    </div>
+
+    <script>
+        function buyAgain(productId) {
+            // Redirects to checkout view with product_id and default quantity of 1
+            window.location.href = `/api/checkout/?product_id=${productId}&quantity=1`;
         }
-
-        // Initialize
-        loadPurchaseHistory();
     </script>
+
 </body>
 </html>

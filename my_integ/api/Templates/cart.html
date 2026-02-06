@@ -2,211 +2,321 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Floating Cart</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart | Shopee Clone</title>
     <style>
-        :root { --shopee-orange: #ee4d2d; --bg: #f5f5f5; }
-        
-        /* Floating Container Styling */
-        #draggable-cart {
-            position: fixed;
-            top: 50px;
-            right: 50px;
-            width: 450px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 9999;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #ddd;
+        :root {
+            --shopee-orange: #ee4d2d;
+            --text-black: #222;
+            --text-grey: #888;
+            --bg-grey: #f5f5f5;
+            --border-color: #e8e8e8;
         }
 
-        /* Drag Handle Header */
-        .cart-drag-header {
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-grey);
+            margin: 0;
+            padding-bottom: 100px; /* Space for sticky footer */
+        }
+
+        /* --- NAVBAR --- */
+        .navbar {
+            background: linear-gradient(-180deg, #f53d2d, #f63);
+            color: white;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .nav-content {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 0 20px;
+        }
+        .logo { 
+            font-size: 24px; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+            color: white;
+            text-decoration: none;
+        }
+        .page-title { font-size: 20px; border-left: 1px solid rgba(255,255,255,0.5); padding-left: 15px; }
+        .search-bar { flex: 1; display: flex; }
+        .search-bar input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 2px;
+            outline: none;
+        }
+        .search-btn {
+            background: #fb5533;
+            border: none;
+            padding: 0 20px;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* --- CART LAYOUT --- */
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 10px; }
+        
+        .cart-header {
+            background: white;
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: 50px 4fr 1fr 1fr 1fr 1fr;
+            align-items: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 1px 0 rgba(0,0,0,0.05);
+            border-radius: 3px;
+        }
+
+        .store-group {
+            background: white;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 1px 0 rgba(0,0,0,0.05);
+            border-radius: 3px;
+        }
+        .store-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .cart-item {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 50px 4fr 1fr 1fr 1fr 1fr;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .product-info { display: flex; gap: 10px; align-items: center; }
+        .product-img {
+            width: 80px;
+            height: 80px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: 10px;
+        }
+        .product-name { font-size: 14px; line-height: 1.2; }
+        
+        .variation { color: #888; font-size: 13px; cursor: pointer; }
+        .unit-price { color: var(--text-black); }
+        .total-price { color: var(--shopee-orange); font-weight: bold; }
+        
+        /* Quantity Stepper */
+        .qty-control { display: flex; border: 1px solid #ddd; width: fit-content; }
+        .qty-btn { background: white; border: none; padding: 5px 10px; cursor: pointer; border-right: 1px solid #ddd; }
+        .qty-btn:last-child { border-right: none; border-left: 1px solid #ddd; }
+        .qty-input { width: 40px; text-align: center; border: none; outline: none; }
+
+        .actions { color: var(--text-black); cursor: pointer; }
+        .actions:hover { color: var(--shopee-orange); }
+
+        /* --- STICKY FOOTER --- */
+        .checkout-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+        .footer-content {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+        }
+        .footer-left { display: flex; gap: 20px; align-items: center; font-size: 14px; }
+        .footer-right { display: flex; align-items: center; gap: 20px; }
+        
+        .total-label { font-size: 16px; }
+        .final-price { font-size: 24px; color: var(--shopee-orange); font-weight: bold; }
+        
+        .btn-checkout {
             background: var(--shopee-orange);
             color: white;
-            padding: 12px;
-            cursor: move; /* Indicates it can be dragged */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: bold;
-            user-select: none;
+            border: none;
+            padding: 12px 60px;
+            font-size: 16px;
+            border-radius: 2px;
+            cursor: pointer;
         }
+        .btn-checkout:hover { opacity: 0.9; }
 
-        .cart-content { padding: 15px; max-height: 400px; overflow-y: auto; background: white; }
-        
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .qty-controls { display: flex; align-items: center; gap: 8px; }
-        .qty-btn { background: #eee; border: none; width: 22px; height: 22px; cursor: pointer; border-radius: 2px; }
-        
-        .checkout-bar { padding: 15px; border-top: 1px solid #eee; background: #fafafa; }
-        .voucher-row { display: flex; gap: 5px; margin-bottom: 10px; }
-        .cart-voucher-input { flex: 1; padding: 6px; border: 1px solid #ddd; }
-        .btn-order { background: var(--shopee-orange); color: white; border: none; width: 100%; padding: 10px; cursor: pointer; font-weight: bold; }
-        .btn-order:disabled { background: #ccc; }
-
-        .close-cart { cursor: pointer; font-size: 20px; }
+        .empty-cart { text-align: center; padding: 50px; font-size: 18px; color: #888; }
     </style>
 </head>
 <body>
 
-    <div id="draggable-cart">
-        <div class="cart-drag-header" id="cart-header">
-            <span>🛒 Shopping Cart</span>
-            <span class="close-cart" onclick="window.location.href='/shop/'">×</span>
+    <div class="navbar">
+        <div class="nav-content">
+            <a href="/" class="logo">
+                <span>🛍️</span>
+                <span>Shopee</span>
+                <span class="page-title">Shopping Cart</span>
+            </a>
+            <div class="search-bar">
+                <input type="text" placeholder="Search for products...">
+                <button class="search-btn">🔍</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="cart-header">
+            <input type="checkbox">
+            <div>Product</div>
+            <div>Unit Price</div>
+            <div style="text-align:center;">Quantity</div>
+            <div style="text-align:right;">Total Price</div>
+            <div style="text-align:right;">Actions</div>
         </div>
 
-        <div class="cart-content" id="cart-list">
-            Syncing with MySQL...
-        </div>
+        {% if cart_items %}
+            {% regroup cart_items by product.store as store_list %}
 
-        <div class="checkout-bar">
-            <div class="voucher-row">
-                <input type="text" id="cart-voucher-input" class="cart-voucher-input" placeholder="Voucher Code">
-                <button style="background:#555; color:white; border:none; padding:0 10px;" onclick="loadCart()">Apply</button>
+            {% for store in store_list %}
+            <div class="store-group">
+                <div class="store-header">
+                    <input type="checkbox">
+                    <span>🏪 {{ store.grouper.store_name|default:"SariSariStore" }}</span>
+                </div>
+
+                {% for item in store.list %}
+                <div class="cart-item">
+                    <input type="checkbox" checked>
+                    
+                    <div class="product-info">
+                        <div class="product-img">IMG</div>
+                        <div>
+                            <div class="product-name">{{ item.product.product_name }}</div>
+                        </div>
+                    </div>
+
+                    <div class="variation">Variation: Standard</div>
+                    <div class="unit-price">₱{{ item.product.price }}</div>
+
+                    <div style="display:flex; justify-content:center;">
+                        <div class="qty-control">
+                            <button class="qty-btn" onclick="updateQty('{{ item.id }}', '{{ item.quantity }}', -1)">-</button>
+                            <input type="text" class="qty-input" value="{{ item.quantity }}" readonly>
+                            <button class="qty-btn" onclick="updateQty('{{ item.id }}', '{{ item.quantity }}', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="total-price" style="text-align:right;">
+                        ₱{% widthratio item.product.price 1 item.quantity %}
+                    </div>
+
+                    <div class="actions" style="text-align:right;" onclick="removeItem('{{ item.id }}')">
+                        Delete
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span id="subtotal-display" style="font-size:12px; color:#999;"></span>
-                <span style="font-weight:bold; color:var(--shopee-orange);">Total: <span id="grand-total">₱0</span></span>
+            {% endfor %}
+
+        {% else %}
+            <div class="empty-cart">
+                <p>Your shopping cart is empty</p>
+                <a href="/" style="color:var(--shopee-orange); text-decoration:none;">Go Shopping Now</a>
             </div>
-            <button class="btn-order" id="checkout-btn" onclick="processCheckout()">CHECKOUT</button>
+        {% endif %}
+    </div>
+
+    <div class="checkout-footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <input type="checkbox" checked> Select All ({{ cart_items|length }})
+                <span>Delete</span>
+            </div>
+            <div class="footer-right">
+                <span class="total-label">Total ({{ cart_items|length }} item):</span>
+                <span class="final-price">₱{{ cart_total }}</span>
+                <button class="btn-checkout" onclick="window.location.href='/checkout/'">Check Out</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "http://127.0.0.1:8000/api/";
-        let currentTotal = 0;
+        // Simple API wrappers to update cart state
+        async function updateQty(itemId, currentQty, change) {
+            const newQty = parseInt(currentQty) + change;
+            if (newQty < 1) return;
 
-        // --- Drag Logic ---
-        const cart = document.getElementById("draggable-cart");
-        const header = document.getElementById("cart-header");
-
-        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-        header.onmousedown = dragMouseDown;
-
-        function dragMouseDown(e) {
-            e.preventDefault();
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = closeDragElement;
-            document.onmousemove = elementDrag;
-        }
-
-        function elementDrag(e) {
-            e.preventDefault();
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            cart.style.top = (cart.offsetTop - pos2) + "px";
-            cart.style.left = (cart.offsetLeft - pos1) + "px";
-        }
-
-        function closeDragElement() {
-            document.onmouseup = null;
-            document.onmousemove = null;
-        }
-
-        // --- Cart Logic (MySQL Sync) ---
-        async function loadCart() {
             try {
-                const res = await fetch(`${API_URL}cartitems/`);
-                const items = await res.json();
-                const list = document.getElementById('cart-list');
-                const voucherInput = document.getElementById('cart-voucher-input').value.trim();
-                let subtotal = 0;
-
-                if (items.length === 0) {
-                    list.innerHTML = "<p style='text-align:center; color:#999;'>Empty Cart</p>";
-                    document.getElementById('grand-total').innerText = "₱0";
-                    return;
-                }
-
-                list.innerHTML = items.map(item => {
-                    const price = parseFloat(item.product_price || 0);
-                    subtotal += price * item.quantity;
-                    return `
-                        <div class="cart-item">
-                            <div style="font-size:13px;">
-                                <b>${item.product_name}</b><br>
-                                <small style="color:#ee4d2d; cursor:pointer;" onclick="removeItem(${item.id})">Delete</small>
-                            </div>
-                            <div class="qty-controls">
-                                <button class="qty-btn" onclick="updateQty(${item.id}, ${item.quantity - 1})">-</button>
-                                <span>${item.quantity}</span>
-                                <button class="qty-btn" onclick="updateQty(${item.id}, ${item.quantity + 1})">+</button>
-                                <b style="min-width:60px; text-align:right;">₱${(price * item.quantity).toLocaleString()}</b>
-                            </div>
-                        </div>`;
-                }).join('');
-
-                let finalTotal = subtotal;
-                if (voucherInput === "SAVE50") {
-                    finalTotal = subtotal * 0.5;
-                    document.getElementById('subtotal-display').innerText = `Disc: -₱${(subtotal * 0.5).toLocaleString()}`;
-                } else {
-                    document.getElementById('subtotal-display').innerText = "";
-                }
-
-                currentTotal = finalTotal;
-                document.getElementById('grand-total').innerText = `₱${finalTotal.toLocaleString()}`;
-            } catch (err) { console.error(err); }
-        }
-
-        async function updateQty(itemId, newQty) {
-            if (newQty < 1) return removeItem(itemId);
-            await fetch(`${API_URL}cartitems/${itemId}/`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ quantity: newQty })
-            });
-            loadCart();
+                await fetch(`/api/cartitems/${itemId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ quantity: newQty })
+                });
+                location.reload(); // Refresh to show new total
+            } catch (err) {
+                console.error(err);
+            }
         }
 
         async function removeItem(itemId) {
-            await fetch(`${API_URL}cartitems/${itemId}/`, { method: 'DELETE' });
-            loadCart();
-        }
-
-        async function processCheckout() {
-            const btn = document.getElementById('checkout-btn');
-            btn.disabled = true;
-            btn.innerText = "Saving Order...";
-
+            if (!confirm('Remove this item?')) return;
+            
             try {
-                const res = await fetch(`${API_URL}cartitems/`);
-                const items = await res.json();
-                
-                // Aggregate into ONE single order
-                const orderPayload = {
-                    user: 1, 
-                    address: 1, 
-                    payment: 1,
-                    product_id: items[0].product, 
-                    total_amount: currentTotal.toString(),
-                    voucher_code: document.getElementById('cart-voucher-input').value,
-                    status: "Pending"
-                };
-
-                const orderRes = await fetch(`${API_URL}orders/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderPayload)
+                await fetch(`/api/cartitems/${itemId}/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
                 });
-
-                if (orderRes.ok) {
-                    for (let item of items) await fetch(`${API_URL}cartitems/${item.id}/`, { method: 'DELETE' });
-                    alert(`✅ Order confirmed at ₱${currentTotal.toLocaleString()}`);
-                    loadCart();
-                }
-            } catch (err) { alert("Checkout failed."); }
-            finally { btn.disabled = false; btn.innerText = "CHECKOUT"; }
+                location.reload();
+            } catch (err) {
+                console.error(err);
+            }
         }
 
-        loadCart();
+        // Helper to get CSRF token for Django requests
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
+
 </body>
 </html>
