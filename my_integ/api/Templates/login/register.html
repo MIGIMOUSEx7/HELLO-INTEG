@@ -5,103 +5,578 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register | ShopeeClone</title>
     <style>
-        :root { --shopee-orange: #ee4d2d; --bg: #f5f5f5; }
-        
+        :root { 
+            --shopee-orange: #ee4d2d; 
+            --shopee-orange-light: #ff6643;
+            --bg-gray: #f5f5f5; 
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #888888;
+            --border-color: #dbdbdb;
+        }
+
+        [data-theme="dark"] {
+            --bg-gray: #121212; 
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-light: #b0b0b0;
+            --border-color: #333333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body { 
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-            background: var(--bg); 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
-        }
-
-        .signup-card { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 4px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            width: 400px; 
-            margin: 20px;
-        }
-
-        .logo { color: var(--shopee-orange); font-size: 32px; font-weight: bold; text-align: center; margin-bottom: 10px; }
-        
-        h3 { text-align: center; margin-top: 0; font-weight: 400; color: #555; margin-bottom: 25px; }
-
-        /* Django form styling */
-        form p { 
-            margin-bottom: 15px; 
+            background: var(--bg-gray); 
             display: flex;
             flex-direction: column;
+            min-height: 100vh;
+            color: var(--text-main);
+            transition: background 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background Shapes */
+        .bg-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.08;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .shape1 {
+            width: 300px;
+            height: 300px;
+            background: var(--shopee-orange);
+            top: 10%;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .shape2 {
+            width: 200px;
+            height: 200px;
+            background: var(--shopee-orange-light);
+            top: 60%;
+            right: -50px;
+            animation-delay: 3s;
+        }
+
+        .shape3 {
+            width: 150px;
+            height: 150px;
+            background: var(--shopee-orange);
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 6s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, -50px) scale(1.1); }
+            66% { transform: translate(-30px, 30px) scale(0.9); }
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--shopee-orange) 0%, var(--shopee-orange-light) 100%);
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10%;
+            box-shadow: 0 4px 20px rgba(238, 77, 45, 0.3);
+            position: relative;
+            z-index: 10;
+        }
+
+        .header .logo { 
+            color: white; 
+            font-size: 28px; 
+            font-weight: bold; 
+            text-decoration: none;
+            animation: slideInLeft 0.8s ease;
+        }
+
+        .theme-toggle {
+            background: rgba(255,255,255,0.25);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            animation: slideInRight 0.8s ease;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.35);
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content-wrapper {
+            display: flex;
+            gap: 60px;
+            align-items: center;
+            max-width: 1100px;
+            width: 100%;
+            animation: fadeInUp 1s ease;
+        }
+
+        /* Promotional Side */
+        .promo-side {
+            flex: 1;
+            color: var(--text-main);
+            animation: slideInLeft 1.2s ease;
+        }
+
+        .promo-side h1 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--shopee-orange), var(--shopee-orange-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .promo-side p {
+            font-size: 18px;
+            color: var(--text-light);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .benefits {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            animation: fadeIn 1s ease backwards;
+        }
+
+        .benefit-item:nth-child(1) { animation-delay: 0.2s; }
+        .benefit-item:nth-child(2) { animation-delay: 0.4s; }
+        .benefit-item:nth-child(3) { animation-delay: 0.6s; }
+
+        .benefit-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 4px 15px rgba(238, 77, 45, 0.2);
+        }
+
+        .benefit-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--shopee-orange), var(--shopee-orange-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .benefit-text h3 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: var(--text-main);
+        }
+
+        .benefit-text p {
+            font-size: 13px;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        /* Signup Card */
+        .signup-card { 
+            background: var(--card-bg); 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15); 
+            width: 100%;
+            max-width: 450px;
+            transition: all 0.3s ease;
+            animation: slideInRight 1.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signup-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--shopee-orange), var(--shopee-orange-light));
+            animation: slideRight 2s infinite;
+        }
+
+        @keyframes slideRight {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .signup-card:hover {
+            box-shadow: 0 12px 40px rgba(238, 77, 45, 0.25);
+        }
+
+        h2 {
+            margin: 0 0 10px 0;
+            font-size: 26px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        form p { 
+            margin-bottom: 20px; 
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+        }
+
+        form label {
+            margin-bottom: 8px;
+            color: var(--text-main);
+            font-weight: 500;
         }
 
         form input { 
             width: 100%; 
-            padding: 12px; 
-            border: 1px solid #dbdbdb; 
-            box-sizing: border-box; 
-            border-radius: 2px;
-            font-size: 14px;
+            padding: 14px; 
+            border: 2px solid var(--border-color); 
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-main);
             outline: none;
-            transition: border-color 0.2s;
+            font-size: 14px;
+            transition: all 0.3s ease;
         }
-        
-        form input:focus { border-color: #888; }
 
-        /* Styling for validation errors */
+        form input:focus {
+            border-color: var(--shopee-orange);
+            box-shadow: 0 0 0 3px rgba(238, 77, 45, 0.1);
+            transform: translateY(-2px);
+        }
+
         .errorlist {
-            color: var(--shopee-orange);
+            color: #ff424f;
             list-style: none;
             padding: 0;
             margin: 5px 0 0 0;
             font-size: 12px;
         }
 
-        button { 
+        .helptext {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+        
+        button[type="submit"] { 
             width: 100%; 
-            padding: 12px; 
-            background: var(--shopee-orange); 
+            padding: 15px; 
+            background: linear-gradient(135deg, var(--shopee-orange), var(--shopee-orange-light));
             color: white; 
             border: none; 
             font-weight: bold; 
             cursor: pointer; 
-            margin-top: 10px; 
+            border-radius: 8px;
+            margin-top: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        button:hover { opacity: 0.9; }
+        button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button[type="submit"]:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button[type="submit"]:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(238, 77, 45, 0.4);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(-1px);
+        }
 
         .footer-links {
-            margin-top: 20px;
+            margin-top: 25px;
             text-align: center;
-            font-size: 12px;
-            color: #888;
+            font-size: 14px;
+            color: var(--text-light);
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
         }
 
         .footer-links a { 
             color: var(--shopee-orange); 
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--shopee-orange-light);
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .content-wrapper {
+                flex-direction: column;
+                gap: 40px;
+            }
+
+            .promo-side {
+                text-align: center;
+            }
+
+            .promo-side h1 {
+                font-size: 32px;
+            }
+
+            .benefit-item:hover {
+                transform: translateY(-5px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 0 5%;
+            }
+
+            .header .logo {
+                font-size: 22px;
+            }
+
+            .signup-card {
+                padding: 30px 25px;
+            }
+
+            .promo-side h1 {
+                font-size: 28px;
+            }
         }
     </style>
 </head>
-<body>
-    <div class="signup-card">
-        <div class="logo">ShopeeClone</div>
-        <h3>Sign Up</h3>
-        
-        <form method="POST" novalidate>
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">SIGN UP</button>
-        </form>
-        
-        <div class="footer-links">
-            Already have an account? <a href="{% url 'login' %}">Log In</a>
-        </div>
+<body data-theme="light">
+
+    <!-- Animated Background Shapes -->
+    <div class="bg-shapes">
+        <div class="shape shape1"></div>
+        <div class="shape shape2"></div>
+        <div class="shape shape3"></div>
     </div>
+
+    <header class="header">
+        <a href="/" class="logo">ShopeeClone</a>
+        <button class="theme-toggle" onclick="toggleTheme()">🌙 Toggle Mode</button>
+    </header>
+
+    <div class="main-content">
+        <div class="content-wrapper">
+            <!-- Promotional Side -->
+            <div class="promo-side">
+                <h1>Join Our Shopping Community!</h1>
+                <p>Create your account today and unlock exclusive benefits</p>
+                
+                <div class="benefits">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🎁</div>
+                        <div class="benefit-text">
+                            <h3>Welcome Bonus</h3>
+                            <p>Get ₱100 off on your first purchase</p>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">⚡</div>
+                        <div class="benefit-text">
+                            <h3>Lightning Deals</h3>
+                            <p>Access exclusive flash sales daily</p>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🚚</div>
+                        <div class="benefit-text">
+                            <h3>Free Shipping</h3>
+                            <p>On orders over ₱399 nationwide</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+          <div class="signup-card">
+    <h2>Create Account</h2>
+    <p class="subtitle">Start your shopping journey with us</p>
+    
+    <form method="POST" novalidate>
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <p>
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                    <span class="helptext">{{ field.help_text }}</span>
+                {% endif %}
+                {% for error in field.errors %}
+                    <span style="color: red;">{{ error }}</span>
+                {% endfor %}
+            </p>
+        {% endfor %}
+        
+        <button type="submit">Complete Registration</button>
+    </form>
+    
+    <div class="footer-links">
+        Already have an account? <a href="/login">Log In</a>
+    </div>
+</div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const toggle = document.querySelector('.theme-toggle');
+            
+            if (currentTheme === 'dark') {
+                body.setAttribute('data-theme', 'light');
+                toggle.textContent = '🌙 Toggle Mode';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                toggle.textContent = '☀️ Toggle Mode';
+            }
+        }
+
+        // Add floating animation to form inputs on interaction
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+                this.parentElement.style.transition = 'transform 0.3s ease';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+    </script>
 </body>
 </html>

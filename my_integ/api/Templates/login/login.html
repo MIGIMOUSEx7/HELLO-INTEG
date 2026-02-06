@@ -2,63 +2,588 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | ShopeeClone</title>
     <style>
-        :root { --shopee-orange: #ee4d2d; --bg: #f5f5f5; }
-        body { font-family: Arial, sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; }
-        .logo { color: var(--shopee-orange); font-size: 28px; font-weight: bold; text-align: center; margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; box-sizing: border-box; }
+        :root { 
+            --shopee-orange: #ee4d2d; 
+            --shopee-orange-light: #ff6643;
+            --bg-gray: #f5f5f5; 
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #888888;
+            --border-color: #dbdbdb;
+        }
+
+        [data-theme="dark"] {
+            --bg-gray: #121212; 
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-light: #b0b0b0;
+            --border-color: #333333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            background: var(--bg-gray); 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            color: var(--text-main);
+            transition: background 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background Shapes */
+        .bg-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.08;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .shape1 {
+            width: 300px;
+            height: 300px;
+            background: var(--shopee-orange);
+            top: 10%;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .shape2 {
+            width: 200px;
+            height: 200px;
+            background: var(--shopee-orange-light);
+            top: 60%;
+            right: -50px;
+            animation-delay: 3s;
+        }
+
+        .shape3 {
+            width: 150px;
+            height: 150px;
+            background: var(--shopee-orange);
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 6s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, -50px) scale(1.1); }
+            66% { transform: translate(-30px, 30px) scale(0.9); }
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--shopee-orange) 0%, var(--shopee-orange-light) 100%);
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10%;
+            box-shadow: 0 4px 20px rgba(238, 77, 45, 0.3);
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo { 
+            color: white; 
+            font-size: 28px; 
+            font-weight: bold; 
+            animation: slideInLeft 0.8s ease;
+        }
+
+        .theme-toggle {
+            background: rgba(255,255,255,0.25);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            animation: slideInRight 0.8s ease;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.35);
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content-wrapper {
+            display: flex;
+            gap: 60px;
+            align-items: center;
+            max-width: 1100px;
+            width: 100%;
+            animation: fadeInUp 1s ease;
+        }
+
+        /* Welcome Side */
+        .welcome-side {
+            flex: 1;
+            color: var(--text-main);
+            animation: slideInLeft 1.2s ease;
+        }
+
+        .welcome-side h1 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--shopee-orange), var(--shopee-orange-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .welcome-side p {
+            font-size: 18px;
+            color: var(--text-light);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .features {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            animation: fadeIn 1s ease backwards;
+        }
+
+        .feature-item:nth-child(1) { animation-delay: 0.2s; }
+        .feature-item:nth-child(2) { animation-delay: 0.4s; }
+        .feature-item:nth-child(3) { animation-delay: 0.6s; }
+
+        .feature-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 4px 15px rgba(238, 77, 45, 0.2);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--shopee-orange), var(--shopee-orange-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .feature-text h3 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: var(--text-main);
+        }
+
+        .feature-text p {
+            font-size: 13px;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        /* Login Box */
+        .login-box { 
+            background: var(--card-bg); 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15); 
+            width: 100%;
+            max-width: 450px;
+            transition: all 0.3s ease;
+            animation: slideInRight 1.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--shopee-orange), var(--shopee-orange-light));
+            animation: slideRight 2s infinite;
+        }
+
+        @keyframes slideRight {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .login-box:hover {
+            box-shadow: 0 12px 40px rgba(238, 77, 45, 0.25);
+        }
+
+        h2 {
+            margin: 0 0 10px 0;
+            font-size: 26px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            margin-bottom: 18px; 
+            border: 2px solid var(--border-color); 
+            border-radius: 8px;
+            box-sizing: border-box; 
+            background: var(--card-bg);
+            color: var(--text-main);
+            outline: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--shopee-orange);
+            box-shadow: 0 0 0 3px rgba(238, 77, 45, 0.1);
+            transform: translateY(-2px);
+        }
+
+        input::placeholder {
+            color: var(--text-light);
+        }
         
-        /* Main Login Button */
-        button { width: 100%; padding: 10px; background: var(--shopee-orange); color: white; border: none; font-weight: bold; cursor: pointer; }
-        button:hover { opacity: 0.9; }
-
-        .err { color: red; font-size: 12px; text-align: center; margin-top: 10px; }
-
-        /* Sign Up Section */
-        .signup-link { 
-            text-align: center; 
-            margin-top: 25px; 
-            border-top: 1px solid #eee; 
-            padding-top: 15px; 
-            font-size: 14px; 
-            color: #888; 
-        }
-        .signup-btn { 
-            display: block;
+        button[type="submit"] { 
+            width: 100%; 
+            padding: 15px; 
+            background: linear-gradient(135deg, var(--shopee-orange), var(--shopee-orange-light));
+            color: white; 
+            border: none; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 8px;
             margin-top: 10px;
-            text-align: center; 
-            color: var(--shopee-orange); 
-            text-decoration: none; 
-            font-weight: bold;
-            border: 1px solid var(--shopee-orange);
-            padding: 8px;
-            border-radius: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        .signup-btn:hover {
-            background-color: rgba(238, 77, 45, 0.05);
+
+        button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button[type="submit"]:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button[type="submit"]:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(238, 77, 45, 0.4);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(-1px);
+        }
+
+        .err { 
+            color: #ff424f; 
+            font-size: 13px; 
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 12px;
+            background: rgba(255, 66, 79, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #ff424f;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .divider {
+            margin: 25px 0;
+            display: flex;
+            align-items: center;
+            color: var(--text-light);
+            font-size: 12px;
+        }
+        .divider::before, .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+            margin: 0 10px;
+        }
+
+        .actions {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .signup-link {
+            color: var(--shopee-orange);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .signup-link:hover {
+            color: var(--shopee-orange-light);
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .content-wrapper {
+                flex-direction: column;
+                gap: 40px;
+            }
+
+            .welcome-side {
+                text-align: center;
+            }
+
+            .welcome-side h1 {
+                font-size: 32px;
+            }
+
+            .feature-item:hover {
+                transform: translateY(-5px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 0 5%;
+            }
+
+            .logo {
+                font-size: 22px;
+            }
+
+            .login-box {
+                padding: 30px 25px;
+            }
+
+            .welcome-side h1 {
+                font-size: 28px;
+            }
         }
     </style>
 </head>
-<body>
-    <div class="login-box">
+<body data-theme="light">
+
+    <!-- Animated Background Shapes -->
+    <div class="bg-shapes">
+        <div class="shape shape1"></div>
+        <div class="shape shape2"></div>
+        <div class="shape shape3"></div>
+    </div>
+
+    <header class="header">
         <div class="logo">ShopeeClone</div>
-        <form method="POST">
-            {% csrf_token %}
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
+        <button class="theme-toggle" onclick="toggleTheme()">🌙 Toggle Mode</button>
+    </header>
 
-              {% if messages %}
-            {% for message in messages %}<div class="err">{{ message }}</div>{% endfor %}
-        {% endif %}
-        
-            <button type="submit">LOG IN</button>
-        </form>
+    <div class="main-content">
+        <div class="content-wrapper">
+            <!-- Welcome Side -->
+            <div class="welcome-side">
+                <h1>Welcome Back!</h1>
+                <p>Log in to access exclusive deals and your personalized shopping experience</p>
+                
+                <div class="features">
+                    <div class="feature-item">
+                        <div class="feature-icon">🛍️</div>
+                        <div class="feature-text">
+                            <h3>Track Your Orders</h3>
+                            <p>Real-time updates on all purchases</p>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">💰</div>
+                        <div class="feature-text">
+                            <h3>Exclusive Deals</h3>
+                            <p>Members-only discounts & offers</p>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">⭐</div>
+                        <div class="feature-text">
+                            <h3>Saved Favorites</h3>
+                            <p>Access your wishlist anywhere</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-      
-            <a href="{% url 'register' %}" class="signup-btn">CREATE ACCOUNT</a>
+            <!-- Login Box -->
+            <div class="login-box">
+                <h2>Log In</h2>
+                <p class="subtitle">Enter your credentials to continue</p>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="text" name="username" placeholder="Username" required>
+                    <input type="password" name="password" placeholder="Password" required>
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="err">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <button type="submit">LOG IN</button>
+                </form>
+
+                <div class="divider">OR</div>
+
+                <div class="actions">
+                    New to ShopeeClone? 
+                    <a href="{% url 'register' %}" class="signup-link">Sign Up</a>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const toggle = document.querySelector('.theme-toggle');
+            
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.setAttribute('data-theme', 'light');
+                toggle.textContent = '🌙 Toggle Mode';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                toggle.textContent = '☀️ Toggle Mode';
+            }
+        }
+
+        // Add floating animation to inputs on interaction
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.transform = 'scale(1.02)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+    </script>
 </body>
 </html>
