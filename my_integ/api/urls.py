@@ -3,6 +3,9 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from django.urls import path
 from api import views
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 # Create a router and register our viewsets
 router = DefaultRouter()
@@ -21,6 +24,7 @@ router.register(r'carts', views.CartViewSet)
 router.register(r'cartitems', views.CartItemViewSet)
 
 
+
 # The API URLs are now determined automatically by the router
 urlpatterns = [
     path('login/', views.login_view, name='login'),
@@ -30,6 +34,9 @@ urlpatterns = [
     path('cart/', views.view_cart, name='cart'), # NEW: The path to your cart page
     path('history/', views.purchase_history, name='purchase_history'),
     path('', include(router.urls)),         # The API Root at /api/
-    path('signup/', views.signup_view, name='signup'),
-    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register')
+    
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
