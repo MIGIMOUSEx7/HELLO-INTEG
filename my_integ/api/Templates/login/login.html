@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | ShopeeClone</title>
+    <style>
+        :root { --shopee-orange: #ee4d2d; --bg: #f5f5f5; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: white; width: 400px; padding: 30px; border-radius: 4px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+        .logo { color: var(--shopee-orange); font-size: 32px; font-weight: bold; text-align: center; margin-bottom: 20px; }
+        .form-title { font-size: 20px; margin-bottom: 20px; color: #222; }
+        
+        input[type="text"], input[type="password"] {
+            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #dbdbdb; border-radius: 2px; box-sizing: border-box; outline: none;
+        }
+        .login-btn {
+            width: 100%; padding: 12px; background: var(--shopee-orange); color: white; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 2px;
+        }
+        .login-btn:hover { opacity: 0.9; }
+        .footer-links { text-align: center; margin-top: 20px; font-size: 14px; color: #888; }
+        .footer-links a { color: var(--shopee-orange); text-decoration: none; font-weight: bold; }
+        .error-msg { color: #ee4d2d; font-size: 13px; margin-bottom: 15px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="logo">ShopeeClone</div>
+    <div class="form-title">Log In</div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="error-msg">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Phone number / Username / Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit" class="login-btn">Log In</button>
+    </form>
+
+    <div class="footer-links">
+        New to Shopee? <a href="{% url 'signup' %}">Sign Up</a>
+    </div>
+</div>
+
+</body>
+</html>
