@@ -87,10 +87,11 @@ DatabaseFeatures.can_return_columns_from_insert = property(lambda self: False)
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.AllowAny', # Allows public access to Shop page
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.BasicAuthentication',
+        # FIXED: Use SessionAuth so it respects your Login page (No more popup!)
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -105,10 +106,12 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# --- STATIC FILES ---
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Fixes for older MariaDB versions
-from django.db.backends.mysql.features import DatabaseFeatures
-DatabaseFeatures.can_return_rows_from_bulk_insert = property(lambda self: False)
-DatabaseFeatures.can_return_columns_from_insert = property(lambda self: False)
+# --- MEDIA FILES (Images) ---
+# This allows product images to be displayed
+MEDIA_URL = '/media/'
+# Using pathlib syntax (/) to match your BASE_DIR definition
+MEDIA_ROOT = BASE_DIR / 'media'

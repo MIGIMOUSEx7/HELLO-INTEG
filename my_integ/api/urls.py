@@ -1,6 +1,4 @@
 from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from . import views
 
@@ -21,24 +19,6 @@ router.register(r'carts', views.CartViewSet)
 router.register(r'cartitems', views.CartItemViewSet, basename='cartitem')
 
 urlpatterns = [
-    # --- Authentication ---
-    path('login/', views.login_view, name='login'),
-    path('logout/', views.logout_view, name='logout'),
-    path('register/', views.register_view, name='register'),
-    
-    # FIXED: Point 'signup' to 'register_view' since they do the same thing
-    path('signup/', views.register_view, name='signup'), 
-
-    # --- Frontend Pages ---
-    path('', views.home, name='home'),
-    path('shop/', views.home, name='shop'),
-    path('cart/', views.view_cart, name='cart'),
-    path('history/', views.purchase_history, name='purchase_history'),
-    path('checkout/', views.checkout_view, name='checkout'),
-
-    # --- API Root ---
+    # This automatically generates URLs like /api/products/, /api/cartitems/, etc.
     path('', include(router.urls)),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -115,6 +115,9 @@
             color: #ccc;
             font-size: 10px;
         }
+        /* Ensure images fit nicely */
+        .product-img img { width: 100%; height: 100%; object-fit: cover; }
+
         .product-name { font-size: 14px; line-height: 1.2; }
         
         .variation { color: #888; font-size: 13px; cursor: pointer; }
@@ -176,9 +179,13 @@
 </head>
 <body>
 
+    <div style="display:none;">
+        {% csrf_token %}
+    </div>
+
     <div class="navbar">
         <div class="nav-content">
-            <a href="/" class="logo">
+            <a href="{% url 'home' %}" class="logo">
                 <span>🛍️</span>
                 <span>Shopee</span>
                 <span class="page-title">Shopping Cart</span>
@@ -215,7 +222,13 @@
                     <input type="checkbox" checked>
                     
                     <div class="product-info">
-                        <div class="product-img">IMG</div>
+                        <div class="product-img">
+                            {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" alt="Product">
+                            {% else %}
+                                <span>IMG</span>
+                            {% endif %}
+                        </div>
                         <div>
                             <div class="product-name">{{ item.product.product_name }}</div>
                         </div>
@@ -247,7 +260,7 @@
         {% else %}
             <div class="empty-cart">
                 <p>Your shopping cart is empty</p>
-                <a href="/" style="color:var(--shopee-orange); text-decoration:none;">Go Shopping Now</a>
+                <a href="{% url 'shop' %}" style="color:var(--shopee-orange); text-decoration:none;">Go Shopping Now</a>
             </div>
         {% endif %}
     </div>
@@ -261,13 +274,12 @@
             <div class="footer-right">
                 <span class="total-label">Total ({{ cart_items|length }} item):</span>
                 <span class="final-price">₱{{ cart_total }}</span>
-                <button class="btn-checkout" onclick="window.location.href='/checkout/'">Check Out</button>
+                <button class="btn-checkout" onclick="window.location.href='{% url 'checkout' %}'">Check Out</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Simple API wrappers to update cart state
         async function updateQty(itemId, currentQty, change) {
             const newQty = parseInt(currentQty) + change;
             if (newQty < 1) return;
@@ -281,7 +293,7 @@
                     },
                     body: JSON.stringify({ quantity: newQty })
                 });
-                location.reload(); // Refresh to show new total
+                location.reload(); 
             } catch (err) {
                 console.error(err);
             }
@@ -301,7 +313,6 @@
             }
         }
 
-        // Helper to get CSRF token for Django requests
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
