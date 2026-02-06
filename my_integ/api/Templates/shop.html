@@ -375,7 +375,8 @@
 
     <nav class="navbar">
         <div class="navbar-top">
-            <a href="/api/history/">📋 Purchase History</a>
+            <a href="{% url 'purchase_history' %}">📋 Purchase History</a>
+            
             {% if user.is_authenticated %}
                 <span>👤 {{ user.username }}</span>
                 <a href="{% url 'logout' %}">Logout</a>
@@ -390,7 +391,7 @@
                 <button class="search-btn" onclick="performSearch()">🔍</button>
             </div>
             
-            <a href="/cart/" class="cart-link">
+            <a href="{% url 'cart' %}" class="cart-link">
                 🛒
                 <span id="cart-count" class="cart-badge">0</span>
             </a>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | ShopeeClone</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f5f5f5; margin: 0; padding-bottom: 50px; }
+        .container { max-width: 1200px; margin: 20px auto; }
+        
+        /* Shopee Colors */
+        .text-orange { color: #ee4d2d; }
+        .bg-orange { background-color: #ee4d2d; }
+        .btn-orange { background-color: #ee4d2d; color: white; border: none; }
+        .btn-orange:hover { background-color: #d73211; }
+
+        /* HEADER */
+        .shopee-header { background: white; padding: 20px 0; border-bottom: 1px solid #e0e0e0; margin-bottom: 20px; box-shadow: 0 1px 1px 0 rgba(0,0,0,.05); }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 15px; }
+        .brand-text { color: #ee4d2d; font-size: 28px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+        .page-title { border-left: 1px solid #ee4d2d; padding-left: 15px; font-size: 20px; color: #ee4d2d; line-height: 28px; height: 28px; }
+
+        /* SECTIONS COMMON */
+        .card { background: white; border-radius: 3px; box-shadow: 0 1px 1px 0 rgba(0,0,0,.05); margin-bottom: 12px; position: relative; overflow: hidden; }
+        
+        /* ADDRESS SECTION */
+        .address-border {
+            height: 3px;
+            width: 100%;
+            background-image: repeating-linear-gradient(45deg, #F18D9B, #F18D9B 33px, transparent 0, transparent 41px, #6FA6D6 0, #6FA6D6 74px, transparent 0, transparent 82px);
+        }
+        .address-content { padding: 28px 30px 24px; }
+        .address-header { color: #ee4d2d; font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+        .address-details { display: flex; align-items: center; font-size: 14px; color: #222; }
+        .user-info { font-weight: 700; margin-right: 20px; }
+        .default-badge { font-size: 10px; border: 1px solid #ee4d2d; color: #ee4d2d; padding: 2px 4px; border-radius: 1px; margin-left: 15px; margin-right: 5px; }
+        .btn-change { color: #4080ff; text-decoration: none; font-weight: 500; text-transform: uppercase; margin-left: auto; cursor: pointer; }
+
+        /* PRODUCT TABLE */
+        .product-table-header { display: flex; padding: 24px 30px; color: #888; font-size: 14px; border-bottom: 1px solid #f1f1f1; }
+        .col-prod { flex: 4; }
+        .col-price { flex: 1; text-align: center; }
+        .col-qty { flex: 1; text-align: center; }
+        .col-total { flex: 1; text-align: right; }
+        
+        .store-header { padding: 20px 30px 0; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+        .store-header i { color: #00bfa5; font-size: 12px; }
+
+        .product-item { display: flex; align-items: center; padding: 20px 30px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #222; }
+        .prod-img { width: 40px; height: 40px; border: 1px solid #e1e1e1; margin-right: 15px; object-fit: cover; }
+        .prod-meta { font-size: 12px; color: #888; margin-top: 4px; }
+        
+        /* Protection & Voucher */
+        .extra-row { padding: 20px 30px; border-bottom: 1px dashed #e8e8e8; display: flex; align-items: center; font-size: 14px; }
+        .protection-label { display: flex; align-items: center; gap: 8px; color: #222; }
+        .protection-new { background: #ee4d2d; color: white; font-size: 10px; padding: 1px 4px; border-radius: 2px; font-weight: bold; }
+        .msg-container { display: flex; align-items: center; width: 40%; border-right: 1px dashed #e8e8e8; padding-right: 20px; }
+        .msg-input { flex: 1; border: 1px solid #e0e0e0; padding: 5px 10px; margin-left: 10px; font-size: 14px; }
+        .shipping-info { flex: 1; padding-left: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .ship-date { font-weight: bold; color: #222; font-size: 13px; }
+        .ship-sub { font-size: 12px; color: #888; margin-top: 2px; }
+
+        /* BOTTOM SECTION */
+        .payment-method { padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f1f1; }
+        .payment-options { display: flex; gap: 10px; }
+        .pay-btn { padding: 8px 15px; border: 1px solid #e0e0e0; cursor: pointer; color: #555; background: white; border-radius: 2px; }
+        .pay-btn.active { border-color: #ee4d2d; color: #ee4d2d; font-weight: 500; }
+
+        .summary-section { background: #fffefb; padding: 20px 30px; border-top: 1px solid #f1f1f1; text-align: right; }
+        .summary-row { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px; font-size: 14px; color: #757575; }
+        .summary-label { width: 200px; }
+        .summary-val { width: 150px; text-align: right; color: #222; }
+        .total-payment-row { margin-top: 20px; display: flex; justify-content: flex-end; align-items: center; }
+        .total-price { font-size: 28px; color: #ee4d2d; font-weight: 500; margin-left: 20px; }
+        
+        .place-order-btn {
+            background: #ee4d2d; color: white; width: 210px; height: 48px; font-size: 16px; border: none; border-radius: 2px; cursor: pointer; margin-top: 20px; font-weight: 500;
+        }
+        .place-order-btn:hover { background: #d04325; }
+    </style>
+</head>
+<body>
+
+    <div class="shopee-header">
+        <div class="header-content">
+            <div class="brand-text">
+                <i class="fas fa-shopping-bag" style="font-size: 32px;"></i> ShopeeClone
+            </div>
+            <div class="page-title">Checkout</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="address-border"></div>
+            <div class="address-content">
+                <div class="address-header">
+                    <i class="fas fa-map-marker-alt text-orange"></i> Delivery Address
+                </div>
+                <div class="address-details">
+                    {% if address %}
+                        <div class="user-info">{{ address.full_name }} (+63) {{ address.phone }}</div>
+                        <div style="flex: 1;">
+                            {{ address.street }}, {{ address.city }}, {{ address.province }}, {{ address.zip_code }}
+                            <span class="default-badge">Default</span>
+                        </div>
+                        <a href="#" class="btn-change">Change</a>
+                    {% else %}
+                        <div class="text-orange">Please set a default address in your profile.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="product-table-header">
+                <div class="col-prod">Products Ordered</div>
+                <div class="col-price">Unit Price</div>
+                <div class="col-qty">Quantity</div>
+                <div class="col-total">Item Subtotal</div>
+            </div>
+
+            {% for item in items %}
+            <div class="store-header">
+                <i class="fas fa-store"></i> 
+                {{ item.product.store.store_name|default:"Official Store" }} 
+                <span style="border-left: 1px solid #ddd; margin: 0 5px; height: 12px;"></span>
+                <span style="color: #00bfa5; cursor: pointer;">chat now</span>
+            </div>
+
+            <div class="product-item">
+                <div class="col-prod" style="display: flex; align-items: center;">
+                    {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" class="prod-img" alt="Product Image">
+                    {% else %}
+                        <div class="prod-img" style="background:#eee; display:flex; align-items:center; justify-content:center; color:#ccc;">
+                            <i class="fas fa-image"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <div>{{ item.product.name }}</div>
+                        <div class="prod-meta">Variation: Default</div>
+                    </div>
+                </div>
+                <div class="col-price">₱{{ item.product.price|floatformat:2 }}</div>
+                <div class="col-qty">{{ item.quantity }}</div>
+                <div class="col-total">₱{% widthratio item.product.price 1 item.quantity %}</div>
+            </div>
+            {% endfor %}
+
+            <div class="extra-row" style="border-bottom: 1px solid #f1f1f1;">
+                <div class="col-prod" style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" checked disabled>
+                    <div class="protection-label">
+                        Merchandise Protection <span class="protection-new">New</span>
+                    </div>
+                    <span style="color: #888; font-size: 12px;">Protect your items from total loss due to accidental damage...</span>
+                </div>
+                <div class="col-total" style="flex: 1; text-align: right;">₱{{ protection|floatformat:2 }}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="extra-row" style="justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-ticket-alt text-orange"></i> Shop Voucher
+                </div>
+                <a href="#" class="btn-change">Select Voucher</a>
+            </div>
+            
+            <div class="extra-row" style="border: none;">
+                <div class="msg-container">
+                    <label>Message:</label>
+                    <input type="text" class="msg-input" placeholder="Please leave a message...">
+                </div>
+                <div class="shipping-info">
+                    <div style="color: #00bfa5; font-size: 12px; font-weight: bold;">Shipping Option:</div>
+                    <div style="text-align: right;">
+                        <div class="ship-date">Get by 12 - 19 Feb</div>
+                        <div class="ship-sub">Standard Local</div>
+                    </div>
+                    <div class="btn-change" style="margin-left: 20px; color: #ee4d2d;">Change</div>
+                    <div style="margin-left: 20px; color: #222;">₱{{ shipping_fee|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="extra-row" style="justify-content: space-between;">
+                <div><i class="fas fa-coins" style="color: #ffc107;"></i> Shopee Coins</div>
+                <div style="color: #ccc;">[-₱0] <input type="checkbox" disabled></div>
+            </div>
+
+            <div class="payment-method">
+                <div style="font-weight: 500;">Payment Method</div>
+                <div class="payment-options">
+                    <button class="pay-btn active">Cash on Delivery</button>
+                    <button class="pay-btn">Payment Center / e-Wallet</button>
+                    <button class="pay-btn">Linked Bank Account</button>
+                </div>
+                <a href="#" class="btn-change">CHANGE</a>
+            </div>
+
+            <div class="summary-section">
+                <div class="summary-row">
+                    <div class="summary-label">Merchandise Subtotal:</div>
+                    <div class="summary-val">₱{{ subtotal|floatformat:2 }}</div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-label">Shipping Total:</div>
+                    <div class="summary-val">₱{{ shipping_fee|floatformat:2 }}</div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-label">Merchandise Protection:</div>
+                    <div class="summary-val">₱{{ protection|floatformat:2 }}</div>
+                </div>
+                <div class="total-payment-row">
+                    <div style="font-size: 14px; color: #222; margin-right: 10px;">Total Payment:</div>
+                    <div class="total-price">₱{{ total_payment|floatformat:2 }}</div>
+                </div>
+
+                <button class="place-order-btn" onclick="placeOrder()">Place Order</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function placeOrder() {
+            if(!confirm("Are you sure you want to place this order?")) return;
+
+            const btn = document.querySelector('.place-order-btn');
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            // Detect if this is "Buy Now" (from URL params) or "Cart Checkout"
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('product_id');
+            const quantity = urlParams.get('quantity');
+
+            // Build payload
+            const payload = {
+                payment_method: "COD",
+                note: document.querySelector('.msg-input').value || ""
+            };
+
+            // If we have URL params, add them to payload so backend knows it's a single item order
+            if (productId) {
+                payload.product_id = productId;
+                payload.quantity = quantity;
+            }
+
+            try {
+                const response = await fetch('/api/orders/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert("✅ Order Placed Successfully!");
+                    // Redirect to purchase history
+                    window.location.href = "{% url 'purchase_history' %}";
+                } else {
+                    const errorData = await response.json();
+                    console.error("Order Failed:", errorData);
+                    alert("❌ Failed to place order: " + (errorData.error || JSON.stringify(errorData)));
+                    btn.innerText = "Place Order";
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Network Error:", error);
+                alert("❌ A network error occurred.");
+                btn.innerText = "Place Order";
+                btn.disabled = false;
+            }
+        }
+    </script>
+    
+    {% csrf_token %}
+</body>
+</html>

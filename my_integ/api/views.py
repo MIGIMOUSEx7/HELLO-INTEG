@@ -5,10 +5,12 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import transaction # <--- CRITICAL: Needed for bulk order creation
 from django.db.models import F, Sum
 
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .forms import RegisterForm
@@ -67,7 +69,6 @@ def home(request):
 def view_cart(request):
     """
     Fetches cart items for the logged-in user.
-    CRITICAL FIX: 2-step lookup to prevent 'ValueError' crashes.
     """
     # 1. Get the actual Cart object first
     user_cart, _ = Cart.objects.get_or_create(user=request.user)
@@ -131,56 +132,95 @@ def purchase_history(request):
 
 # --- 3. API VIEWSETS ---
 
-@method_decorator(csrf_exempt, name='dispatch')
 class OrderViewSet(viewsets.ModelViewSet):
+    """
+    Handles creating orders. 
+    Now supports both Single Item (Buy Now) and Bulk Cart Checkout.
+    """
     queryset = Order.objects.all()
     serializer_class = OrderSerializer 
+    permission_classes = [IsAuthenticated] # Ensure only logged-in users can order
 
     def create(self, request, *args, **kwargs):
-        product_id = request.data.get('product') or request.data.get('product_id')
-        voucher_code = request.data.get('voucher_code')
-        total_amount = float(request.data.get('total_amount', 0))
+        user = request.user
+        data = request.data
         
-        try:
-            product = Product.objects.get(id=product_id)
-            if product.stock_quantity <= 0:
-                return Response(
-                    {"error": f"Sorry, {product.product_name} is sold out!"}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        except (Product.DoesNotExist, ValueError):
-            return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
-        
-        if voucher_code:
+        # 1. Determine items to order
+        # If 'product_id' is provided in JSON, it's a "Buy Now" single item order.
+        # Otherwise, we fetch everything from the user's Cart.
+        product_id = data.get('product') or data.get('product_id')
+        items_to_process = []
+
+        if product_id:
+            # --- Single Item (Buy Now) ---
             try:
-                voucher = Voucher.objects.get(
-                    code=voucher_code, 
-                    start_date__lte=timezone.now(), 
-                    end_date__gte=timezone.now()
-                )
-                discount_val = float(voucher.discount_value)
-                if voucher.discount_type == 'Fixed':
-                    total_amount -= discount_val
-                else:
-                    total_amount = total_amount * (1 - (discount_val / 100))
-                
-                total_amount = max(0, round(total_amount, 2))
-            except Voucher.DoesNotExist:
-                return Response({"error": "Invalid voucher."}, status=status.HTTP_400_BAD_REQUEST)
+                prod = Product.objects.get(id=product_id)
+                qty = int(data.get('quantity', 1))
+                items_to_process.append({'product': prod, 'quantity': qty})
+            except Product.DoesNotExist:
+                return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            # --- Cart Checkout ---
+            user_cart, _ = Cart.objects.get_or_create(user=user)
+            cart_items = CartItem.objects.filter(cart=user_cart)
+            
+            if not cart_items.exists():
+                return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            for item in cart_items:
+                items_to_process.append({'product': item.product, 'quantity': item.quantity})
 
-        mutable_data = request.data.copy()
-        mutable_data['product'] = product_id
-        mutable_data['user'] = request.user.id 
+        # 2. Process the Order(s) safely using a transaction
+        # This ensures all orders are created at once, or none at all if an error occurs.
+        created_orders = []
+        try:
+            with transaction.atomic():
+                for item in items_to_process:
+                    product = item['product']
+                    quantity = item['quantity']
+                    
+                    # Stock Check
+                    if product.stock_quantity < quantity:
+                        raise ValueError(f"Not enough stock for {product.product_name}")
 
-        serializer = self.get_serializer(data=mutable_data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        order = serializer.save(total_amount=total_amount)
-        product.stock_quantity -= 1
-        product.save()
-        
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                    # Calculate Price
+                    total_amount = product.price * quantity
+                    
+                    # Create the Order Record
+                    order = Order.objects.create(
+                        user=user,
+                        product=product,
+                        quantity=quantity,
+                        total_amount=total_amount,
+                        status='Pending', # Default status
+                        payment_method=data.get('payment_method', 'COD'),
+                        shipping_address=data.get('shipping_address', 'Default Address')
+                    )
+                    
+                    # Update Stock
+                    product.stock_quantity -= quantity
+                    product.save()
+                    
+                    created_orders.append(order)
+
+                # 3. If this was a Cart checkout, clear the cart now that orders are placed
+                if not product_id:
+                    CartItem.objects.filter(cart__user=user).delete()
+
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # Log the actual error for debugging
+            print(f"Order Processing Error: {e}")
+            return Response({"error": "An error occurred processing the order."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Return success. If multiple orders, we just return the data of the first one to satisfy the serializer.
+        if created_orders:
+            serializer = self.get_serializer(created_orders[0])
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+             return Response({"error": "No orders created"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -191,9 +231,10 @@ class ProductViewSet(viewsets.ModelViewSet):
 @method_decorator(csrf_exempt, name='dispatch')
 class CartItemViewSet(viewsets.ModelViewSet):
     serializer_class = CartItemSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Safe lookup for API as well
+        # Safe lookup for API: ensures user is logged in
         if not self.request.user.is_authenticated:
             return CartItem.objects.none()
         user_cart, _ = Cart.objects.get_or_create(user=self.request.user)
