@@ -1,75 +1,145 @@
 import os
 import django
-from decimal import Decimal
-from datetime import timedelta # Correct import for time math
-from django.utils import timezone
+import random
 
-# Setup Django environment
+# 1. Setup Django Environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'my_integ.settings')
 django.setup()
 
-from api.models import User, Category, Store, Product, Address, Payment, Voucher, Shipment, Order
+from django.contrib.auth.models import User
+from api.models import Category, Store, Product, Cart, Address, Order, OrderItem, Payment, CartItem
 
 def populate():
-    print("🚀 Starting Extended Population...")
+    print("🔄 Cleaning old data...")
+    
+    # CRITICAL FIX: Delete child records first to avoid ProtectedError
+    print("   - Deleting Order Items...")
+    OrderItem.objects.all().delete()
+    
+    print("   - Deleting Orders...")
+    Order.objects.all().delete()
 
-    # 1. Create User (van plaza)
-    user, _ = User.objects.get_or_create(
-        id=1,
-        defaults={'first_name': 'van', 'last_name': 'plaza', 'email': 'ivan@gmail.com'}
+    print("   - Deleting Cart Items...")
+    CartItem.objects.all().delete()
+
+    print("   - Deleting Carts...")
+    Cart.objects.all().delete()
+
+    print("   - Deleting Products...")
+    Product.objects.all().delete()
+
+    print("   - Deleting Stores...")
+    Store.objects.all().delete()
+
+    print("   - Deleting Addresses...")
+    Address.objects.all().delete()
+
+    print("   - Deleting Payments...")
+    Payment.objects.all().delete()
+
+    print("   - Deleting Categories...")
+    Category.objects.all().delete()
+    
+    print("   - Deleting Users (except superusers)...")
+    User.objects.exclude(is_superuser=True).delete()
+    
+    print("---------------------------------------")
+    print("👤 Creating Users...")
+    # Create standard users from your screenshots
+    user_first = User.objects.create_user(username='firstuser', email='first@email.com', password='password123')
+    user_shop = User.objects.create_user(username='shop_owner', email='shop@email.com', password='password123')
+    user_van = User.objects.create_user(username='vanelectro', email='van@email.com', password='password123')
+    user_mercy = User.objects.create_user(username='mercy', email='mercy@email.com', password='password123')
+
+    # Create Carts for them
+    Cart.objects.get_or_create(user=user_first)
+
+    # Create a default address for the buyer
+    Address.objects.create(
+        user=user_first,
+        full_name="First User",
+        phone="09123456789",
+        street="123 Sampaguita St",
+        city="Manila",
+        province="Metro Manila",
+        zip_code="1000",
+        country="Philippines",
+        is_default=True
     )
 
-    # 2. Create Voucher
-    voucher, _ = Voucher.objects.get_or_create(
-        code="SAVE50",
-        defaults={
-            'discount_type': 'Fixed',
-            'discount_value': Decimal('50.00'),
-            'min_spend': Decimal('100.00'),
-            'start_date': timezone.now(),
-            'end_date': timezone.now() + timedelta(days=30) # Fixed line
-        }
+    print("📂 Creating Categories...")
+    cat_necessity = Category.objects.create(category_name="Necessity")
+    cat_meds = Category.objects.create(category_name="Medication")
+    cat_electro = Category.objects.create(category_name="Electronics")
+
+    print("🏪 Creating Stores...")
+    store_sari = Store.objects.create(user=user_shop, store_name="Shop SariSariStore", rating=4.5)
+    store_mercy = Store.objects.create(user=user_mercy, store_name="MerciyDragstoere", rating=4.8)
+    store_van = Store.objects.create(user=user_van, store_name="VAN ELECTRO", rating=5.0)
+
+    print("📦 Creating Products...")
+    
+    # Products for Shop SariSariStore (Necessity)
+    Product.objects.create(
+        store=store_sari,
+        category=cat_necessity,
+        name="totpaste",
+        description="Daily toothpaste",
+        price=25.00,
+        stock_quantity=20,
+        status="Available"
+    )
+    Product.objects.create(
+        store=store_sari,
+        category=cat_necessity,
+        name="Napkin",
+        description="Hygiene product",
+        price=20.00,
+        stock_quantity=50,
+        status="Available"
     )
 
-    # 3. Create Address
-    addr, _ = Address.objects.get_or_create(id=1, user=user, defaults={'city': 'cdc', 'full_name': 'van'})
-
-    # 4. Create Payment
-    pay, _ = Payment.objects.get_or_create(
-        id=1, 
-        user=user, 
-        defaults={
-            'method': 'Cash g', 
-            'amount': Decimal('1450.00'), 
-            'voucher_id': voucher.id
-        }
+    # Products for MerciyDragstoere (Medication)
+    Product.objects.create(
+        store=store_mercy,
+        category=cat_meds,
+        name="bioflu",
+        description="For flu relief",
+        price=15.00,
+        stock_quantity=97,
+        status="Available"
+    )
+    Product.objects.create(
+        store=store_mercy,
+        category=cat_meds,
+        name="Paracetamol",
+        description="For headache",
+        price=15.00,
+        stock_quantity=98,
+        status="Available"
     )
 
-    # 5. Create Product and Category
-    cat, _ = Category.objects.get_or_create(category_name="Electronics")
-    prod, _ = Product.objects.get_or_create(name="Shabs", defaults={'category': cat, 'status': 'Available'})
-
-    # 6. Create initial Order
-    order, _ = Order.objects.get_or_create(
-        id=1,
-        user=user,
-        address=addr,
-        payment=pay,
-        defaults={'status': 'Processing', 'total_amount': Decimal('1450.00')}
+    # Products for VAN ELECTRO (Electronics)
+    Product.objects.create(
+        store=store_van,
+        category=cat_electro,
+        name="PSU",
+        description="Power Supply Unit 600W",
+        price=3500.00,
+        stock_quantity=15,
+        status="Available"
+    )
+    Product.objects.create(
+        store=store_van,
+        category=cat_electro,
+        name="MotherBoard",
+        description="B450M Gaming Motherboard",
+        price=5500.00,
+        stock_quantity=15,
+        status="Available"
     )
 
-    # 7. Create Shipment
-    Shipment.objects.get_or_create(
-        order=order,
-        defaults={
-            'courier': 'J&T Express',
-            'tracking_number': 'IVAN123456789',
-            'status': 'In Transit',
-            'shipped_at': timezone.now()
-        }
-    )
-
-    print("✅ Full ERD Lifecycle Populated!")
+    print("✅ Database Populated Successfully!")
 
 if __name__ == '__main__':
     populate()

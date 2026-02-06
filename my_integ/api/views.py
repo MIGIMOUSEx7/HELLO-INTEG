@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db import transaction # <--- CRITICAL: Needed for bulk order creation
+from django.db import transaction # Needed for atomic database updates
 from django.db.models import F, Sum
 
 from rest_framework import viewsets, status
@@ -14,8 +14,9 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .forms import RegisterForm
+# CRITICAL: Added OrderItem to imports
 from .models import (
-    Product, Order, User, Category, Store, 
+    Product, Order, OrderItem, User, Category, Store, 
     Voucher, Shipment, Address, Payment,
     Cart, CartItem 
 )
@@ -33,7 +34,6 @@ def register_view(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             new_user = form.save()
-            # SAFE CART CREATION: Uses get_or_create to avoid duplicates/errors
             Cart.objects.get_or_create(user=new_user)
             username = form.cleaned_data.get('username')
             messages.success(request, f'Account created for {username}! You can now log in.')
@@ -67,16 +67,8 @@ def home(request):
 
 @login_required(login_url='login')
 def view_cart(request):
-    """
-    Fetches cart items for the logged-in user.
-    """
-    # 1. Get the actual Cart object first
     user_cart, _ = Cart.objects.get_or_create(user=request.user)
-
-    # 2. Filter items using the Cart object
     cart_items = CartItem.objects.filter(cart=user_cart).order_by('product__store__store_name')
-    
-    # Calculate total safely
     cart_total = sum(item.product.price * item.quantity for item in cart_items)
     
     context = {
@@ -100,7 +92,7 @@ def checkout_view(request):
         }]
         merchandise_subtotal = product.price * quantity
     else:
-        # Cart Checkout Flow - Safe Lookup
+        # Cart Checkout Flow
         user_cart, _ = Cart.objects.get_or_create(user=request.user)
         cart_items = CartItem.objects.filter(cart=user_cart)
         items = cart_items
@@ -124,8 +116,7 @@ def checkout_view(request):
 
 @login_required(login_url='login')
 def purchase_history(request):
-    # FIX: Use 'user_id' to strictly match database column
-    orders = Order.objects.filter(user_id=request.user.id).order_by('-order_date')
+    orders = Order.objects.filter(user=request.user).order_by('-order_date')
     context = {'orders': orders}
     return render(request, 'orders/PurchaseHistory.html', context)
 
@@ -133,34 +124,30 @@ def purchase_history(request):
 # --- 3. API VIEWSETS ---
 
 class OrderViewSet(viewsets.ModelViewSet):
-    """
-    Handles creating orders. 
-    Now supports both Single Item (Buy Now) and Bulk Cart Checkout.
-    """
-    queryset = Order.objects.all()
+    queryset = Order.objects.all().order_by('-order_date')
     serializer_class = OrderSerializer 
-    permission_classes = [IsAuthenticated] # Ensure only logged-in users can order
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         user = request.user
         data = request.data
         
-        # 1. Determine items to order
-        # If 'product_id' is provided in JSON, it's a "Buy Now" single item order.
-        # Otherwise, we fetch everything from the user's Cart.
+        # 1. Gather Items & Calculate Total
         product_id = data.get('product') or data.get('product_id')
         items_to_process = []
+        calculated_total = 0
 
         if product_id:
-            # --- Single Item (Buy Now) ---
+            # Case A: Buy Now (Single Item)
             try:
                 prod = Product.objects.get(id=product_id)
                 qty = int(data.get('quantity', 1))
                 items_to_process.append({'product': prod, 'quantity': qty})
+                calculated_total += prod.price * qty
             except Product.DoesNotExist:
                 return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
         else:
-            # --- Cart Checkout ---
+            # Case B: Cart Checkout (Multiple Items)
             user_cart, _ = Cart.objects.get_or_create(user=user)
             cart_items = CartItem.objects.filter(cart=user_cart)
             
@@ -169,57 +156,52 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             for item in cart_items:
                 items_to_process.append({'product': item.product, 'quantity': item.quantity})
+                calculated_total += item.product.price * item.quantity
 
-        # 2. Process the Order(s) safely using a transaction
-        # This ensures all orders are created at once, or none at all if an error occurs.
-        created_orders = []
+        # 2. Atomic Transaction: Create Order -> Create Items -> Update Stock
         try:
             with transaction.atomic():
+                # A. Create the Parent Order
+                # We do NOT pass 'product' or 'quantity' here anymore.
+                order = Order.objects.create(
+                    user=user,
+                    total_amount=calculated_total, 
+                    status='Pending',
+                    payment_method=data.get('payment_method', 'COD'),
+                    shipping_address=data.get('shipping_address', 'Default Address')
+                )
+                
+                # B. Create the Children (OrderItems)
                 for item in items_to_process:
                     product = item['product']
                     quantity = item['quantity']
                     
-                    # Stock Check
                     if product.stock_quantity < quantity:
-                        raise ValueError(f"Not enough stock for {product.product_name}")
+                        raise ValueError(f"Not enough stock for {product.name}")
 
-                    # Calculate Price
-                    total_amount = product.price * quantity
-                    
-                    # Create the Order Record
-                    order = Order.objects.create(
-                        user=user,
+                    OrderItem.objects.create(
+                        order=order,
                         product=product,
                         quantity=quantity,
-                        total_amount=total_amount,
-                        status='Pending', # Default status
-                        payment_method=data.get('payment_method', 'COD'),
-                        shipping_address=data.get('shipping_address', 'Default Address')
+                        price=product.price
                     )
                     
-                    # Update Stock
+                    # Deduct Stock
                     product.stock_quantity -= quantity
                     product.save()
-                    
-                    created_orders.append(order)
 
-                # 3. If this was a Cart checkout, clear the cart now that orders are placed
+                # C. Clear Cart only if it was a cart checkout
                 if not product_id:
                     CartItem.objects.filter(cart__user=user).delete()
 
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # Log the actual error for debugging
-            print(f"Order Processing Error: {e}")
+            print(f"Order Error: {e}") 
             return Response({"error": "An error occurred processing the order."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Return success. If multiple orders, we just return the data of the first one to satisfy the serializer.
-        if created_orders:
-            serializer = self.get_serializer(created_orders[0])
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-             return Response({"error": "No orders created"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -234,7 +216,6 @@ class CartItemViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Safe lookup for API: ensures user is logged in
         if not self.request.user.is_authenticated:
             return CartItem.objects.none()
         user_cart, _ = Cart.objects.get_or_create(user=self.request.user)

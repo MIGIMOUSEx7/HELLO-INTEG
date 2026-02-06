@@ -1,8 +1,25 @@
 from rest_framework import serializers
 from .models import (
-    Cart, CartItem, Product, Order, User, Category, Store, 
+    Cart, CartItem, Product, Order, OrderItem, User, Category, Store, 
     Voucher, Shipment, Address, Payment
 )
+
+# --- Basic Serializers ---
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'
+
+class StoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Store
+        fields = '__all__'
 
 class VoucherSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,61 +41,60 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = Payment
         fields = '__all__'
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
-
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = '__all__'
-
-class StoreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Store
-        fields = '__all__'
+# --- Nested Serializers ---
 
 class ProductSerializer(serializers.ModelSerializer):
-    # Explicitly including stock_quantity for the "Sold Out" logic
+    store = StoreSerializer(read_only=True)
+    
     class Meta:
         model = Product
         fields = '__all__'
 
+# --- ORDER SYSTEM ---
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product', 'quantity', 'price']
+
 class OrderSerializer(serializers.ModelSerializer):
-    # Pulling User details for the "van plaza" display
-    user_full_name = serializers.ReadOnlyField(source='user.first_name')
-    user_last_name = serializers.ReadOnlyField(source='user.last_name')
-    shipment_status = serializers.SerializerMethodField()
+    items = OrderItemSerializer(many=True, read_only=True)
+    formatted_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
-            'id', 'user', 'user_full_name', 'user_last_name', 
-            'address', 'payment', 'status', 'total_amount', 
-            'shipment_status'
+            'id', 'user', 'items', 'total_amount', 'status', 
+            'order_date', 'formatted_date', 'payment_method', 'shipping_address',
+            'shipment', 'address', 'payment'
         ]
 
-    def get_shipment_status(self, obj):
-        # Checks the api_shipment table for linked orders
-        shipment = Shipment.objects.filter(status=obj.status).first() 
-        return shipment.status if shipment else "Pending Approval"
+    def get_formatted_date(self, obj):
+        return obj.order_date.strftime("%b %d, %Y")
 
-# --- New Cart Serializers ---
+# --- CART SYSTEM (FIXED) ---
 
 class CartItemSerializer(serializers.ModelSerializer):
-    # Helpful for displaying product names in the cart view
-    product_name = serializers.ReadOnlyField(source='product.name')
-    product_price = serializers.ReadOnlyField(source='product.price')
+    # 1. WRITE: Expects an ID (e.g., "product": 5) from the frontend
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
 
     class Meta:
         model = CartItem
-        fields = ['id', 'cart', 'product', 'product_name', 'product_price', 'quantity']
+        fields = ['id', 'product', 'quantity']
+
+    # 2. READ: Swaps the ID for the full Product Object (Image, Name, Price)
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Verify product exists before serializing to prevent crashes
+        if instance.product:
+            representation['product'] = ProductSerializer(instance.product).data
+        return representation
 
 class CartSerializer(serializers.ModelSerializer):
-    # This allows you to see all items inside a cart in one API call
-    items = CartItemSerializer(many=True, read_only=True, source='cartitem_set')
+    items = CartItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = Cart
-        fields = ['id', 'store', 'created_at', 'items']
+        fields = ['id', 'user', 'created_at', 'items']

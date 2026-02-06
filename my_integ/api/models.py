@@ -1,12 +1,10 @@
 from django.db import models
-from django.contrib.auth.models import User  # <--- IMPORT REAL DJANGO USER
+from django.contrib.auth.models import User
 
 # --- User & Location ---
-# (Custom User class DELETED to prevent conflicts)
-
 class Address(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE) # Links to real Auth User
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=100)
     street = models.CharField(max_length=100)
@@ -33,7 +31,7 @@ class Category(models.Model):
 
 class Store(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE) # Links to real Auth User
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     store_name = models.CharField(max_length=100)
     store_description = models.TextField()
     rating = models.FloatField(default=0.0)
@@ -44,7 +42,6 @@ class Store(models.Model):
 
 class Product(models.Model):
     id = models.BigAutoField(primary_key=True)
-    # ADDED 'store' field. Essential for Cart grouping logic.
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
@@ -85,7 +82,7 @@ class Shipment(models.Model):
 
 class Payment(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE) # Links to real Auth User
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     method = models.CharField(max_length=100)
     voucher = models.ForeignKey(Voucher, on_delete=models.SET_NULL, null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -95,31 +92,42 @@ class Payment(models.Model):
     def __str__(self):
         return f"{self.method}: {self.amount}"
 
+# --- NEW ORDER STRUCTURE ---
+
 class Order(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE) 
     address = models.ForeignKey(Address, on_delete=models.PROTECT, null=True, blank=True)
     payment = models.ForeignKey(Payment, on_delete=models.PROTECT, null=True, blank=True)
     shipment = models.ForeignKey(Shipment, on_delete=models.SET_NULL, null=True, blank=True)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
-    
-    # --- ADDED FIELDS (Fixes Checkout Error) ---
-    quantity = models.PositiveIntegerField(default=1)
+
+    # Note: 'product' and 'quantity' are removed from here.
+    # They are now in the OrderItem class below.
+
     payment_method = models.CharField(max_length=50, default="COD")
     shipping_address = models.TextField(default="Default Address")
-    # -------------------------------------------
-
+    
     order_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=100, default="Pending")
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return f"Order #{self.id} - {self.user.first_name}"
+        return f"Order #{self.id} by {self.user.username} (Total: {self.total_amount})"
+
+# CRITICAL FIX: This class handles the items inside the order
+class OrderItem(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    price = models.DecimalField(max_digits=10, decimal_places=2) 
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name}"
 
 # --- Shopping Cart ---
 class Cart(models.Model):
     id = models.BigAutoField(primary_key=True)
-    # CRITICAL FIX: Links to User, not Store. 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
