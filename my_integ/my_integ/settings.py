@@ -1,6 +1,7 @@
 from pathlib import Path
 import sys
 import pymysql
+import os
 
 # --- DATABASE DRIVER INITIALIZATION ---
 # This allows Django to use PyMySQL as the MySQL driver
@@ -114,4 +115,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # This allows product images to be displayed
 MEDIA_URL = '/media/'
 # Using pathlib syntax (/) to match your BASE_DIR definition
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

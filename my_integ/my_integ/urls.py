@@ -8,7 +8,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # --- API Routes (JSON Data) ---
-    # This connects to api/urls.py
+    # This connects the ViewSets (Cart, Order, Product APIs)
     path('api/', include('api.urls')),
 
     # --- Frontend Pages (HTML Views) ---
@@ -17,7 +17,7 @@ urlpatterns = [
     path('cart/', views.view_cart, name='cart'),
     path('history/', views.purchase_history, name='purchase_history'),
     
-    # The Checkout Page (Fixes 404 error)
+    # The Checkout Page
     path('checkout/', views.checkout_view, name='checkout'), 
 
     # --- Authentication ---
@@ -28,6 +28,6 @@ urlpatterns = [
 ]
 
 # --- Serve Media Files (Images) in Development ---
-# This is CRITICAL for seeing product images
+# This is CRITICAL for seeing product images on your Mac
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
