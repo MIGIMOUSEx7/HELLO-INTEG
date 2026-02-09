@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase History | Shopee Clone</title>
     <style>
+        /* --- YOUR EXACT CSS DESIGN --- */
         :root {
             --primary: #ee4d2d;
             --primary-dark: #d73211;
@@ -58,32 +59,9 @@
             animation: float 25s infinite ease-in-out;
         }
 
-        .shape1 {
-            width: 350px;
-            height: 350px;
-            background: var(--primary);
-            top: 10%;
-            left: -100px;
-            animation-delay: 0s;
-        }
-
-        .shape2 {
-            width: 280px;
-            height: 280px;
-            background: var(--primary-light);
-            top: 50%;
-            right: -80px;
-            animation-delay: 5s;
-        }
-
-        .shape3 {
-            width: 200px;
-            height: 200px;
-            background: var(--primary);
-            bottom: 10%;
-            left: 25%;
-            animation-delay: 10s;
-        }
+        .shape1 { width: 350px; height: 350px; background: var(--primary); top: 10%; left: -100px; animation-delay: 0s; }
+        .shape2 { width: 280px; height: 280px; background: var(--primary-light); top: 50%; right: -80px; animation-delay: 5s; }
+        .shape3 { width: 200px; height: 200px; background: var(--primary); bottom: 10%; left: 25%; animation-delay: 10s; }
 
         @keyframes float {
             0%, 100% { transform: translate(0, 0) rotate(0deg); }
@@ -118,601 +96,136 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        .navbar-top a, .navbar-top span {
-            color: white;
-            text-decoration: none;
-            opacity: 0.9;
-            transition: all 0.3s;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
+        .navbar-top a, .navbar-top span { color: white; text-decoration: none; opacity: 0.9; transition: all 0.3s; padding: 4px 8px; border-radius: 4px; }
+        .navbar-top a:hover { opacity: 1; background: rgba(255,255,255,0.1); }
 
-        .navbar-top a:hover { 
-            opacity: 1; 
-            background: rgba(255,255,255,0.1);
-        }
+        .navbar-main { padding: 16px 5%; display: flex; justify-content: space-between; align-items: center; }
 
-        .navbar-main {
-            padding: 16px 5%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 28px;
-            font-weight: 800;
-            cursor: pointer;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: transform 0.3s;
-            animation: fadeInLeft 0.8s ease;
-        }
-
+        .logo { font-size: 28px; font-weight: 800; cursor: pointer; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; transition: transform 0.3s; animation: fadeInLeft 0.8s ease; }
         .logo:hover { transform: scale(1.05); }
+        .logo::before { content: '🛍️'; font-size: 32px; animation: bounce 2s infinite; }
 
-        .logo::before { 
-            content: '🛍️'; 
-            font-size: 32px;
-            animation: bounce 2s infinite;
-        }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
 
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
+        .search-bar { flex: 1; max-width: 600px; margin: 0 40px; position: relative; animation: fadeInUp 0.8s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-        @keyframes fadeInLeft {
-            from { opacity: 0; transform: translateX(-30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
+        .search-input { width: 100%; padding: 14px 60px 14px 20px; border: none; border-radius: 25px; font-size: 14px; outline: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s; }
+        .search-input:focus { box-shadow: 0 6px 20px rgba(238, 77, 45, 0.3); transform: translateY(-2px); }
 
-        .search-bar {
-            flex: 1;
-            max-width: 600px;
-            margin: 0 40px;
-            position: relative;
-            animation: fadeInUp 0.8s ease;
-        }
+        .search-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); height: calc(100% - 8px); padding: 0 20px; background: var(--primary); border: none; color: white; cursor: pointer; border-radius: 20px; transition: all 0.3s; }
+        .search-btn:hover { background: var(--primary-dark); transform: translateY(-50%) scale(1.05); }
 
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 14px 60px 14px 20px;
-            border: none;
-            border-radius: 25px;
-            font-size: 14px;
-            outline: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s;
-        }
-
-        .search-input:focus {
-            box-shadow: 0 6px 20px rgba(238, 77, 45, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .search-btn {
-            position: absolute;
-            right: 4px;
-            top: 50%;
-            transform: translateY(-50%);
-            height: calc(100% - 8px);
-            padding: 0 20px;
-            background: var(--primary);
-            border: none;
-            color: white;
-            cursor: pointer;
-            border-radius: 20px;
-            transition: all 0.3s;
-        }
-
-        .search-btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-50%) scale(1.05);
-        }
-
-        .cart-link {
-            position: relative;
-            color: white;
-            text-decoration: none;
-            font-size: 28px;
-            padding: 10px 16px;
-            border-radius: 12px;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255,255,255,0.1);
-            animation: fadeInRight 0.8s ease;
-        }
-
-        @keyframes fadeInRight {
-            from { opacity: 0; transform: translateX(30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .cart-link:hover { 
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-3px);
-        }
-
-        .cart-badge {
-            position: absolute;
-            top: 4px;
-            right: 6px;
-            background: var(--warning);
-            color: white;
-            border-radius: 12px;
-            padding: 3px 7px;
-            font-size: 11px;
-            font-weight: bold;
-            min-width: 20px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
+        .cart-link { position: relative; color: white; text-decoration: none; font-size: 28px; padding: 10px 16px; border-radius: 12px; transition: all 0.3s; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); animation: fadeInRight 0.8s ease; }
+        @keyframes fadeInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        .cart-link:hover { background: rgba(255,255,255,0.2); transform: translateY(-3px); }
 
         /* Tabs */
-        .nav-tabs {
-            background: white;
-            display: flex;
-            justify-content: center;
-            border-bottom: 2px solid rgba(238, 77, 45, 0.1);
-            box-shadow: var(--shadow-sm);
-            position: relative;
-            z-index: 10;
-            animation: fadeIn 0.8s ease;
-        }
+        .nav-tabs { background: white; display: flex; justify-content: center; border-bottom: 2px solid rgba(238, 77, 45, 0.1); box-shadow: var(--shadow-sm); position: relative; z-index: 10; animation: fadeIn 0.8s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .nav-item {
-            padding: 18px 24px;
-            cursor: pointer;
-            font-size: 15px;
-            color: var(--text-black);
-            text-align: center;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-            font-weight: 500;
-            position: relative;
-        }
-
-        .nav-item::before {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 50%;
-            width: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--primary-light));
-            transform: translateX(-50%);
-            transition: width 0.3s;
-        }
-
-        .nav-item:hover { 
-            color: var(--shopee-orange); 
-            background: rgba(238, 77, 45, 0.03);
-        }
-
-        .nav-item.active {
-            color: var(--shopee-orange);
-            font-weight: 600;
-        }
-
-        .nav-item.active::before {
-            width: 100%;
-        }
+        .nav-item { padding: 18px 24px; cursor: pointer; font-size: 15px; color: var(--text-black); text-align: center; border-bottom: 3px solid transparent; transition: all 0.3s; font-weight: 500; position: relative; }
+        .nav-item::before { content: ''; position: absolute; bottom: -2px; left: 50%; width: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--primary-light)); transform: translateX(-50%); transition: width 0.3s; }
+        .nav-item:hover { color: var(--shopee-orange); background: rgba(238, 77, 45, 0.03); }
+        .nav-item.active { color: var(--shopee-orange); font-weight: 600; }
+        .nav-item.active::before { width: 100%; }
 
         /* Search Container */
-        .search-container {
-            background: linear-gradient(135deg, #eaeaea 0%, #f5f5f5 100%);
-            padding: 16px 0;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-            position: relative;
-            z-index: 5;
-        }
-
-        .search-box {
-            background: white;
-            width: 100%;
-            max-width: 980px;
-            margin: 0 auto;
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            transition: all 0.3s;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .search-box:hover {
-            border-color: var(--primary);
-            box-shadow: 0 2px 8px rgba(238, 77, 45, 0.15);
-        }
-
-        .search-box input {
-            border: none;
-            width: 100%;
-            outline: none;
-            margin-left: 12px;
-            font-size: 14px;
-        }
+        .search-container { background: linear-gradient(135deg, #eaeaea 0%, #f5f5f5 100%); padding: 16px 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); position: relative; z-index: 5; }
+        .search-box { background: white; width: 100%; max-width: 980px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; border: 2px solid #e0e0e0; border-radius: 8px; transition: all 0.3s; box-shadow: var(--shadow-sm); }
+        .search-box:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(238, 77, 45, 0.15); }
+        .search-box input { border: none; width: 100%; outline: none; margin-left: 12px; font-size: 14px; }
 
         /* Main Container */
-        .main-container {
-            max-width: 1000px;
-            margin: 24px auto;
-            padding: 0 20px;
-            position: relative;
-            z-index: 1;
-            animation: fadeInUp 1s ease;
-        }
+        .main-container { max-width: 1000px; margin: 24px auto; padding: 0 20px; position: relative; z-index: 1; animation: fadeInUp 1s ease; }
 
         /* Order Card */
-        .order-card {
-            background: white;
-            margin-bottom: 18px;
-            box-shadow: var(--shadow-sm);
-            border-radius: 10px;
-            overflow: hidden;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-            animation: slideIn 0.6s ease backwards;
-        }
-
+        .order-card { background: white; margin-bottom: 18px; box-shadow: var(--shadow-sm); border-radius: 10px; overflow: hidden; transition: all 0.3s; border: 2px solid transparent; animation: slideIn 0.6s ease backwards; }
         .order-card:nth-child(1) { animation-delay: 0.1s; }
         .order-card:nth-child(2) { animation-delay: 0.2s; }
         .order-card:nth-child(3) { animation-delay: 0.3s; }
 
-        @keyframes slideIn {
-            from { 
-                opacity: 0; 
-                transform: translateY(20px); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0); 
-            }
-        }
-
-        .order-card:hover {
-            box-shadow: var(--shadow-lg);
-            border-color: rgba(238, 77, 45, 0.2);
-            transform: translateY(-4px);
-        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .order-card:hover { box-shadow: var(--shadow-lg); border-color: rgba(238, 77, 45, 0.2); transform: translateY(-4px); }
         
         /* Card Header */
-        .card-header {
-            padding: 16px 28px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(to right, #fff 0%, #fafafa 100%);
-        }
-
-        .store-section { 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-        }
-
-        .store-name { 
-            font-weight: 700; 
-            font-size: 14px; 
-        }
-
-        .btn-chat, .btn-view-shop {
-            padding: 6px 14px;
-            font-size: 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-chat {
-            background: var(--shopee-orange);
-            color: white;
-            border: none;
-        }
-
-        .btn-chat:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(238, 77, 45, 0.3);
-        }
-
-        .btn-view-shop {
-            background: white;
-            border: 1px solid #ddd;
-            color: #555;
-        }
-
-        .btn-view-shop:hover {
-            background: #f8f8f8;
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .order-status { 
-            color: var(--shopee-orange); 
-            text-transform: uppercase; 
-            font-size: 13px; 
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-        }
-
-        .separator { 
-            border-left: 2px solid #e0e0e0; 
-            height: 16px; 
-            margin: 0 6px; 
-        }
+        .card-header { padding: 16px 28px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to right, #fff 0%, #fafafa 100%); }
+        .store-section { display: flex; align-items: center; gap: 12px; }
+        .store-name { font-weight: 700; font-size: 14px; }
+        .btn-chat, .btn-view-shop { padding: 6px 14px; font-size: 12px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn-chat { background: var(--shopee-orange); color: white; border: none; }
+        .btn-chat:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(238, 77, 45, 0.3); }
+        .btn-view-shop { background: white; border: 1px solid #ddd; color: #555; }
+        .btn-view-shop:hover { background: #f8f8f8; border-color: var(--primary); color: var(--primary); }
+        .order-status { color: var(--shopee-orange); text-transform: uppercase; font-size: 13px; display: flex; align-items: center; gap: 10px; font-weight: 600; }
+        .separator { border-left: 2px solid #e0e0e0; height: 16px; margin: 0 6px; }
 
         /* Card Body */
-        .card-body {
-            padding: 20px 28px;
-            display: flex;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .card-body:hover { 
-            background: linear-gradient(to right, #fafafa 0%, #fff 100%);
-            transform: translateX(4px);
-        }
+        .card-body { padding: 20px 28px; display: flex; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: all 0.3s; }
+        .card-body:hover { background: linear-gradient(to right, #fafafa 0%, #fff 100%); transform: translateX(4px); }
         
         .product-img {
-            width: 85px;
-            height: 85px;
+            width: 85px; height: 85px;
             background-color: #f5f5f5;
             border: 2px solid #e0e0e0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            color: #aaa;
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; color: #aaa; border-radius: 8px;
+            box-shadow: var(--shadow-sm); transition: all 0.3s;
+            overflow: hidden; /* Fix for image overflow */
         }
+        /* Ensures image fits your design perfectly */
+        .product-img img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .card-body:hover .product-img { transform: scale(1.05); box-shadow: var(--shadow-md); }
 
-        .card-body:hover .product-img {
-            transform: scale(1.05);
-            box-shadow: var(--shadow-md);
-        }
-
-        .product-details { 
-            margin-left: 16px; 
-            flex: 1; 
-        }
-
-        .product-name { 
-            font-size: 15px; 
-            margin-bottom: 6px; 
-            color: var(--text-black); 
-            font-weight: 600;
-        }
-
-        .product-variant { 
-            color: var(--text-grey); 
-            font-size: 13px; 
-            margin-bottom: 6px; 
-        }
-
-        .product-qty { 
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .product-price { 
-            color: var(--shopee-orange); 
-            font-size: 14px;
-            font-weight: 600;
-        }
+        .product-details { margin-left: 16px; flex: 1; }
+        .product-name { font-size: 15px; margin-bottom: 6px; color: var(--text-black); font-weight: 600; }
+        .product-variant { color: var(--text-grey); font-size: 13px; margin-bottom: 6px; }
+        .product-qty { font-size: 13px; color: var(--text-secondary); }
+        .product-price { color: var(--shopee-orange); font-size: 14px; font-weight: 600; }
 
         /* Card Footer */
-        .card-footer {
-            padding: 26px 28px;
-            background: linear-gradient(to bottom, #fffefb 0%, #fff 100%);
-            text-align: right;
-        }
-
-        .total-section {
-            font-size: 14px;
-            margin-bottom: 22px;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .total-price {
-            font-size: 26px;
-            color: var(--shopee-orange);
-            font-weight: 700;
-            animation: priceGlow 3s infinite;
-        }
-
-        @keyframes priceGlow {
-            0%, 100% { text-shadow: 0 0 5px rgba(238, 77, 45, 0); }
-            50% { text-shadow: 0 0 10px rgba(238, 77, 45, 0.3); }
-        }
+        .card-footer { padding: 26px 28px; background: linear-gradient(to bottom, #fffefb 0%, #fff 100%); text-align: right; }
+        .total-section { font-size: 14px; margin-bottom: 22px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
+        .total-price { font-size: 26px; color: var(--shopee-orange); font-weight: 700; animation: priceGlow 3s infinite; }
+        @keyframes priceGlow { 0%, 100% { text-shadow: 0 0 5px rgba(238, 77, 45, 0); } 50% { text-shadow: 0 0 10px rgba(238, 77, 45, 0.3); } }
         
         /* Buttons */
-        .action-buttons { 
-            display: flex; 
-            justify-content: flex-end; 
-            gap: 12px; 
-        }
+        .action-buttons { display: flex; justify-content: flex-end; gap: 12px; }
+        .btn { padding: 10px 44px; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block; font-weight: 600; transition: all 0.3s; position: relative; overflow: hidden; }
+        .btn::before { content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0; border-radius: 50%; background: rgba(255,255,255,0.3); transform: translate(-50%, -50%); transition: width 0.6s, height 0.6s; }
+        .btn:hover::before { width: 300px; height: 300px; }
+        
+        .btn-primary { background: linear-gradient(135deg, var(--shopee-orange), var(--primary-light)); color: white; border: none; box-shadow: 0 4px 12px rgba(238, 77, 45, 0.3); }
+        .btn-primary:hover { background: linear-gradient(135deg, var(--primary-dark), var(--primary)); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(238, 77, 45, 0.4); }
 
-        .btn {
-            padding: 10px 44px;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            font-weight: 600;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--shopee-orange), var(--primary-light));
-            color: white;
-            border: none;
-            box-shadow: 0 4px 12px rgba(238, 77, 45, 0.3);
-        }
-
-        .btn-primary:hover { 
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(238, 77, 45, 0.4);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: #555;
-            border: 2px solid #ddd;
-        }
-
-        .btn-secondary:hover { 
-            background: #f8f8f8;
-            border-color: var(--primary);
-            color: var(--primary);
-            transform: translateY(-2px);
-        }
+        .btn-secondary { background: white; color: #555; border: 2px solid #ddd; }
+        .btn-secondary:hover { background: #f8f8f8; border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
 
         /* Empty State */
-        .no-orders {
-            text-align: center;
-            padding: 120px 20px;
-            background: white;
-            margin-top: 24px;
-            border-radius: 12px;
-            box-shadow: var(--shadow-md);
-            animation: fadeInUp 0.8s ease;
-        }
-
-        .no-orders-icon {
-            font-size: 100px;
-            color: #ddd;
-            margin-bottom: 24px;
-            animation: swing 3s ease-in-out infinite;
-        }
-
-        @keyframes swing {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(-10deg); }
-            75% { transform: rotate(10deg); }
-        }
-
-        .no-orders a {
-            display: inline-block;
-            margin-top: 20px;
-            color: white;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            padding: 14px 40px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 700;
-            transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(238, 77, 45, 0.3);
-        }
-
-        .no-orders a:hover {
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(238, 77, 45, 0.4);
-        }
+        .no-orders { text-align: center; padding: 120px 20px; background: white; margin-top: 24px; border-radius: 12px; box-shadow: var(--shadow-md); animation: fadeInUp 0.8s ease; }
+        .no-orders-icon { font-size: 100px; color: #ddd; margin-bottom: 24px; animation: swing 3s ease-in-out infinite; }
+        @keyframes swing { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-10deg); } 75% { transform: rotate(10deg); } }
+        
+        .no-orders a { display: inline-block; margin-top: 20px; color: white; background: linear-gradient(135deg, var(--primary), var(--primary-light)); padding: 14px 40px; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.3s; box-shadow: 0 4px 12px rgba(238, 77, 45, 0.3); }
+        .no-orders a:hover { background: linear-gradient(135deg, var(--primary-dark), var(--primary)); transform: translateY(-3px); box-shadow: 0 6px 16px rgba(238, 77, 45, 0.4); }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .navbar-main {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .search-bar {
-                margin: 0;
-                width: 100%;
-                max-width: 100%;
-            }
-            
-            .logo {
-                font-size: 24px;
-            }
-
-            .nav-tabs {
-                overflow-x: auto;
-                justify-content: flex-start;
-            }
-
-            .nav-item {
-                padding: 15px 18px;
-                font-size: 13px;
-            }
-
-            .card-header {
-                flex-direction: column;
-                gap: 12px;
-                align-items: flex-start;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .btn {
-                width: 100%;
-            }
+            .navbar-main { flex-direction: column; gap: 15px; }
+            .search-bar { margin: 0; width: 100%; max-width: 100%; }
+            .logo { font-size: 24px; }
+            .nav-tabs { overflow-x: auto; justify-content: flex-start; }
+            .nav-item { padding: 15px 18px; font-size: 13px; }
+            .card-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .action-buttons { flex-direction: column; width: 100%; }
+            .btn { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Animated Background Shapes -->
     <div class="bg-shapes">
         <div class="shape shape1"></div>
         <div class="shape shape2"></div>
@@ -722,7 +235,6 @@
     <nav class="navbar">
         <div class="navbar-top">
             <a href="{% url 'purchase_history' %}">📋 Purchase History</a>
-            
             {% if user.is_authenticated %}
                 <span>👤 {{ user.username }}</span>
                 <a href="{% url 'logout' %}">Logout</a>
@@ -768,7 +280,7 @@
             <div class="order-card">
                 <div class="card-header">
                     <div class="store-section">
-                        <span class="store-name">{{ order.product.store.store_name|default:"SariSariStore" }}</span>
+                        <span class="store-name">{{ order.items.first.product.store.store_name|default:"SariSariStore" }}</span>
                         <button class="btn-chat">Chat</button>
                         <button class="btn-view-shop">View Shop</button>
                     </div>
@@ -779,16 +291,25 @@
                     </div>
                 </div>
 
+                {% for item in order.items.all %}
                 <div class="card-body" onclick="window.location.href='/'">
                     <div class="product-img">
-                        Product<br>Image
+                        {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                        {% else %}
+                            <span>No Img</span>
+                        {% endif %}
                     </div>
                     <div class="product-details">
-                        <div class="product-name">{{ order.product.product_name }}</div>
-                        <div class="product-variant">Variation: Default</div>
-                        <div class="product-qty">x1</div>
+                        <div class="product-name">{{ item.product.name }}</div>
+                        <div class="product-variant">{{ item.product.description|truncatechars:60 }}</div>
+                        <div class="product-qty">x{{ item.quantity }}</div>
+                    </div>
+                    <div class="product-price">
+                        ₱{{ item.price|floatformat:2 }}
                     </div>
                 </div>
+                {% endfor %}
 
                 <div class="card-footer">
                     <div class="total-section">
@@ -797,7 +318,7 @@
                     </div>
                     <div class="action-buttons">
                         <button class="btn btn-secondary">Contact Seller</button>
-                        <button class="btn btn-primary" onclick="buyAgain('{{ order.product.id }}')">Buy Again</button>
+                        <button class="btn btn-primary" onclick="buyAgain('{{ order.items.first.product.id }}')">Buy Again</button>
                     </div>
                 </div>
             </div>
@@ -816,7 +337,7 @@
 
     <script>
         function buyAgain(productId) {
-            window.location.href = `/api/checkout/?product_id=${productId}&quantity=1`;
+            window.location.href = `/checkout/?product_id=${productId}&quantity=1`;
         }
 
         function handleSearch(e) { 
@@ -827,18 +348,6 @@
             const query = document.getElementById('search-input').value;
             window.location.href = `/?search=${encodeURIComponent(query)}`;
         }
-
-        async function updateCartBadge() {
-            try {
-                const res = await fetch('http://127.0.0.1:8000/api/cartitems/');
-                const items = await res.json();
-                document.getElementById('cart-count').innerText = items.length;
-            } catch (err) {
-                console.error("Badge update error:", err);
-            }
-        }
-
-        updateCartBadge();
     </script>
 
 </body>
