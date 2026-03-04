@@ -3,35 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | ShopeeClone</title>
+    <title>Login | Tindahan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --shopee-orange: #ee4d2d; 
-            --shopee-orange-light: #ff6643;
-            --bg-gray: #f5f5f5; 
-            --card-bg: #ffffff;
-            --text-main: #333333;
-            --text-light: #888888;
-            --border-color: #dbdbdb;
+            --primary: #c0392b;
+            --primary-light: #e05a3a;
+            --accent: #e8a838;
+            --accent-warm: #f0c060;
+            --bg: #f5ede0;
+            --card-bg: #fdf6ec;
+            --text-main: #3b2a1a;
+            --text-light: #8a6a50;
+            --border-color: #d9c4a8;
+            --shadow: rgba(80, 40, 10, 0.15);
         }
 
         [data-theme="dark"] {
-            --bg-gray: #121212; 
-            --card-bg: #1e1e1e;
-            --text-main: #e0e0e0;
-            --text-light: #b0b0b0;
-            --border-color: #333333;
+            --bg: #1a1008;
+            --card-bg: #261808;
+            --text-main: #f0dfc0;
+            --text-light: #b09070;
+            --border-color: #4a3020;
+            --shadow: rgba(0, 0, 0, 0.4);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body { 
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-            background: var(--bg-gray); 
+            font-family: 'Lato', sans-serif;
+            background: var(--bg);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -40,505 +41,497 @@
             overflow-x: hidden;
         }
 
-        /* Animated Background Shapes */
-        .bg-shapes {
+        body::before {
+            content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            overflow: hidden;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.035;
             pointer-events: none;
+            z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 150px;
         }
 
-        .shape {
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .bg-pattern::before {
+            content: '';
             position: absolute;
+            top: -200px; right: -200px;
+            width: 600px; height: 600px;
             border-radius: 50%;
-            opacity: 0.08;
-            animation: float 20s infinite ease-in-out;
+            background: radial-gradient(circle, var(--accent-warm) 0%, transparent 70%);
+            opacity: 0.25;
+            animation: drift 18s infinite ease-in-out;
         }
 
-        .shape1 {
-            width: 300px;
-            height: 300px;
-            background: var(--shopee-orange);
-            top: 10%;
-            left: -100px;
-            animation-delay: 0s;
+        .bg-pattern::after {
+            content: '';
+            position: absolute;
+            bottom: -150px; left: -150px;
+            width: 500px; height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            opacity: 0.12;
+            animation: drift 22s infinite ease-in-out reverse;
         }
 
-        .shape2 {
-            width: 200px;
-            height: 200px;
-            background: var(--shopee-orange-light);
-            top: 60%;
-            right: -50px;
-            animation-delay: 3s;
-        }
-
-        .shape3 {
-            width: 150px;
-            height: 150px;
-            background: var(--shopee-orange);
-            bottom: 20%;
-            left: 20%;
-            animation-delay: 6s;
-        }
-
-        @keyframes float {
+        @keyframes drift {
             0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(50px, -50px) scale(1.1); }
-            66% { transform: translate(-30px, 30px) scale(0.9); }
+            50% { transform: translate(40px, -40px) scale(1.1); }
         }
 
-        /* Header */
+        .border-strip {
+            height: 6px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--primary) 0px, var(--primary) 20px,
+                var(--accent) 20px, var(--accent) 40px,
+                var(--primary-light) 40px, var(--primary-light) 60px,
+                var(--accent-warm) 60px, var(--accent-warm) 80px
+            );
+            position: relative;
+            z-index: 10;
+        }
+
         .header {
-            background: linear-gradient(135deg, var(--shopee-orange) 0%, var(--shopee-orange-light) 100%);
+            background: linear-gradient(135deg, #2c1008 0%, #4a1e0a 50%, #3a1508 100%);
             height: 80px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 10%;
-            box-shadow: 0 4px 20px rgba(238, 77, 45, 0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             position: relative;
             z-index: 10;
         }
 
-        .logo { 
-            color: white; 
-            font-size: 28px; 
-            font-weight: bold; 
+        .logo-wrap {
+            display: flex;
+            flex-direction: column;
             animation: slideInLeft 0.8s ease;
         }
 
+        .logo { 
+            color: var(--accent-warm);
+            font-family: 'Playfair Display', serif;
+            font-size: 30px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            line-height: 1;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.4);
+        }
+
+        .logo-tagline {
+            color: var(--accent);
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
         .theme-toggle {
-            background: rgba(255,255,255,0.25);
-            border: 2px solid rgba(255,255,255,0.3);
-            color: white;
+            background: rgba(240, 192, 96, 0.15);
+            border: 1px solid rgba(240, 192, 96, 0.35);
+            color: var(--accent-warm);
             padding: 10px 20px;
-            border-radius: 25px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
             transition: all 0.3s ease;
             animation: slideInRight 0.8s ease;
         }
 
         .theme-toggle:hover {
-            background: rgba(255,255,255,0.35);
+            background: rgba(240, 192, 96, 0.25);
             transform: translateY(-2px);
         }
 
-        /* Main Content */
         .main-content {
             flex-grow: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 40px 20px;
+            padding: 50px 20px;
             position: relative;
             z-index: 1;
         }
 
         .content-wrapper {
             display: flex;
-            gap: 60px;
+            gap: 70px;
             align-items: center;
             max-width: 1100px;
             width: 100%;
             animation: fadeInUp 1s ease;
         }
 
-        /* Welcome Side */
         .welcome-side {
             flex: 1;
-            color: var(--text-main);
             animation: slideInLeft 1.2s ease;
         }
 
-        .welcome-side h1 {
-            font-size: 42px;
+        .welcome-badge {
+            display: inline-block;
+            background: var(--accent);
+            color: #3b2a1a;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 6px 16px;
+            border-radius: 2px;
             margin-bottom: 20px;
-            background: linear-gradient(135deg, var(--shopee-orange), var(--shopee-orange-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: shimmer 3s infinite;
         }
 
-        @keyframes shimmer {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.2); }
+        .welcome-side h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            line-height: 1.1;
         }
 
-        .welcome-side p {
-            font-size: 18px;
+        .welcome-side h1 span { color: var(--primary); }
+
+        .welcome-side > p {
+            font-size: 16px;
             color: var(--text-light);
-            margin-bottom: 30px;
-            line-height: 1.6;
+            margin-bottom: 35px;
+            line-height: 1.7;
+            font-weight: 300;
         }
 
-        .features {
+        .vintage-divider {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
         }
+
+        .vintage-divider::before, .vintage-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+        }
+
+        .vintage-divider span { color: var(--accent); font-size: 18px; }
+
+        .features { display: flex; flex-direction: column; gap: 12px; }
 
         .feature-item {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 15px;
+            gap: 16px;
+            padding: 16px 18px;
             background: var(--card-bg);
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent);
+            box-shadow: 3px 3px 0px var(--border-color);
             transition: all 0.3s ease;
             animation: fadeIn 1s ease backwards;
         }
 
-        .feature-item:nth-child(1) { animation-delay: 0.2s; }
-        .feature-item:nth-child(2) { animation-delay: 0.4s; }
-        .feature-item:nth-child(3) { animation-delay: 0.6s; }
+        .feature-item:nth-child(1) { animation-delay: 0.2s; border-left-color: var(--primary); }
+        .feature-item:nth-child(2) { animation-delay: 0.4s; border-left-color: var(--accent); }
+        .feature-item:nth-child(3) { animation-delay: 0.6s; border-left-color: var(--primary-light); }
 
         .feature-item:hover {
-            transform: translateX(10px);
-            box-shadow: 0 4px 15px rgba(238, 77, 45, 0.2);
+            transform: translate(-4px, -4px);
+            box-shadow: 7px 7px 0px var(--border-color);
         }
 
         .feature-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--shopee-orange), var(--shopee-orange-light));
-            border-radius: 12px;
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px;
             flex-shrink: 0;
-            animation: pulse 2s infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
+        .feature-text h3 { font-size: 15px; font-weight: 700; margin-bottom: 3px; color: var(--text-main); }
+        .feature-text p { font-size: 12px; color: var(--text-light); margin: 0; }
 
-        .feature-text h3 {
-            font-size: 16px;
-            margin-bottom: 5px;
-            color: var(--text-main);
-        }
-
-        .feature-text p {
-            font-size: 13px;
-            color: var(--text-light);
-            margin: 0;
-        }
-
-        /* Login Box */
         .login-box { 
-            background: var(--card-bg); 
-            padding: 40px; 
-            border-radius: 16px; 
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15); 
+            background: var(--card-bg);
+            padding: 44px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            box-shadow: 8px 8px 0px var(--border-color);
             width: 100%;
-            max-width: 450px;
+            max-width: 440px;
             transition: all 0.3s ease;
             animation: slideInRight 1.2s ease;
             position: relative;
-            overflow: hidden;
         }
 
-        .login-box::before {
-            content: '';
+        .login-box::after {
+            content: 'TINDAHAN';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--shopee-orange), var(--shopee-orange-light));
-            animation: slideRight 2s infinite;
-        }
-
-        @keyframes slideRight {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+            top: 16px; right: 16px;
+            font-family: 'Playfair Display', serif;
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: var(--primary);
+            opacity: 0.25;
+            border: 1px solid var(--primary);
+            padding: 4px 8px;
+            border-radius: 2px;
+            transform: rotate(8deg);
         }
 
         .login-box:hover {
-            box-shadow: 0 12px 40px rgba(238, 77, 45, 0.25);
+            box-shadow: 12px 12px 0px var(--border-color);
+            transform: translate(-2px, -2px);
         }
 
-        h2 {
-            margin: 0 0 10px 0;
-            font-size: 26px;
-            font-weight: 600;
-            text-align: center;
+        .login-header { text-align: center; margin-bottom: 32px; }
+
+        .login-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--text-main);
+            margin-bottom: 6px;
         }
 
-        .subtitle {
-            text-align: center;
+        .subtitle { color: var(--text-light); font-size: 13px; letter-spacing: 0.5px; }
+
+        .input-group { position: relative; margin-bottom: 18px; }
+
+        .input-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             color: var(--text-light);
-            margin-bottom: 30px;
-            font-size: 14px;
+            margin-bottom: 8px;
         }
 
         input { 
             width: 100%; 
-            padding: 14px; 
-            margin-bottom: 18px; 
-            border: 2px solid var(--border-color); 
-            border-radius: 8px;
-            box-sizing: border-box; 
-            background: var(--card-bg);
+            padding: 13px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            background: var(--bg);
             color: var(--text-main);
             outline: none;
             font-size: 14px;
+            font-family: 'Lato', sans-serif;
             transition: all 0.3s ease;
         }
 
         input:focus {
-            border-color: var(--shopee-orange);
-            box-shadow: 0 0 0 3px rgba(238, 77, 45, 0.1);
-            transform: translateY(-2px);
+            border-color: var(--primary);
+            box-shadow: 3px 3px 0px var(--primary);
+            transform: translate(-1px, -1px);
         }
 
-        input::placeholder {
-            color: var(--text-light);
-        }
+        input::placeholder { color: var(--border-color); }
         
         button[type="submit"] { 
-            width: 100%; 
-            padding: 15px; 
-            background: linear-gradient(135deg, var(--shopee-orange), var(--shopee-orange-light));
-            color: white; 
-            border: none; 
-            font-weight: bold; 
-            cursor: pointer; 
-            border-radius: 8px;
-            margin-top: 10px;
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-family: 'Lato', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 3px;
+            margin-top: 8px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 14px;
+            letter-spacing: 3px;
+            font-size: 13px;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        button[type="submit"]::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        button[type="submit"]:hover::before {
-            width: 300px;
-            height: 300px;
+            border-bottom: 4px solid #8b1e0f;
         }
 
         button[type="submit"]:hover { 
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(238, 77, 45, 0.4);
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(192, 57, 43, 0.35);
         }
 
         button[type="submit"]:active {
-            transform: translateY(-1px);
+            transform: translateY(2px);
+            border-bottom-width: 1px;
         }
 
         .err { 
-            color: #ff424f; 
-            font-size: 13px; 
+            color: var(--primary);
+            font-size: 13px;
             margin-bottom: 15px;
             text-align: center;
             padding: 12px;
-            background: rgba(255, 66, 79, 0.1);
-            border-radius: 8px;
-            border-left: 4px solid #ff424f;
+            background: rgba(192, 57, 43, 0.08);
+            border-radius: 3px;
+            border-left: 3px solid var(--primary);
             animation: shake 0.5s ease;
         }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
 
         .divider {
-            margin: 25px 0;
+            margin: 24px 0;
             display: flex;
             align-items: center;
             color: var(--text-light);
-            font-size: 12px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
         .divider::before, .divider::after {
             content: "";
             flex: 1;
             height: 1px;
             background: var(--border-color);
-            margin: 0 10px;
+            margin: 0 12px;
         }
 
-        .actions {
-            text-align: center;
-            font-size: 14px;
-            color: var(--text-light);
-        }
+        .actions { text-align: center; font-size: 14px; color: var(--text-light); }
 
         .signup-link {
-            color: var(--shopee-orange);
+            color: var(--primary);
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 700;
             transition: all 0.3s ease;
         }
 
-        .signup-link:hover {
-            color: var(--shopee-orange-light);
-            text-decoration: underline;
-        }
+        .signup-link:hover { color: var(--accent); text-decoration: underline; }
 
-        /* Animations */
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
         }
-
         @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
         }
-
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
 
-        /* Responsive Design */
+        .footer-strip {
+            height: 6px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--accent-warm) 0px, var(--accent-warm) 20px,
+                var(--primary-light) 20px, var(--primary-light) 40px,
+                var(--accent) 40px, var(--accent) 60px,
+                var(--primary) 60px, var(--primary) 80px
+            );
+            position: relative;
+            z-index: 10;
+        }
+
         @media (max-width: 968px) {
-            .content-wrapper {
-                flex-direction: column;
-                gap: 40px;
-            }
-
-            .welcome-side {
-                text-align: center;
-            }
-
-            .welcome-side h1 {
-                font-size: 32px;
-            }
-
-            .feature-item:hover {
-                transform: translateY(-5px);
-            }
+            .content-wrapper { flex-direction: column; gap: 40px; }
+            .welcome-side { text-align: center; }
+            .welcome-side h1 { font-size: 36px; }
+            .vintage-divider { justify-content: center; }
         }
 
         @media (max-width: 480px) {
-            .header {
-                padding: 0 5%;
-            }
-
-            .logo {
-                font-size: 22px;
-            }
-
-            .login-box {
-                padding: 30px 25px;
-            }
-
-            .welcome-side h1 {
-                font-size: 28px;
-            }
+            .header { padding: 0 5%; }
+            .logo { font-size: 24px; }
+            .login-box { padding: 30px 24px; }
+            .welcome-side h1 { font-size: 28px; }
         }
     </style>
 </head>
 <body data-theme="light">
 
-    <!-- Animated Background Shapes -->
-    <div class="bg-shapes">
-        <div class="shape shape1"></div>
-        <div class="shape shape2"></div>
-        <div class="shape shape3"></div>
-    </div>
+    <div class="bg-pattern"></div>
+    <div class="border-strip"></div>
 
     <header class="header">
-        <div class="logo">ShopeeClone</div>
+        <div class="logo-wrap">
+            <div class="logo">Tindahan</div>
+            <div class="logo-tagline">Ang iyong merkado</div>
+        </div>
         <button class="theme-toggle" onclick="toggleTheme()">🌙 Toggle Mode</button>
     </header>
 
     <div class="main-content">
         <div class="content-wrapper">
-            <!-- Welcome Side -->
+
             <div class="welcome-side">
-                <h1>Welcome Back!</h1>
-                <p>Log in to access exclusive deals and your personalized shopping experience</p>
-                
+                <div class="welcome-badge">🇵🇭 Mabuhay!</div>
+                <h1>Balik ka na, <span>suki!</span></h1>
+                <p>Mag-login para sa iyong personalized na karanasan sa pamimili at mga eksklusibong deals</p>
+
+                <div class="vintage-divider"><span>✦</span></div>
+
                 <div class="features">
                     <div class="feature-item">
                         <div class="feature-icon">🛍️</div>
                         <div class="feature-text">
-                            <h3>Track Your Orders</h3>
-                            <p>Real-time updates on all purchases</p>
+                            <h3>Subaybayan ang Orders</h3>
+                            <p>Real-time updates sa lahat ng binili mo</p>
                         </div>
                     </div>
-                    
                     <div class="feature-item">
                         <div class="feature-icon">💰</div>
                         <div class="feature-text">
-                            <h3>Exclusive Deals</h3>
-                            <p>Members-only discounts & offers</p>
+                            <h3>Eksklusibong Deals</h3>
+                            <p>Members-only na diskwento at alok</p>
                         </div>
                     </div>
-                    
                     <div class="feature-item">
                         <div class="feature-icon">⭐</div>
                         <div class="feature-text">
-                            <h3>Saved Favorites</h3>
-                            <p>Access your wishlist anywhere</p>
+                            <h3>Mga Paboritong Item</h3>
+                            <p>I-access ang iyong wishlist kahit saan</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Login Box -->
             <div class="login-box">
-                <h2>Log In</h2>
-                <p class="subtitle">Enter your credentials to continue</p>
+                <div class="login-header">
+                    <h2>Mag-Login</h2>
+                    <p class="subtitle">Ilagay ang iyong mga kredensyal</p>
+                </div>
                 
                 <form method="POST">
                     {% csrf_token %}
-                    <input type="text" name="username" placeholder="Username" required>
-                    <input type="password" name="password" placeholder="Password" required>
+                    <div class="input-group">
+                        <label class="input-label">Username</label>
+                        <input type="text" name="user" placeholder="Ilagay ang username" autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Password</label>
+                        <input type="password" name="password" placeholder="Ilagay ang password">
+                    </div>
 
                     {% if messages %}
                         {% for message in messages %}
@@ -546,24 +539,26 @@
                         {% endfor %}
                     {% endif %}
                     
-                    <button type="submit">LOG IN</button>
+                    <button type="submit">Mag-Login</button>
                 </form>
 
-                <div class="divider">OR</div>
+                <div class="divider">o kaya</div>
 
                 <div class="actions">
-                    New to ShopeeClone? 
-                    <a href="{% url 'register' %}" class="signup-link">Sign Up</a>
+                    Bago sa Tindahan? 
+                    <a href="{% url 'register' %}" class="signup-link">Mag-Sign Up</a>
                 </div>
             </div>
+
         </div>
     </div>
+
+    <div class="footer-strip"></div>
 
     <script>
         function toggleTheme() {
             const body = document.body;
             const toggle = document.querySelector('.theme-toggle');
-            
             if (body.getAttribute('data-theme') === 'dark') {
                 body.setAttribute('data-theme', 'light');
                 toggle.textContent = '🌙 Toggle Mode';
@@ -573,15 +568,13 @@
             }
         }
 
-        // Add floating animation to inputs on interaction
         const inputs = document.querySelectorAll('input');
         inputs.forEach(input => {
             input.addEventListener('focus', function() {
-                this.style.transform = 'scale(1.02)';
+                this.style.transform = 'translate(-1px, -1px)';
             });
-            
             input.addEventListener('blur', function() {
-                this.style.transform = 'scale(1)';
+                this.style.transform = '';
             });
         });
     </script>
