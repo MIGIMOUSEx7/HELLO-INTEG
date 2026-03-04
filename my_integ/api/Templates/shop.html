@@ -741,6 +741,28 @@
     <script>
         const API_URL = "http://127.0.0.1:8000/api/";
         let allProducts = [];
+        
+        // Initialize page functions
+    window.addEventListener('DOMContentLoaded', () => {
+        updateCartBadge();
+    });
+
+    // ════════════════════════════════════════════════════════
+    //  NEW: CART BADGE UPDATER
+    // ════════════════════════════════════════════════════════
+    async function updateCartBadge() {
+        try {
+            // Gumagamit ng built-in cartitems ViewSet
+            const res = await fetch(`${API_URL}cartitems/`);
+            if (res.ok) {
+                const items = await res.json();
+                const badge = document.getElementById('cart-count');
+                if (badge) badge.innerText = items.length;
+            }
+        } catch (err) {
+            console.error("Badge update error:", err);
+        }
+    }
 
         function toggleTheme() {
             const body = document.body;

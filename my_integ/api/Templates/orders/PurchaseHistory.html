@@ -1473,6 +1473,28 @@
             setTimeout(() => t.classList.remove('show'), 3500);
         }
 
+        // Initialize page functions
+    window.addEventListener('DOMContentLoaded', () => {
+        updateCartBadge();
+    });
+
+    // ════════════════════════════════════════════════════════
+    //  NEW: CART BADGE UPDATER
+    // ════════════════════════════════════════════════════════
+    async function updateCartBadge() {
+        try {
+            // Gumagamit ng built-in cartitems ViewSet
+            const res = await fetch(`${API_URL}cartitems/`);
+            if (res.ok) {
+                const items = await res.json();
+                const badge = document.getElementById('cart-count');
+                if (badge) badge.innerText = items.length;
+            }
+        } catch (err) {
+            console.error("Badge update error:", err);
+        }
+    }
+
         // ─── Shared helpers ───────────────────────────────────────────────
         function closeAllModals()       { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); }
         function getCard(el)            { return el.closest('.order-card'); }
@@ -1774,13 +1796,13 @@
         function payNow(orderId, btn) {
             const method = getCard(btn).dataset.paymentMethod || 'COD';
             showToast(`Ire-redirect sa ${method} payment page...`, 'info');
-            setTimeout(() => window.location.href = `/checkout/pay/${orderId}/`, 1200);
+            setTimeout(() => window.location.href = `/orders/checkout/pay/${orderId}/`, 1200);
         }
 
         // ─── Buy Again ────────────────────────────────────────────────────
         function buyAgain(productId) {
     // I-re-redirect ang user sa checkout page na may dalang product_id
-    window.location.href = `/checkout/?product_id=${productId}&quantity=1`;
+    window.location.href = `/orders/checkout/`;
 }
 
         // ─── Search ───────────────────────────────────────────────────────

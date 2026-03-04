@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order #{{ order.id }} | Tindahan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary:      #c0392b;
+            --primary-dark: #8b1e0f;
+            --primary-light:#e05a3a;
+            --accent:       #e8a838;
+            --accent-warm:  #f0c060;
+            --bg:           #f5ede0;
+            --card-bg:      #fdf6ec;
+            --text-main:    #3b2a1a;
+            --text-secondary:#6b4c30;
+            --text-light:   #8a6a50;
+            --border-color: #d9c4a8;
+            --success:      #2e7d32;
+            --info:         #1565c0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ── Noise Texture Overlay ── */
+        body::before {
+            content: '';
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.03; pointer-events: none; z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-repeat: repeat; background-size: 150px;
+        }
+
+        /* ── Floating Background Blobs ── */
+        .bg-pattern { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: hidden; }
+        .bg-pattern::before {
+            content: '';
+            position: absolute; top: -200px; right: -200px;
+            width: 600px; height: 600px; border-radius: 50%;
+            background: radial-gradient(circle, var(--accent-warm) 0%, transparent 70%);
+            opacity: 0.2; animation: drift 20s infinite ease-in-out;
+        }
+        .bg-pattern::after {
+            content: '';
+            position: absolute; bottom: -150px; left: -100px;
+            width: 500px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            opacity: 0.08; animation: drift 26s infinite ease-in-out reverse;
+        }
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50%       { transform: translate(40px, -40px) scale(1.1); }
+        }
+
+        /* ── Top Color Strip ── */
+        .border-strip {
+            height: 6px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--primary) 0px, var(--primary) 20px,
+                var(--accent) 20px, var(--accent) 40px,
+                var(--primary-light) 40px, var(--primary-light) 60px,
+                var(--accent-warm) 60px, var(--accent-warm) 80px
+            );
+            position: relative; z-index: 1001;
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            background: linear-gradient(135deg, #2c1008 0%, #4a1e0a 50%, #3a1508 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+            position: sticky; top: 0; z-index: 1000;
+            animation: slideDown 0.6s ease;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to   { transform: translateY(0);     opacity: 1; }
+        }
+        .navbar-top {
+            padding: 8px 5%; background: rgba(0,0,0,0.2);
+            display: flex; justify-content: flex-end; align-items: center;
+            gap: 20px; font-size: 12px;
+            border-bottom: 1px solid rgba(240,192,96,0.15);
+        }
+        .navbar-top a {
+            color: var(--accent-warm); text-decoration: none; opacity: 0.85;
+            transition: all 0.3s; padding: 4px 10px; border-radius: 3px;
+            font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .navbar-top a:hover { opacity: 1; background: rgba(240,192,96,0.15); }
+        .navbar-top .user-chip {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 12px;
+            background: rgba(240,192,96,0.12); border: 1px solid rgba(240,192,96,0.25);
+            border-radius: 3px; color: var(--accent-warm);
+            font-weight: 700; font-size: 11px; letter-spacing: 0.5px;
+        }
+        .navbar-main {
+            padding: 14px 5%; display: flex;
+            justify-content: space-between; align-items: center; gap: 20px;
+        }
+        .logo-wrap { display: flex; flex-direction: column; cursor: pointer; transition: transform 0.3s; }
+        .logo-wrap:hover { transform: scale(1.04); }
+        .logo {
+            color: var(--accent-warm); font-family: 'Playfair Display', serif;
+            font-size: 28px; font-weight: 900; letter-spacing: 2px; line-height: 1;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.4);
+        }
+        .logo-tagline { color: var(--accent); font-size: 9px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8; }
+
+        /* ── Page Breadcrumb ── */
+        .breadcrumb-bar {
+            background: var(--card-bg);
+            border-bottom: 2px solid var(--border-color);
+            padding: 12px 0;
+            position: relative; z-index: 10;
+            animation: fadeIn 0.6s ease;
+        }
+        .breadcrumb-inner {
+            max-width: 1000px; margin: 0 auto; padding: 0 20px;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .breadcrumb-inner a { color: var(--text-light); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb-inner a:hover { color: var(--primary); }
+        .breadcrumb-sep { color: var(--border-color); }
+        .breadcrumb-current { color: var(--primary); }
+
+        /* ── Main Layout ── */
+        .main-container {
+            max-width: 1000px; margin: 28px auto;
+            padding: 0 20px 60px; position: relative; z-index: 1;
+        }
+
+        /* ── Page Header ── */
+        .page-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.7s ease;
+        }
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px; font-weight: 900;
+            color: var(--text-main);
+            line-height: 1.1;
+        }
+        .page-title span { color: var(--primary); }
+        .page-subtitle { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 8px 18px;
+            border-radius: 3px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+            border: 1px solid;
+        }
+        .status-pill.to_pay        { background: rgba(232,168,56,0.12); color: #7a5200; border-color: rgba(232,168,56,0.4); }
+        .status-pill.to_ship       { background: rgba(21,101,192,0.1);  color: var(--info); border-color: rgba(21,101,192,0.3); }
+        .status-pill.to_receive    { background: rgba(21,101,192,0.1);  color: var(--info); border-color: rgba(21,101,192,0.3); }
+        .status-pill.completed     { background: rgba(46,125,50,0.1);   color: var(--success); border-color: rgba(46,125,50,0.3); }
+        .status-pill.cancelled     { background: rgba(192,57,43,0.08);  color: var(--primary); border-color: rgba(192,57,43,0.25); }
+        .status-pill.return_refund { background: rgba(21,101,192,0.1);  color: var(--info); border-color: rgba(21,101,192,0.3); }
+
+        /* ── Grid Layout ── */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* ── Cards ── */
+        .detail-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 4px 4px 0px var(--border-color);
+            overflow: hidden;
+            position: relative;
+            animation: fadeInUp 0.6s ease backwards;
+        }
+        .detail-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0;
+            width: 4px; height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+        }
+        .detail-card:nth-child(1) { animation-delay: 0.05s; }
+        .detail-card:nth-child(2) { animation-delay: 0.10s; }
+        .detail-card:nth-child(3) { animation-delay: 0.15s; }
+        .detail-card:nth-child(4) { animation-delay: 0.20s; }
+
+        .card-title-bar {
+            padding: 14px 20px 14px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(192,57,43,0.04);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card-title-bar h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 15px; font-weight: 700; color: var(--text-main);
+        }
+        .card-title-icon { font-size: 17px; }
+
+        /* ── Order Items Section ── */
+        .store-header {
+            padding: 12px 20px 12px 24px;
+            background: rgba(192,57,43,0.03);
+            border-bottom: 1px dashed var(--border-color);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .store-label {
+            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light);
+        }
+        .store-name-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 14px; font-weight: 700; color: var(--text-main);
+        }
+
+        .item-row {
+            padding: 16px 20px 16px 24px;
+            display: flex; align-items: center; gap: 14px;
+            border-bottom: 1px dashed var(--border-color);
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .item-row:last-child { border-bottom: none; }
+        .item-row:hover { background: rgba(192,57,43,0.03); padding-left: 30px; }
+
+        .item-img {
+            width: 70px; height: 70px; flex-shrink: 0;
+            border: 1px solid var(--border-color); border-radius: 3px;
+            background: var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            overflow: hidden;
+            box-shadow: 2px 2px 0px var(--border-color);
+            transition: box-shadow 0.2s;
+        }
+        .item-row:hover .item-img { box-shadow: 4px 4px 0px var(--border-color); }
+        .item-img img { width: 100%; height: 100%; object-fit: cover; }
+
+        .item-info { flex: 1; }
+        .item-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 3px;
+        }
+        .item-desc { font-size: 12px; color: var(--text-light); font-style: italic; margin-bottom: 5px; }
+        .item-qty  { font-size: 12px; color: var(--text-secondary); font-weight: 700; }
+        .item-price {
+            font-family: 'Playfair Display', serif;
+            font-size: 16px; font-weight: 900; color: var(--primary);
+            white-space: nowrap; text-align: right;
+        }
+        .item-unit-price { font-size: 11px; color: var(--text-light); text-align: right; margin-top: 2px; }
+
+        /* ── Info Grid (key-value pairs) ── */
+        .info-grid { padding: 0 20px 0 24px; }
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 11px 0;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 13px;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: var(--text-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; }
+        .info-val   { color: var(--text-main); font-weight: 700; text-align: right; max-width: 60%; }
+        .info-val.primary { color: var(--primary); font-family: 'Playfair Display', serif; font-size: 15px; }
+        .info-val.success { color: var(--success); }
+        .info-val.info    { color: var(--info); }
+        .info-val.mono    { font-family: monospace; letter-spacing: 1px; font-size: 12px; }
+
+        /* ── Order Total Summary (inside left column bottom) ── */
+        .total-bar {
+            padding: 16px 20px 16px 24px;
+            background: rgba(192,57,43,0.04);
+            border-top: 2px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .total-label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); }
+        .total-amount {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px; font-weight: 900; color: var(--primary);
+        }
+
+        /* ── Shipment Timeline (right col) ── */
+        .timeline { padding: 16px 20px 16px 24px; }
+        .timeline-step {
+            display: flex; gap: 14px; padding: 10px 0;
+            position: relative;
+        }
+        .timeline-step:not(:last-child)::after {
+            content: '';
+            position: absolute; left: 13px; top: 34px;
+            width: 2px; height: calc(100% - 12px);
+            background: var(--border-color);
+        }
+        .tl-dot {
+            width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; border: 2px solid var(--border-color);
+            background: var(--card-bg); z-index: 1;
+        }
+        .tl-dot.done   { background: var(--success); border-color: var(--success); color: white; }
+        .tl-dot.active { background: var(--primary); border-color: var(--primary); color: white; animation: pulseDot 1.5s infinite; }
+        .tl-dot.pending{ background: var(--bg); color: var(--text-light); }
+        @keyframes pulseDot {
+            0%,100% { box-shadow: 0 0 0 0 rgba(192,57,43,0.35); }
+            50%      { box-shadow: 0 0 0 6px rgba(192,57,43,0); }
+        }
+        .tl-content .tl-title { font-weight: 700; font-size: 13px; }
+        .tl-content .tl-desc  { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+        .tl-title.pending { color: var(--text-light); }
+
+        /* ── Action Buttons ── */
+        .actions-card { padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+        .btn {
+            width: 100%; padding: 12px 20px;
+            border-radius: 3px; font-size: 12px; cursor: pointer;
+            font-family: 'Lato', sans-serif; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            transition: all 0.3s; border: none;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-primary   { background: var(--primary); color: white; border-bottom: 3px solid var(--primary-dark); }
+        .btn-primary:hover { background: var(--primary-light); transform: translateY(-2px); }
+        .btn-primary:active{ transform: translateY(1px); border-bottom-width: 1px; }
+        .btn-secondary { background: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color); border-bottom: 3px solid var(--border-color); }
+        .btn-secondary:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
+        .btn-accent    { background: var(--accent); color: #3b2a1a; border: none; border-bottom: 3px solid #b07a10; }
+        .btn-accent:hover { background: var(--accent-warm); transform: translateY(-2px); }
+        .btn-accent:active{ transform: translateY(1px); border-bottom-width: 1px; }
+        .btn-info      { background: var(--info); color: white; border: none; border-bottom: 3px solid #0d3c7a; }
+        .btn-info:hover { background: #1976d2; transform: translateY(-2px); }
+        .btn-danger    { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); border-bottom: 3px solid var(--primary-dark); }
+        .btn-danger:hover { background: var(--primary); color: white; transform: translateY(-2px); }
+        .btn-danger:active{ transform: translateY(1px); border-bottom-width: 1px; }
+
+        /* ── Back Link ── */
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--text-light); text-decoration: none;
+            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 3px;
+            transition: all 0.3s; background: var(--card-bg);
+            margin-bottom: 20px; box-shadow: 2px 2px 0px var(--border-color);
+        }
+        .back-link:hover { border-color: var(--primary); color: var(--primary); transform: translate(-2px,-2px); box-shadow: 4px 4px 0px var(--border-color); }
+
+        /* ── Divider ── */
+        .section-gap { height: 20px; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed; bottom: 32px; right: 32px;
+            background: var(--card-bg); padding: 16px 24px;
+            border-radius: 4px; box-shadow: 4px 4px 0px var(--border-color);
+            display: none; align-items: center; gap: 12px;
+            z-index: 6000; border: 1px solid var(--border-color); border-left: 4px solid var(--success);
+            font-size: 14px; color: var(--text-main); animation: toastIn 0.4s ease; max-width: 360px;
+        }
+        .toast.show    { display: flex; }
+        .toast.error   { border-left-color: var(--primary); }
+        .toast.info    { border-left-color: var(--info); }
+        .toast.warning { border-left-color: var(--accent); }
+        @keyframes toastIn {
+            from { transform: translateX(300px); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ── Modal Base ── */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.55);
+            z-index: 5000; display: none;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 4px; box-shadow: 8px 8px 0px var(--border-color);
+            padding: 36px; max-width: 460px; width: 92%;
+            position: relative; animation: fadeInUp 0.3s ease;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal-box h3 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 10px; color: var(--text-main); }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+        .modal-close { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-light); transition: color 0.2s; }
+        .modal-close:hover { color: var(--primary); }
+        .modal-btn { padding: 10px 24px; border-radius: 3px; font-size: 12px; cursor: pointer; font-family: 'Lato', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; border: none; }
+
+        .modal-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; padding: 5px 12px; border-radius: 2px; margin-bottom: 14px; }
+        .modal-badge-danger  { background: rgba(192,57,43,0.1);  color: var(--primary); border: 1px solid rgba(192,57,43,0.25); }
+        .modal-badge-success { background: rgba(46,125,50,0.1);  color: var(--success); border: 1px solid rgba(46,125,50,0.25); }
+        .modal-badge-accent  { background: rgba(232,168,56,0.15); color: #7a5200; border: 1px solid rgba(232,168,56,0.4); }
+
+        .modal-info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--border-color); font-size: 13px; }
+        .modal-info-label { color: var(--text-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; }
+        .modal-info-val   { color: var(--text-main); font-weight: 700; }
+        .modal-warning    { font-size: 12px; color: var(--primary); background: rgba(192,57,43,0.06); border-left: 3px solid var(--primary); padding: 10px 12px; border-radius: 2px; margin: 14px 0 0; line-height: 1.5; }
+
+        .modal-reason-list { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+        .modal-radio { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 13px; transition: all 0.2s; color: var(--text-secondary); }
+        .modal-radio:hover { border-color: var(--primary); color: var(--primary); background: rgba(192,57,43,0.04); }
+        .modal-radio input[type="radio"] { accent-color: var(--primary); }
+
+        .modal-textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 3px; background: var(--bg); color: var(--text-main); font-family: 'Lato', sans-serif; font-size: 13px; outline: none; resize: vertical; min-height: 100px; transition: all 0.3s; box-shadow: 2px 2px 0px var(--border-color); margin-top: 4px; }
+        .modal-textarea:focus { border-color: var(--primary); box-shadow: 3px 3px 0px var(--primary); }
+        .modal-textarea::placeholder { color: var(--border-color); }
+
+        .modal-stars   { display: flex; gap: 6px; margin: 14px 0 4px; }
+        .star          { font-size: 32px; color: var(--border-color); cursor: pointer; transition: all 0.15s; line-height: 1; }
+        .star:hover, .star.selected { color: var(--accent); transform: scale(1.15); }
+        .star-label    { font-size: 12px; color: var(--text-light); margin-bottom: 12px; font-style: italic; }
+
+        /* ── Footer strip ── */
+        .footer-strip {
+            height: 6px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--accent-warm) 0px, var(--accent-warm) 20px,
+                var(--primary-light) 20px, var(--primary-light) 40px,
+                var(--accent) 40px, var(--accent) 60px,
+                var(--primary) 60px, var(--primary) 80px
+            );
+            margin-top: 60px; position: relative; z-index: 1;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInUp  { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Responsive ── */
+        @media (max-width: 780px) {
+            .detail-grid      { grid-template-columns: 1fr; }
+            .page-header      { flex-direction: column; gap: 12px; }
+            .navbar-main      { flex-wrap: wrap; }
+            .modal-actions    { flex-direction: column; }
+            .modal-btn        { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+<div class="border-strip"></div>
+
+<!-- ══ NAVBAR ══════════════════════════════════════════════ -->
+<nav class="navbar">
+    <div class="navbar-top">
+        <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Pagbili</a>
+        {% if user.is_authenticated %}
+            <span class="user-chip">👤 {{ user.username }}</span>
+            <a href="{% url 'logout' %}">Mag-Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login / Sign Up</a>
+        {% endif %}
+    </div>
+    <div class="navbar-main">
+        <div class="logo-wrap" onclick="window.location.href='/'">
+            <div class="logo">Tindahan</div>
+            <div class="logo-tagline">Ang iyong merkado</div>
+        </div>
+    </div>
+</nav>
+
+<!-- ══ BREADCRUMB ══════════════════════════════════════════ -->
+<div class="breadcrumb-bar">
+    <div class="breadcrumb-inner">
+        <a href="/">🏠 Tahanan</a>
+        <span class="breadcrumb-sep">›</span>
+        <a href="{% url 'purchase_history' %}">Kasaysayan ng Pagbili</a>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">Order #{{ order.id }}</span>
+    </div>
+</div>
+
+<!-- ══ MAIN ════════════════════════════════════════════════ -->
+<div class="main-container">
+
+    <!-- Back link -->
+    <a href="{% url 'purchase_history' %}" class="back-link">← Bumalik sa Listahan</a>
+
+    <!-- Page header -->
+    <div class="page-header">
+        <div>
+            <div class="page-title">Order <span>#{{ order.id }}</span></div>
+            <div class="page-subtitle">{{ order.order_date|date:"F j, Y · g:i A" }}</div>
+        </div>
+        <div class="status-pill {{ order.status|lower }}">
+            {% if order.status|lower == "to_pay" %}💳 Naghihintay ng Bayad
+            {% elif order.status|lower == "to_ship" %}📦 Inihahanda ng Tindahan
+            {% elif order.status|lower == "to_receive" %}🚚 Nasa Daan Na
+            {% elif order.status|lower == "completed" %}✅ Naihatid Na
+            {% elif order.status|lower == "cancelled" %}✕ Nakansela
+            {% elif order.status|lower == "return_refund" %}🔄 Sa Proseso ng Pagbabalik
+            {% else %}📋 {{ order.status|upper }}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 2-column grid -->
+    <div class="detail-grid">
+
+        <!-- ════ LEFT COLUMN ════════════════════════════ -->
+        <div>
+
+            <!-- CARD: Order Items -->
+            <div class="detail-card" style="animation-delay:0.05s;">
+                <div class="card-title-bar">
+                    <span class="card-title-icon">🛍️</span>
+                    <h2>Mga Item sa Order</h2>
+                </div>
+
+                <!-- Group by store -->
+                <div class="store-header">
+                    <span class="store-label">Tindahan:</span>
+                    <span class="store-name-text">
+                        {{ order.items.first.product.store.store_name|default:"SariSariStore" }}
+                    </span>
+                </div>
+
+                {% for item in order.items.all %}
+                <div class="item-row" onclick="window.location.href='/products/{{ item.product.id }}/'">
+                    <div class="item-img">
+                        {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                        {% else %}
+                            📦
+                        {% endif %}
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">{{ item.product.name }}</div>
+                        <div class="item-desc">{{ item.product.description|truncatechars:70 }}</div>
+                        <div class="item-qty">x{{ item.quantity }}</div>
+                    </div>
+                    <div>
+                        <div class="item-price">₱{{ item.price|floatformat:2 }}</div>
+                        <div class="item-unit-price">₱{{ item.product.price|floatformat:2 }} / piraso</div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Total bar -->
+                <div class="total-bar">
+                    <span class="total-label">Kabuuang Halaga</span>
+                    <span class="total-amount">₱{{ order.total_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+
+            <div class="section-gap"></div>
+
+            <!-- CARD: Delivery Address -->
+            <div class="detail-card" style="animation-delay:0.10s;">
+                <div class="card-title-bar">
+                    <span class="card-title-icon">📍</span>
+                    <h2>Delivery Address</h2>
+                </div>
+                <div class="info-grid">
+                    {% if order.address %}
+                        <div class="info-row">
+                            <span class="info-label">Tatanggap</span>
+                            <span class="info-val">{{ order.address.full_name }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Telepono</span>
+                            <span class="info-val">{{ order.address.phone }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Kalye</span>
+                            <span class="info-val">{{ order.address.street }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Lungsod / Lalawigan</span>
+                            <span class="info-val">{{ order.address.city }}, {{ order.address.province }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">ZIP / Bansa</span>
+                            <span class="info-val">{{ order.address.zip_code }}, {{ order.address.country }}</span>
+                        </div>
+                    {% else %}
+                        <div class="info-row">
+                            <span class="info-label">Address</span>
+                            <span class="info-val">{{ order.shipping_address|default:"—" }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="section-gap"></div>
+
+            <!-- CARD: Payment Info -->
+            <div class="detail-card" style="animation-delay:0.15s;">
+                <div class="card-title-bar">
+                    <span class="card-title-icon">💳</span>
+                    <h2>Impormasyon ng Bayad</h2>
+                </div>
+                <div class="info-grid">
+                    <div class="info-row">
+                        <span class="info-label">Paraan ng Bayad</span>
+                        <span class="info-val">{{ order.payment_method|default:"COD" }}</span>
+                    </div>
+                    {% if order.payment %}
+                        <div class="info-row">
+                            <span class="info-label">Halaga ng Bayad</span>
+                            <span class="info-val primary">₱{{ order.payment.amount|floatformat:2 }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Status ng Bayad</span>
+                            <span class="info-val {% if order.payment.status == 'paid' %}success{% endif %}">
+                                {{ order.payment.status|default:"—" }}
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Petsa ng Bayad</span>
+                            <span class="info-val">{{ order.payment.paid_at|date:"F j, Y"|default:"—" }}</span>
+                        </div>
+                        {% if order.payment.voucher %}
+                        <div class="info-row">
+                            <span class="info-label">Voucher na Ginamit</span>
+                            <span class="info-val mono">{{ order.payment.voucher.code }}</span>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="info-row">
+                            <span class="info-label">Status</span>
+                            <span class="info-val">
+                                {% if order.status == "to_pay" %}Naghihintay ng bayad
+                                {% elif order.status == "cancelled" %}Hindi nabayaran (na-cancel)
+                                {% else %}—
+                                {% endif %}
+                            </span>
+                        </div>
+                    {% endif %}
+                    <div class="info-row" style="border-bottom:none; padding-top:14px; padding-bottom:14px;">
+                        <span class="info-label" style="font-size:13px;">Kabuuang Binayad</span>
+                        <span class="info-val primary" style="font-size:20px;">₱{{ order.total_amount|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end left col -->
+
+
+        <!-- ════ RIGHT COLUMN ═══════════════════════════ -->
+        <div>
+
+            <!-- CARD: Shipment Tracker -->
+            <div class="detail-card" style="animation-delay:0.05s;">
+                <div class="card-title-bar">
+                    <span class="card-title-icon">🚚</span>
+                    <h2>Tracking ng Padala</h2>
+                </div>
+
+                <!-- Timeline steps driven by order.status -->
+                <div class="timeline" id="order-timeline"></div>
+
+                <!-- Shipment Details -->
+                {% if order.shipment %}
+                <div class="info-grid" style="padding-top:4px;">
+                    <div class="info-row">
+                        <span class="info-label">Courier</span>
+                        <span class="info-val">{{ order.shipment.courier|default:"—" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tracking #</span>
+                        <span class="info-val mono">{{ order.shipment.tracking_number|default:"—" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Petsa ng Pagpadala</span>
+                        <span class="info-val">{{ order.shipment.shipped_at|date:"M j, Y"|default:"—" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Petsa ng Paghahatid</span>
+                        <span class="info-val">{{ order.shipment.delivered_at|date:"M j, Y"|default:"—" }}</span>
+                    </div>
+                    {% if order.shipment.return_at %}
+                    <div class="info-row">
+                        <span class="info-label">Petsa ng Pagbabalik</span>
+                        <span class="info-val">{{ order.shipment.return_at|date:"M j, Y" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div style="padding:14px 20px 14px 24px; font-size:13px; color:var(--text-light); font-style:italic;">
+                    Wala pang shipment details.
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="section-gap"></div>
+
+            <!-- CARD: Store Info -->
+            <div class="detail-card" style="animation-delay:0.10s;">
+                <div class="card-title-bar">
+                    <span class="card-title-icon">🏪</span>
+                    <h2>Impormasyon ng Tindahan</h2>
+                </div>
+                <div class="info-grid">
+                    <div class="info-row">
+                        <span class="info-label">Pangalan</span>
+                        <span class="info-val">{{ order.items.first.product.store.store_name|default:"—" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Rating</span>
+                        <span class="info-val">⭐ {{ order.items.first.product.store.rating|floatformat:1|default:"—" }} / 5.0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Petsa ng Order</span>
+                        <span class="info-val">{{ order.order_date|date:"M j, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-gap"></div>
+
+            <!-- CARD: Actions -->
+            <div class="detail-card" style="animation-delay:0.15s;">
+                <div class="card-title-bar">
+                    <span class="card-title-icon">⚙️</span>
+                    <h2>Mga Aksyon</h2>
+                </div>
+                <div class="actions-card">
+
+                    <!-- Contact Seller always available -->
+                    <button class="btn btn-secondary" onclick="openChat()">💬 Makipag-ugnayan sa Nagbenta</button>
+
+                    {% if order.status|lower == "to_pay" %}
+                        <button class="btn btn-accent"   onclick="payNow()">💳 Magbayad Na</button>
+                        <button class="btn btn-danger"   onclick="openCancel()">✕ I-cancel ang Order</button>
+
+                    {% elif order.status|lower == "to_ship" %}
+                        <button class="btn btn-info"     onclick="openTrack()">📦 Subaybayan ang Padala</button>
+                        <button class="btn btn-danger"   onclick="openCancel()">✕ I-cancel ang Order</button>
+
+                    {% elif order.status|lower == "to_receive" %}
+                        <button class="btn btn-info"     onclick="openTrack()">🚚 I-track ang Padala</button>
+                        <button class="btn btn-primary"  onclick="openConfirmReceived()">✔ Natanggap Ko Na</button>
+
+                    {% elif order.status|lower == "completed" %}
+                        <button class="btn btn-primary"  onclick="buyAgain()">🔄 Bilhin Ulit</button>
+                        <button class="btn btn-accent"   onclick="openReview()">⭐ Mag-iwan ng Review</button>
+
+                    {% elif order.status|lower == "cancelled" %}
+                        <button class="btn btn-primary"  onclick="buyAgain()">🔄 Bilhin Ulit</button>
+
+                    {% elif order.status|lower == "return_refund" %}
+                        <button class="btn btn-info"     onclick="openTrack()">📋 Tingnan ang Refund Status</button>
+                        <button class="btn btn-danger"   onclick="openCancel()">✕ I-cancel ang Return</button>
+
+                    {% else %}
+                        <button class="btn btn-primary"  onclick="buyAgain()">🔄 Bilhin Ulit</button>
+                    {% endif %}
+
+                </div>
+            </div>
+
+        </div><!-- end right col -->
+    </div><!-- end grid -->
+</div><!-- end main -->
+
+<div class="footer-strip"></div>
+
+<!-- ══ MODAL: Cancel ════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-cancel">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModals()">✕</button>
+        <div class="modal-badge modal-badge-danger">⚠️ I-cancel ang Order</div>
+        <h3>Order #{{ order.id }}</h3>
+        <div class="modal-info-row">
+            <span class="modal-info-label">Petsa ng Order</span>
+            <span class="modal-info-val">{{ order.order_date|date:"F j, Y" }}</span>
+        </div>
+        <div class="modal-info-row">
+            <span class="modal-info-label">Paraan ng Bayad</span>
+            <span class="modal-info-val">{{ order.payment_method|default:"COD" }}</span>
+        </div>
+        <div class="modal-info-row">
+            <span class="modal-info-label">Kabuuang Halaga</span>
+            <span class="modal-info-val" style="color:var(--primary);font-family:'Playfair Display',serif;font-size:16px;">
+                ₱{{ order.total_amount|floatformat:2 }}
+            </span>
+        </div>
+        {% if order.address %}
+        <div class="modal-info-row">
+            <span class="modal-info-label">Delivery Address</span>
+            <span class="modal-info-val" style="font-size:12px;text-align:right;max-width:200px;">
+                {{ order.address.street }}, {{ order.address.city }}, {{ order.address.province }}
+            </span>
+        </div>
+        {% endif %}
+        <p style="margin:14px 0 8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);">Dahilan ng Pagkansela:</p>
+        <div class="modal-reason-list">
+            <label class="modal-radio"><input type="radio" name="cancel-reason" value="Nagbago ang isip ko"><span>Nagbago ang isip ko</span></label>
+            <label class="modal-radio"><input type="radio" name="cancel-reason" value="Mali ang order ko"><span>Mali ang order ko</span></label>
+            <label class="modal-radio"><input type="radio" name="cancel-reason" value="Masyadong mahal ang shipping"><span>Masyadong mahal ang shipping</span></label>
+            <label class="modal-radio"><input type="radio" name="cancel-reason" value="Nahanap ko ng mas mura"><span>Nahanap ko ng mas mura</span></label>
+            <label class="modal-radio"><input type="radio" name="cancel-reason" value="Iba pa"><span>Iba pa</span></label>
+        </div>
+        <p class="modal-warning">⚠️ Kapag na-cancel, ang refund ay ibabalik batay sa paraan ng iyong bayad.</p>
+        <div class="modal-actions">
+            <button class="modal-btn btn-secondary" onclick="closeModals()">Bumalik</button>
+            <button class="modal-btn btn-danger" id="cancel-confirm-btn" onclick="submitCancel()">✕ Kumpirmahin</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Confirm Received ══════════════════════════════ -->
+<div class="modal-overlay" id="modal-received">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModals()">✕</button>
+        <div class="modal-badge modal-badge-success">✔ Kumpirmahin ang Pagtanggap</div>
+        <h3>Order #{{ order.id }}</h3>
+        <div class="modal-info-row">
+            <span class="modal-info-label">Tindahan</span>
+            <span class="modal-info-val">{{ order.items.first.product.store.store_name|default:"SariSariStore" }}</span>
+        </div>
+        <div class="modal-info-row" style="margin-bottom:12px;">
+            <span class="modal-info-label">Kabuuang Halaga</span>
+            <span class="modal-info-val" style="color:var(--primary);font-family:'Playfair Display',serif;font-size:16px;">₱{{ order.total_amount|floatformat:2 }}</span>
+        </div>
+        <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:8px;">Mga Item:</p>
+        {% for item in order.items.all %}
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border-color);">
+            <div style="width:36px;height:36px;border-radius:2px;border:1px solid var(--border-color);background:var(--bg);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+                {% if item.product.image %}<img src="{{ item.product.image.url }}" style="width:100%;height:100%;object-fit:cover;">{% else %}📦{% endif %}
+            </div>
+            <span style="flex:1;font-weight:700;font-size:13px;font-family:'Playfair Display',serif;">{{ item.product.name }}</span>
+            <span style="color:var(--text-light);font-size:12px;">x{{ item.quantity }}</span>
+            <span style="color:var(--primary);font-weight:700;font-family:'Playfair Display',serif;">₱{{ item.price|floatformat:2 }}</span>
+        </div>
+        {% endfor %}
+        <p class="modal-warning" style="border-left-color:var(--success);background:rgba(46,125,50,0.06);color:var(--success);margin-top:14px;">
+            ✅ Pagkatapos i-confirm, ang bayad ay ilalabas na sa nagbenta. Hindi na ito mababawi.
+        </p>
+        <div class="modal-actions">
+            <button class="modal-btn btn-secondary" onclick="closeModals()">Hindi Pa</button>
+            <button class="modal-btn btn-primary" id="received-confirm-btn" onclick="submitReceived()">✔ Oo, Natanggap Ko Na</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Review ════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-review">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModals()">✕</button>
+        <div class="modal-badge modal-badge-accent">⭐ Mag-iwan ng Review</div>
+        <h3>{{ order.items.first.product.name|default:"Produkto" }}</h3>
+        <p style="font-size:14px;color:var(--text-light);margin-bottom:0;line-height:1.6;">Ibahagi ang iyong karanasan para makatulong sa ibang mamimili.</p>
+        <div class="modal-stars" id="star-picker">
+            <span class="star" data-val="1">★</span>
+            <span class="star" data-val="2">★</span>
+            <span class="star" data-val="3">★</span>
+            <span class="star" data-val="4">★</span>
+            <span class="star" data-val="5">★</span>
+        </div>
+        <div class="star-label" id="star-label">Pumili ng rating</div>
+        <textarea class="modal-textarea" id="review-text" placeholder="Isulat ang iyong review dito..."></textarea>
+        <div class="modal-actions">
+            <button class="modal-btn btn-secondary" onclick="closeModals()">I-cancel</button>
+            <button class="modal-btn btn-accent"    id="review-submit-btn" onclick="submitReview()">⭐ I-submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Chat ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-chat">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModals()">✕</button>
+        <div class="modal-badge modal-badge-success">💬 Makipag-ugnayan sa Nagbenta</div>
+        <h3>{{ order.items.first.product.store.store_name|default:"Tindahan" }}</h3>
+        <div class="modal-info-row">
+            <span class="modal-info-label">Order #</span>
+            <span class="modal-info-val">#{{ order.id }}</span>
+        </div>
+        <div class="modal-info-row" style="margin-bottom:12px;">
+            <span class="modal-info-label">Kabuuang Halaga</span>
+            <span class="modal-info-val" style="color:var(--primary);font-family:'Playfair Display',serif;">₱{{ order.total_amount|floatformat:2 }}</span>
+        </div>
+        <textarea class="modal-textarea" id="chat-message" placeholder="Isulat ang iyong mensahe sa nagbenta..."></textarea>
+        <div class="modal-actions">
+            <button class="modal-btn btn-secondary" onclick="closeModals()">I-cancel</button>
+            <button class="modal-btn btn-primary"   onclick="sendChat()">📨 Ipadala</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Track (for to_ship / to_receive / return_refund) ══ -->
+<div class="modal-overlay" id="modal-track">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModals()">✕</button>
+        <div class="modal-badge modal-badge-success" style="border-color:rgba(21,101,192,0.3);background:rgba(21,101,192,0.08);color:var(--info);">🚚 Tracking ng Padala</div>
+        <h3>Order #{{ order.id }}</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;">
+            <div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border-color);border-radius:3px;">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);">Courier</div>
+                <div style="font-size:13px;font-weight:700;color:var(--text-main);">{{ order.shipment.courier|default:"—" }}</div>
+            </div>
+            <div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border-color);border-radius:3px;">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);">Tracking #</div>
+                <div style="font-size:12px;font-weight:700;color:var(--text-main);font-family:monospace;letter-spacing:1px;">{{ order.shipment.tracking_number|default:"—" }}</div>
+            </div>
+            <div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border-color);border-radius:3px;">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);">Status</div>
+                <div style="font-size:13px;font-weight:700;color:var(--text-main);">{{ order.shipment.status|default:"—" }}</div>
+            </div>
+            <div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border-color);border-radius:3px;">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);">Petsa ng Padala</div>
+                <div style="font-size:13px;font-weight:700;color:var(--text-main);">{{ order.shipment.shipped_at|date:"M j, Y"|default:"—" }}</div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn btn-secondary" onclick="closeModals()">Isara</button>
+            {% if order.shipment.tracking_number %}
+            <button class="modal-btn btn-info" onclick="window.open('https://www.jtexpress.ph/trajectoryQuery?billCode={{ order.shipment.tracking_number }}','_blank')">🔗 I-track sa Site</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+    <span id="toast-icon">✅</span>
+    <span id="toast-msg">Tagumpay!</span>
+</div>
+
+
+<script>
+    // ── Django template values exposed to JS ──────────────────────────
+    const ORDER_ID      = "{{ order.id }}";
+    const ORDER_STATUS  = "{{ order.status|lower }}";
+    const FIRST_PRODUCT_ID = "{{ order.items.first.product.id|default:'' }}";
+    const CSRF_TOKEN    = "{{ csrf_token }}";
+
+    // ── Toast ─────────────────────────────────────────────────────────
+    function showToast(msg, type = 'success') {
+        const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+        const t  = document.getElementById('toast');
+        document.getElementById('toast-icon').textContent = icons[type] || '✅';
+        document.getElementById('toast-msg').textContent  = msg;
+        t.className = `toast show ${type}`;
+        setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    // ── Modal helpers ─────────────────────────────────────────────────
+    function closeModals() {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+    }
+    document.querySelectorAll('.modal-overlay').forEach(m =>
+        m.addEventListener('click', e => { if (e.target === m) closeModals(); })
+    );
+
+    function openCancel()          { document.getElementById('modal-cancel').classList.add('active'); }
+    function openConfirmReceived() { document.getElementById('modal-received').classList.add('active'); }
+    function openReview()          { document.getElementById('modal-review').classList.add('active'); }
+    function openChat()            { document.getElementById('modal-chat').classList.add('active'); }
+    function openTrack()           { document.getElementById('modal-track').classList.add('active'); }
+
+    // ── API helper ────────────────────────────────────────────────────
+    function apiPatch(url, body) {
+        return fetch(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+            body: JSON.stringify(body)
+        });
+    }
+
+    function loadingBtn(id, label) { const b = document.getElementById(id); b.textContent = label; b.disabled = true; }
+    function resetBtn(id, label)   { const b = document.getElementById(id); b.textContent = label; b.disabled = false; }
+
+    // ── Cancel Order ─────────────────────────────────────────────────
+    async function submitCancel() {
+        const chosen = document.querySelector('input[name="cancel-reason"]:checked');
+        if (!chosen) { showToast('Pumili ng dahilan ng pagkansela.', 'warning'); return; }
+        loadingBtn('cancel-confirm-btn', '⏳ Nagkakansela...');
+        try {
+            const res = await apiPatch(`/api/orders/${ORDER_ID}/`, {
+                status: 'cancelled',
+                cancel_reason: chosen.value
+            });
+            if (!res.ok) throw new Error();
+            showToast('Na-cancel ang iyong order.', 'warning');
+            closeModals();
+            setTimeout(() => location.reload(), 1200);
+        } catch {
+            showToast('Hindi na-cancel. Subukan ulit.', 'error');
+            resetBtn('cancel-confirm-btn', '✕ Kumpirmahin');
+        }
+    }
+
+    // ── Confirm Received ─────────────────────────────────────────────
+    async function submitReceived() {
+        loadingBtn('received-confirm-btn', '⏳ Nagko-confirm...');
+        try {
+            const res = await apiPatch(`/api/orders/${ORDER_ID}/`, { status: 'completed' });
+            if (!res.ok) throw new Error();
+            showToast('Confirmed! Salamat sa iyong pagbili sa Tindahan. 🎉', 'success');
+            closeModals();
+            setTimeout(() => location.reload(), 1400);
+        } catch {
+            showToast('Hindi na-confirm. Subukan ulit.', 'error');
+            resetBtn('received-confirm-btn', '✔ Oo, Natanggap Ko Na');
+        }
+    }
+
+    // ── Review ───────────────────────────────────────────────────────
+    let _rating = 0;
+    const starLabels = { 1:'😞 Napakasama', 2:'😕 Hindi maganda', 3:'😐 Katamtaman', 4:'😊 Maganda', 5:'🤩 Napakagaling!' };
+
+    document.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('click', () => {
+            _rating = parseInt(star.dataset.val);
+            document.querySelectorAll('.star').forEach((s, i) => s.classList.toggle('selected', i < _rating));
+            document.getElementById('star-label').textContent = starLabels[_rating] || '';
+        });
+    });
+
+    async function submitReview() {
+        if (!_rating) { showToast('Pumili muna ng star rating.', 'warning'); return; }
+        const text = document.getElementById('review-text').value.trim();
+        if (!text)   { showToast('Isulat ang iyong review.', 'warning'); return; }
+        loadingBtn('review-submit-btn', '⏳ Isinasumite...');
+        try {
+            const res = await fetch(`/api/orders/${ORDER_ID}/submit-review/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                body: JSON.stringify({ rating: _rating, text })
+            });
+            if (!res.ok) throw new Error();
+            showToast('Na-submit ang iyong review. Salamat! ⭐', 'success');
+            closeModals();
+        } catch {
+            showToast('Hindi na-submit. Subukan ulit.', 'error');
+            resetBtn('review-submit-btn', '⭐ I-submit');
+        }
+    }
+
+    // ── Chat ─────────────────────────────────────────────────────────
+    async function sendChat() {
+        const msg = document.getElementById('chat-message').value.trim();
+        if (!msg) { showToast('Isulat ang mensahe mo.', 'warning'); return; }
+        try {
+            const res = await fetch('/api/messages/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                body: JSON.stringify({ order: ORDER_ID, message: msg })
+            });
+            if (!res.ok) throw new Error();
+            showToast('Naipadala ang mensahe sa nagbenta! 💬', 'success');
+            closeModals();
+        } catch {
+            showToast('Hindi naipadala. Subukan ulit.', 'error');
+        }
+    }
+
+    // ── Pay Now ───────────────────────────────────────────────────────
+    function payNow() {
+        showToast('Ire-redirect sa payment page...', 'info');
+        setTimeout(() => { window.location.href = `/checkout/pay/${ORDER_ID}/`; }, 1200);
+    }
+
+    // ── Buy Again ─────────────────────────────────────────────────────
+    function buyAgain() {
+        window.location.href = `/checkout/?product_id=${FIRST_PRODUCT_ID}&quantity=1`;
+    }
+
+    // ── Order Timeline (rendered client-side from ORDER_STATUS) ──────
+    (function buildTimeline() {
+        const steps = [
+            { key: 'to_pay',        icon: '💳', title: 'Order Placed',   desc: 'Natanggap ang iyong order.' },
+            { key: 'to_ship',       icon: '📦', title: 'Inihahanda',     desc: 'Inihahanda ng tindahan ang mga item.' },
+            { key: 'to_receive',    icon: '🚚', title: 'Nasa Daan Na',   desc: 'Ang iyong padala ay nasa daan na.' },
+            { key: 'completed',     icon: '✅', title: 'Naihatid Na',    desc: 'Matagumpay na naihatid ang order.' },
+        ];
+        // For return/refund and cancelled, show special terminal step
+        const specialSteps = {
+            cancelled:     { icon: '✕',  title: 'Nakansela',         desc: 'Ang order ay na-cancel.' },
+            return_refund: { icon: '🔄', title: 'Sa Proseso ng Pagbabalik', desc: 'Ang return/refund ay pinoproseso.' },
+        };
+
+        const order  = ['to_pay', 'to_ship', 'to_receive', 'completed'];
+        let cur = order.indexOf(ORDER_STATUS);
+
+        let stepsToRender = [...steps];
+        if (specialSteps[ORDER_STATUS]) {
+            // show up to to_ship as done, then append the special step as active
+            cur = 1; // at least 'to_ship' reached before cancel/return
+            stepsToRender = steps.slice(0, 2);
+            stepsToRender.push({ key: ORDER_STATUS, ...specialSteps[ORDER_STATUS] });
+        }
+
+        const html = stepsToRender.map((s, i) => {
+            const cls = i < cur ? 'done' : i === cur ? 'active' : 'pending';
+            return `
+                <div class="timeline-step">
+                    <div class="tl-dot ${cls}">${s.icon}</div>
+                    <div class="tl-content">
+                        <div class="tl-title ${cls === 'pending' ? 'pending' : ''}">${s.title}</div>
+                        <div class="tl-desc">${s.desc}</div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        document.getElementById('order-timeline').innerHTML = html;
+    })();
+</script>
+
+</body>
+</html>

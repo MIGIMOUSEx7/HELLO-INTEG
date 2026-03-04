@@ -1039,33 +1039,30 @@
                 <div class="col-total">Subtotal</div>
             </div>
 
-            {% for item in items %}
-            <div class="store-header-row">
-                🏪 {{ item.product.store.store_name|default:"Official Store" }}
-                <span style="border-left: 1px solid var(--border-color); margin: 0 10px; height: 14px; display:inline-block;"></span>
-                <span class="chat-link" onclick="showToast('Binubuksan ang chat...', 'info')">💬 Chat</span>
-            </div>
-
-            <div class="product-item">
-                <div class="col-prod" style="display:flex; align-items:center;">
-                    <div class="prod-img">
-                        {% if item.product.image %}
-                            <img src="{{ item.product.image.url }}" alt="Produkto">
-                        {% else %}
-                            📦
-                        {% endif %}
-                    </div>
-                    <div>
-                        <div class="prod-name">{{ item.product.name }}</div>
-                        <div class="prod-meta">Uri: Default</div>
-                    </div>
-                </div>
-                <div class="col-price-val">₱{{ item.product.price|floatformat:2 }}</div>
-                <div class="col-qty-val">{{ item.quantity }}</div>
-                <div class="col-total-val">₱{% widthratio item.product.price 1 item.quantity %}</div>
-            </div>
-            {% endfor %}
-
+           {% for item in items %}
+<div class="product-item">
+    <div class="col-prod" style="display:flex; align-items:center;">
+        <div class="prod-img">
+            {% if item.product.image %}
+                <img src="{{ item.product.image.url }}">
+            {% else %}
+                📦
+            {% endif %}
+        </div>
+        <div>
+            <div class="prod-name">{{ item.product.name }}</div>
+            <div class="prod-meta">Uri: Default</div>
+        </div>
+    </div>
+    
+    {# FIX: Gumamit ng fallback kung OrderItem ang gamit (item.price) o Product (item.product.price) #}
+    <div class="col-price-val">₱{{ item.price|default:item.product.price|floatformat:2 }}</div>
+    <div class="col-qty-val">{{ item.quantity }}</div>
+    <div class="col-total-val">
+        ₱{% if item.price %}{{ item.price }}{% else %}{% widthratio item.product.price 1 item.quantity %}{% endif %}
+    </div>
+</div>
+{% endfor %}
             <!-- Merchandise Protection -->
             <div class="extra-row" style="justify-content:space-between;">
                 <div style="display:flex; align-items:center; gap:10px; font-weight:700;">
@@ -1208,210 +1205,221 @@
         <span id="toast-msg">Tagumpay!</span>
     </div>
 
-    <script>
-        // ─── State ────────────────────────────────────────────────────────
-        const BASE_SUBTOTAL    = parseFloat("{{ subtotal|floatformat:2 }}") || 0;
-        const BASE_PROTECTION  = parseFloat("{{ protection|floatformat:2 }}") || 0;
-        let currentShippingFee = parseFloat("{{ shipping_fee|floatformat:2 }}") || 60;
-        let currentProtection  = BASE_PROTECTION;
-        let voucherDiscount    = 0;
-        let selectedPayment    = 'cod';
-        const paymentLabels    = { cod: 'Cash on Delivery', ewallet: 'e-Wallet / GCash', bank: 'Online Banking', card: 'Credit / Debit Card' };
+   <script>
+    // ─── State & Initial Data ───────────────────────────────────────────
+    // Ginamit ang .replace(/,/g, '') para sa mga numerong may comma (e.g. 1,500.00)
+    const BASE_SUBTOTAL    = parseFloat("{{ subtotal|floatformat:2 }}".replace(/,/g, '')) || 0;
+    const BASE_PROTECTION  = parseFloat("{{ protection|floatformat:2 }}".replace(/,/g, '')) || 0;
+    
+    let currentShippingFee = parseFloat("{{ shipping_fee|floatformat:2 }}".replace(/,/g, '')) || 60;
+    let currentProtection  = BASE_PROTECTION;
+    let voucherDiscount    = 0;
+    let selectedPayment    = 'cod';
+    const paymentLabels    = { 
+        cod: 'Cash on Delivery', 
+        ewallet: 'e-Wallet / GCash', 
+        bank: 'Online Banking', 
+        card: 'Credit / Debit Card' 
+    };
 
-        // ─── Toast ────────────────────────────────────────────────────────
-        function showToast(msg, type = 'success') {
-            const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
-            const t = document.getElementById('toast');
-            document.getElementById('toast-icon').textContent = icons[type] || '✅';
-            document.getElementById('toast-msg').textContent  = msg;
-            t.className = `toast show ${type}`;
-            setTimeout(() => t.classList.remove('show'), 3500);
+    // ─── Toast System ──────────────────────────────────────────────────
+    function showToast(msg, type = 'success') {
+        const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+        const t = document.getElementById('toast');
+        document.getElementById('toast-icon').textContent = icons[type] || '✅';
+        document.getElementById('toast-msg').textContent  = msg;
+        t.className = `toast show ${type}`;
+        setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    // ─── Total Calculation Logic (FIXED) ───────────────────────────────
+    function updateTotal() {
+        const total = BASE_SUBTOTAL + currentShippingFee + currentProtection - voucherDiscount;
+        
+        // I-update ang main displays gamit ang localized formatting (may commas)
+        const formatOptions = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+        
+        document.getElementById('total-price').textContent = '₱' + total.toLocaleString(undefined, formatOptions);
+        document.getElementById('summary-subtotal').textContent = '₱' + BASE_SUBTOTAL.toLocaleString(undefined, formatOptions);
+        document.getElementById('summary-shipping').textContent = '₱' + currentShippingFee.toLocaleString(undefined, formatOptions);
+        document.getElementById('summary-protection').textContent = '₱' + currentProtection.toLocaleString(undefined, formatOptions);
+        
+        if (voucherDiscount > 0) {
+            document.getElementById('summary-discount').textContent = '-₱' + voucherDiscount.toLocaleString(undefined, formatOptions);
+        }
+    }
+
+    // ─── Protection Toggle ─────────────────────────────────────────────
+    function updateProtection() {
+        const isChecked = document.getElementById('protection-toggle').checked;
+        currentProtection = isChecked ? BASE_PROTECTION : 0;
+        
+        const display = document.getElementById('protection-display');
+        if (display) {
+            display.textContent = '₱' + currentProtection.toFixed(2);
+        }
+        
+        updateTotal();
+        showToast(isChecked ? 'Proteksyon naka-on.' : 'Proteksyon naka-off.', isChecked ? 'success' : 'warning');
+    }
+
+    // ─── Shipping Select ───────────────────────────────────────────────
+    function updateShipping() {
+        const sel = document.getElementById('shipping-select');
+        const opt = sel.options[sel.selectedIndex];
+        currentShippingFee = parseFloat(opt.dataset.fee);
+        
+        document.getElementById('shipping-fee-display').textContent = '₱' + currentShippingFee.toFixed(2);
+        document.getElementById('shipping-eta').textContent = opt.dataset.label;
+        
+        updateTotal();
+        showToast('Paraan ng pagpapadala ay binago.', 'info');
+    }
+
+    // ─── Payment Selection ─────────────────────────────────────────────
+    function selectPayment(btn, method) {
+        document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedPayment = method;
+        showToast('Paraan ng bayad: ' + paymentLabels[method], 'info');
+    }
+
+    // ─── Voucher Logic ─────────────────────────────────────────────────
+    const VALID_VOUCHERS = {
+        'TINDAHAN10': { discount: 10,  label: '₱10 off' },
+        'SUKI20':     { discount: 20,  label: '₱20 off' },
+        'MABUHAY50':  { discount: 50,  label: '₱50 off' },
+    };
+
+    function applyVoucher() {
+        const code = document.getElementById('voucher-code').value.trim().toUpperCase();
+        const feedback = document.getElementById('voucher-feedback');
+        const discountRow = document.getElementById('summary-discount-row');
+
+        if (!code) {
+            feedback.textContent = 'Ilagay ang voucher code.';
+            feedback.className = 'voucher-feedback error';
+            return;
         }
 
-        // ─── Total Calculation ────────────────────────────────────────────
-        function updateTotal() {
-            const total = BASE_SUBTOTAL + currentShippingFee + currentProtection - voucherDiscount;
-            document.getElementById('total-price').textContent      = '₱' + total.toFixed(2);
-            document.getElementById('summary-subtotal').textContent = '₱' + BASE_SUBTOTAL.toFixed(2);
-            document.getElementById('summary-shipping').textContent = '₱' + currentShippingFee.toFixed(2);
-            document.getElementById('summary-protection').textContent = '₱' + currentProtection.toFixed(2);
+        if (VALID_VOUCHERS[code]) {
+            voucherDiscount = VALID_VOUCHERS[code].discount;
+            feedback.textContent = `✅ Na-apply! ${VALID_VOUCHERS[code].label} diskwento.`;
+            feedback.className = 'voucher-feedback success';
+            
+            if (discountRow) discountRow.style.display = '';
+            showToast('Voucher na-apply!', 'success');
+        } else {
+            voucherDiscount = 0;
+            feedback.textContent = '❌ Hindi valid ang voucher code.';
+            feedback.className = 'voucher-feedback error';
+            if (discountRow) discountRow.style.display = 'none';
         }
+        updateTotal();
+    }
 
-        // ─── Protection Toggle ────────────────────────────────────────────
-        function updateProtection() {
-            const on = document.getElementById('protection-toggle').checked;
-            currentProtection = on ? BASE_PROTECTION : 0;
-            document.getElementById('protection-display').textContent = '₱' + currentProtection.toFixed(2);
-            updateTotal();
-            showToast(on ? 'Proteksyon ng produkto naka-on.' : 'Proteksyon ng produkto naka-off.', on ? 'success' : 'warning');
+    // ─── Address Handling ──────────────────────────────────────────────
+    function toggleAddressForm() {
+        document.getElementById('address-form').classList.toggle('open');
+    }
+
+    function saveAddress() {
+        const fields = ['addr-name', 'addr-phone', 'addr-street', 'addr-city', 'addr-province', 'addr-zip'];
+        const isComplete = fields.every(id => document.getElementById(id).value.trim() !== '');
+
+        if (!isComplete) {
+            showToast('Punan ang lahat ng field.', 'warning');
+            return;
         }
+        showToast('Na-save ang address!', 'success');
+        toggleAddressForm();
+    }
 
-        // ─── Shipping Select ──────────────────────────────────────────────
-        function updateShipping() {
-            const sel = document.getElementById('shipping-select');
-            const opt = sel.options[sel.selectedIndex];
-            currentShippingFee = parseFloat(opt.dataset.fee);
-            document.getElementById('shipping-fee-display').textContent = '₱' + currentShippingFee.toFixed(2);
-            document.getElementById('shipping-eta').textContent = opt.dataset.label;
-            updateTotal();
-            showToast('Nabago ang paraan ng pagpapadala.', 'info');
+    // ─── Order Confirmation Modal ──────────────────────────────────────
+    function openOrderModal() {
+        const total = BASE_SUBTOTAL + currentShippingFee + currentProtection - voucherDiscount;
+        const format = { minimumFractionDigits: 2 };
+
+        document.getElementById('ms-subtotal').textContent   = '₱' + BASE_SUBTOTAL.toLocaleString(undefined, format);
+        document.getElementById('ms-shipping').textContent   = '₱' + currentShippingFee.toLocaleString(undefined, format);
+        document.getElementById('ms-protection').textContent = '₱' + currentProtection.toLocaleString(undefined, format);
+        document.getElementById('ms-payment').textContent    = paymentLabels[selectedPayment];
+        document.getElementById('ms-total').textContent      = '₱' + total.toLocaleString(undefined, format);
+        
+        const discRow = document.getElementById('ms-discount-row');
+        if (voucherDiscount > 0) {
+            document.getElementById('ms-discount').textContent = '-₱' + voucherDiscount.toLocaleString(undefined, format);
+            discRow.style.display = '';
+        } else {
+            discRow.style.display = 'none';
         }
+        
+        document.getElementById('order-modal').classList.add('active');
+    }
 
-        // ─── Payment Method ───────────────────────────────────────────────
-        function selectPayment(btn, method) {
-            document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            selectedPayment = method;
-            showToast('Paraan ng bayad: ' + paymentLabels[method], 'info');
-        }
+    function closeOrderModal() {
+        document.getElementById('order-modal').classList.remove('active');
+    }
 
-        // ─── Voucher ──────────────────────────────────────────────────────
-        const VALID_VOUCHERS = {
-            'TINDAHAN10': { discount: 10,  label: '₱10 off' },
-            'SUKI20':     { discount: 20,  label: '₱20 off' },
-            'MABUHAY50':  { discount: 50,  label: '₱50 off' },
+    // ─── Final Place Order API Call ────────────────────────────────────
+    async function placeOrder() {
+        const btn = document.getElementById('confirm-order-btn');
+        btn.textContent = '⏳ Nagpo-proseso...';
+        btn.disabled = true;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const street = document.getElementById('addr-street').value;
+        const city = document.getElementById('addr-city').value;
+        const shippingAddr = street && city ? `${street}, ${city}` : 'Default Address';
+
+        const payload = {
+            payment_method: selectedPayment.toUpperCase(),
+            shipping_address: shippingAddr,
+            product_id: urlParams.get('product_id'),
+            quantity: urlParams.get('quantity') || 1
         };
 
-        function applyVoucher() {
-            const code     = document.getElementById('voucher-code').value.trim().toUpperCase();
-            const feedback = document.getElementById('voucher-feedback');
+        try {
+            const response = await fetch('/api/orders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(payload)
+            });
 
-            if (!code) {
-                feedback.textContent = 'Ilagay ang voucher code.';
-                feedback.className = 'voucher-feedback error';
-                return;
-            }
-
-            if (VALID_VOUCHERS[code]) {
-                voucherDiscount = VALID_VOUCHERS[code].discount;
-                feedback.textContent = '✅ Na-apply! ' + VALID_VOUCHERS[code].label + ' diskwento.';
-                feedback.className = 'voucher-feedback success';
-                document.getElementById('summary-discount').textContent = '-₱' + voucherDiscount.toFixed(2);
-                document.getElementById('summary-discount-row').style.display = '';
-                document.getElementById('ms-discount-row').style.display = '';
-                showToast('Voucher na-apply! ' + VALID_VOUCHERS[code].label, 'success');
+            if (response.ok) {
+                showToast('🎉 Matagumpay na na-order!', 'success');
+                setTimeout(() => {
+                    window.location.href = "{% url 'purchase_history' %}";
+                }, 1500);
             } else {
-                voucherDiscount = 0;
-                feedback.textContent = '❌ Hindi valid ang voucher code.';
-                feedback.className = 'voucher-feedback error';
-                document.getElementById('summary-discount-row').style.display = 'none';
+                const err = await response.json();
+                showToast('Error: ' + (err.error || 'Hindi ma-proseso.'), 'error');
+                btn.textContent = '✔ Oo, Mag-order Na';
+                btn.disabled = false;
             }
-            updateTotal();
-        }
-
-        // ─── Address Form ─────────────────────────────────────────────────
-        function toggleAddressForm() {
-            const form = document.getElementById('address-form');
-            form.classList.toggle('open');
-        }
-
-        function saveAddress() {
-            const name     = document.getElementById('addr-name').value.trim();
-            const phone    = document.getElementById('addr-phone').value.trim();
-            const street   = document.getElementById('addr-street').value.trim();
-            const city     = document.getElementById('addr-city').value.trim();
-            const province = document.getElementById('addr-province').value.trim();
-            const zip      = document.getElementById('addr-zip').value.trim();
-
-            if (!name || !phone || !street || !city || !province || !zip) {
-                showToast('Punan ang lahat ng field ng address.', 'warning');
-                return;
-            }
-
-            // In production: send to server via fetch/POST
-            showToast('Na-save ang address!', 'success');
-            toggleAddressForm();
-        }
-
-        // ─── Order Modal ──────────────────────────────────────────────────
-        function openOrderModal() {
-            const total = BASE_SUBTOTAL + currentShippingFee + currentProtection - voucherDiscount;
-            document.getElementById('ms-subtotal').textContent   = '₱' + BASE_SUBTOTAL.toFixed(2);
-            document.getElementById('ms-shipping').textContent   = '₱' + currentShippingFee.toFixed(2);
-            document.getElementById('ms-protection').textContent = '₱' + currentProtection.toFixed(2);
-            document.getElementById('ms-payment').textContent    = paymentLabels[selectedPayment];
-            document.getElementById('ms-total').textContent      = '₱' + total.toFixed(2);
-            if (voucherDiscount > 0) {
-                document.getElementById('ms-discount').textContent  = '-₱' + voucherDiscount.toFixed(2);
-                document.getElementById('ms-discount-row').style.display = '';
-            }
-            document.getElementById('order-modal').classList.add('active');
-        }
-
-        function closeOrderModal() {
-            document.getElementById('order-modal').classList.remove('active');
-        }
-
-        document.getElementById('order-modal').addEventListener('click', e => {
-            if (e.target === e.currentTarget) closeOrderModal();
-        });
-
-        // ─── Place Order ──────────────────────────────────────────────────
-        async function placeOrder() {
-    const btn = document.getElementById('confirm-order-btn');
-    btn.textContent = '⏳ Nagpo-proseso...';
-    btn.disabled = true;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Kunin ang address details mula sa form o display
-    const shippingAddr = `${document.getElementById('addr-street').value}, ${document.getElementById('addr-city').value}, ${document.getElementById('addr-province').value}`;
-
-    const payload = {
-    payment_method: selectedPayment.toUpperCase(),
-    shipping_address: shippingAddr,
-    product_id: urlParams.get('product_id'), // Dapat tugma sa backend data.get()
-    quantity: urlParams.get('quantity') || 1,
-    // Note: Mas safe i-compute ang total sa backend para hindi madaya ng user
-};
-    try {
-        const response = await fetch('/api/orders/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            closeOrderModal();
-            showToast('🎉 Matagumpay na na-order!', 'success');
-            
-            // Redirect sa Purchase History pagkatapos ng 1.5 seconds
-            setTimeout(() => {
-                window.location.href = "{% url 'purchase_history' %}";
-            }, 1500);
-        } else {
-            const err = await response.json();
-            showToast('Error: ' + (err.error || 'Hindi ma-proseso ang order.'), 'error');
-            btn.textContent = '✔ Oo, Mag-order Na';
+        } catch (error) {
+            showToast('May error sa network.', 'error');
             btn.disabled = false;
         }
-    } catch (error) {
-        console.error("Order Error:", error);
-        showToast('May error sa network. Subukan ulit.', 'error');
-        btn.textContent = '✔ Oo, Mag-order Na';
-        btn.disabled = false;
     }
-}
 
-        // ─── Cookie Helper ────────────────────────────────────────────────
-        function getCookie(name) {
-            let val = null;
-            if (document.cookie) {
-                document.cookie.split(';').forEach(c => {
-                    c = c.trim();
-                    if (c.startsWith(name + '=')) val = decodeURIComponent(c.substring(name.length + 1));
-                });
-            }
-            return val;
+    function getCookie(name) {
+        let val = null;
+        if (document.cookie) {
+            document.cookie.split(';').forEach(c => {
+                c = c.trim();
+                if (c.startsWith(name + '=')) val = decodeURIComponent(c.substring(name.length + 1));
+            });
         }
+        return val;
+    }
 
-        // Init
-        updateTotal();
-    </script>
+    // Initial Run
+    updateTotal();
+</script>
 
     {% csrf_token %}
 </body>
