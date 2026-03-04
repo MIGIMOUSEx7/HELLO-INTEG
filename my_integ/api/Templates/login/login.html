@@ -522,22 +522,39 @@
                     <p class="subtitle">Ilagay ang iyong mga kredensyal</p>
                 </div>
                 
-                <form method="POST">
-                    {% csrf_token %}
-                    <div class="input-group">
-                        <label class="input-label">Username</label>
-                        <input type="text" name="user" placeholder="Ilagay ang username" autocomplete="off">
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label">Password</label>
-                        <input type="password" name="password" placeholder="Ilagay ang password">
-                    </div>
+               <form method="POST" autocomplete="off">
+    {% csrf_token %}
+    <div class="input-group">
+        <label class="input-label">Username</label>
+        <input type="text" name="username" placeholder="Ilagay ang username" required autocomplete="off">
+    </div>
 
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="err">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
+                    <div class="input-group">
+    <label class="input-label">Password</label>
+    <div style="position: relative; display: flex; align-items: center;">
+        <input type="password" name="password" id="loginPassword" placeholder="Ilagay ang password" autocomplete="new-password" style="padding-right: 46px;">
+        <button type="button" onclick="togglePassword('loginPassword', this)"
+            style="position:absolute; right:13px; background:none; border:none; cursor:pointer;
+                   font-size:18px; color:var(--text-light); padding:4px; line-height:1;
+                   transition: color 0.2s, transform 0.2s;"
+            onmouseover="this.style.color='var(--primary)'; this.style.transform='scale(1.15)'"
+            onmouseout="this.style.color='var(--text-light)'; this.style.transform=''"
+            aria-label="Show password">👁️</button> 
+    </div>
+</div>
+
+                                    {% if request.method == 'GET' and messages %}
+                    {% for message in messages %}
+                        <div class="err">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                
+                                    {% if request.method == 'POST' and messages %}
+                    {% for message in messages %}
+                        <div class="err">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
                     
                     <button type="submit">Mag-Login</button>
                 </form>
@@ -568,6 +585,19 @@
             }
         }
 
+
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+                btn.setAttribute('aria-label', 'Hide password');
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+                btn.setAttribute('aria-label', 'Show password');
+            }
+        }
         const inputs = document.querySelectorAll('input');
         inputs.forEach(input => {
             input.addEventListener('focus', function() {
@@ -577,6 +607,8 @@
                 this.style.transform = '';
             });
         });
+
+        
     </script>
 </body>
 </html>
