@@ -1,13 +1,8 @@
 from rest_framework import serializers
 from .models import (
     Cart, CartItem, Product, Order, OrderItem, User, Category, Store, 
-    Voucher, Shipment, Address, Payment, Review
+    Voucher, Shipment, Address, Payment, Review, ChatMessage
 )
-from rest_framework.decorators import action
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated 
-
-# --- Basic Serializers ---
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -44,7 +39,17 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = Payment
         fields = '__all__'
 
-# --- Nested Serializers ---
+class ChatMessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.ReadOnlyField(source='sender.username')
+    receiver_name = serializers.ReadOnlyField(source='receiver.username')
+    sender = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = ChatMessage
+        fields = [
+            'id', 'sender', 'sender_name', 'receiver', 
+            'receiver_name', 'store', 'message', 'timestamp', 'is_read'
+        ]
 
 class ProductSerializer(serializers.ModelSerializer):
     store = StoreSerializer(read_only=True)
@@ -52,8 +57,6 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
-
-# --- ORDER SYSTEM ---
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
@@ -77,20 +80,15 @@ class OrderSerializer(serializers.ModelSerializer):
     def get_formatted_date(self, obj):
         return obj.order_date.strftime("%b %d, %Y")
 
-# --- CART SYSTEM (FIXED) ---
-
 class CartItemSerializer(serializers.ModelSerializer):
-    # 1. WRITE: Expects an ID (e.g., "product": 5) from the frontend
     product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
 
     class Meta:
         model = CartItem
         fields = ['id', 'product', 'quantity']
 
-    # 2. READ: Swaps the ID for the full Product Object (Image, Name, Price)
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # Verify product exists before serializing to prevent crashes
         if instance.product:
             representation['product'] = ProductSerializer(instance.product).data
         return representation
@@ -102,40 +100,7 @@ class CartSerializer(serializers.ModelSerializer):
         model = Cart
         fields = ['id', 'user', 'created_at', 'items']
 
-
-class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().order_by('-order_date')
-    serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
-
-    # ... (existing create and partial_update methods) ...
-
-    @action(detail=True, methods=['post'], url_path='submit-review')
-    def submit_review(self, request, pk=None):
-        order = self.get_object()
-        
-        # Kunin ang unang product sa order bilang default target ng review
-        first_item = order.items.first()
-        if not first_item:
-            return Response({"error": "No items found in this order."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # I-prepare ang data para sa serializer
-        review_data = {
-            'order': order.id,
-            'product': first_item.product.id,
-            'rating': request.data.get('rating'),
-            'comment': request.data.get('text') # 'text' ang key sa JS modal mo
-        }
-
-        serializer = ReviewSerializer(data=review_data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# api/serializers.py
-
-class ReviewSerializer(serializers.ModelSerializer): # <--- Siguraduhin ang spelling nito
+class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ['id', 'order', 'product', 'rating', 'comment']

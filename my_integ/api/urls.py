@@ -4,7 +4,6 @@ from . import views
 
 router = DefaultRouter()
 
-# Register each ViewSet ONCE only
 router.register(r'products',   views.ProductViewSet)
 router.register(r'users',      views.UserViewSet)
 router.register(r'categories', views.CategoryViewSet)
@@ -14,12 +13,13 @@ router.register(r'shipments',  views.ShipmentViewSet)
 router.register(r'addresses',  views.AddressViewSet)
 router.register(r'payments',   views.PaymentViewSet)
 router.register(r'carts',      views.CartViewSet)
-router.register(r'orders',     views.OrderViewSet,     basename='order')
-router.register(r'reviews',    views.ReviewViewSet,    basename='review')
-router.register(r'cartitems',  views.CartItemViewSet,  basename='cartitem')
-
+router.register(r'orders',     views.OrderViewSet,      basename='order')
+router.register(r'reviews',    views.ReviewViewSet,     basename='review')
+router.register(r'cartitems',  views.CartItemViewSet,   basename='cartitem')
+router.register(r'messages',   views.ChatMessageViewSet, basename='chatmessage')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('checkout/pay/<int:pk>/', views.checkout_view, name='checkout_pay'),
+    path('checkout/pay/<int:pk>/', views.checkout_pay, name='checkout_pay'),
+    path('seller/messages/', views.seller_message_center, name='seller_messages'),
 ]
