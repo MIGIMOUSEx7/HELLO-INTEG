@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# --- User & Location ---
 class Address(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -17,7 +16,6 @@ class Address(models.Model):
     def __str__(self):
         return f"{self.full_name} - {self.city}"
 
-# --- Product Management ---
 class Category(models.Model):
     id = models.BigAutoField(primary_key=True)
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
@@ -35,6 +33,10 @@ class Store(models.Model):
     store_name = models.CharField(max_length=100)
     store_description = models.TextField()
     rating = models.FloatField(default=0.0)
+    
+    profile_picture = models.ImageField(upload_to='stores/profiles/', null=True, blank=True)
+    banner_image = models.ImageField(upload_to='stores/banners/', null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -55,7 +57,6 @@ class Product(models.Model):
     def __str__(self):
         return f"{self.name} (Stock: {self.stock_quantity})"
 
-# --- Sales & Logistics ---
 class Voucher(models.Model):
     id = models.BigAutoField(primary_key=True)
     code = models.CharField(max_length=100)
@@ -92,29 +93,21 @@ class Payment(models.Model):
     def __str__(self):
         return f"{self.method}: {self.amount}"
 
-# --- NEW ORDER STRUCTURE ---
-
 class Order(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE) 
     address = models.ForeignKey(Address, on_delete=models.PROTECT, null=True, blank=True)
     payment = models.ForeignKey(Payment, on_delete=models.PROTECT, null=True, blank=True)
     shipment = models.ForeignKey(Shipment, on_delete=models.SET_NULL, null=True, blank=True)
-
-    # Note: 'product' and 'quantity' are removed from here.
-    # They are now in the OrderItem class below.
-
     payment_method = models.CharField(max_length=50, default="COD")
     shipping_address = models.TextField(default="Default Address")
-    
     order_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=100, default="Pending")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return f"Order #{self.id} by {self.user.username} (Total: {self.total_amount})"
+        return f"Order #{self.id} by {self.user.username}"
 
-# CRITICAL FIX: This class handles the items inside the order
 class OrderItem(models.Model):
     id = models.BigAutoField(primary_key=True)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
@@ -125,7 +118,6 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
 
-# --- Shopping Cart ---
 class Cart(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')

@@ -14,7 +14,6 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .forms import RegisterForm
-# CRITICAL: Added OrderItem to imports
 from .models import (
     Product, Order, OrderItem, User, Category, Store, 
     Voucher, Shipment, Address, Payment,
@@ -64,6 +63,20 @@ def logout_view(request):
 @login_required(login_url='login')
 def home(request):
     return render(request, 'shop.html')
+
+# 👇 ADDED: STORE PROFILE VIEW 👇
+def store_profile(request, store_id):
+    # Fetch the specific store, or return a 404 error if it doesn't exist
+    store = get_object_or_404(Store, id=store_id)
+    
+    # Fetch ONLY the products linked to this store
+    products = Product.objects.filter(store=store)
+    
+    context = {
+        'store': store,
+        'products': products
+    }
+    return render(request, 'store_profile.html', context)
 
 @login_required(login_url='login')
 def view_cart(request):

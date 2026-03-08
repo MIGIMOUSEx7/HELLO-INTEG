@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ store.name }} | ShopeeClone</title>
+    <link rel="stylesheet" href="{% static 'css/store.css' %}">
+</head>
+<body>
+
+    <div class="store-banner">
+        {% if store.profile_picture %}
+            <img src="{{ store.profile_picture.url }}" alt="Logo" class="store-logo">
+        {% else %}
+            <div class="store-logo" style="display:flex; align-items:center; justify-content:center; color:black; font-size:12px; text-align:center;">No Logo</div>
+        {% endif %}
+        
+        <div class="store-info">
+            <h1>{{ store.name }}</h1>
+            <div style="color: #ccc; font-size: 14px;">⭐ 4.9/5.0 Ratings | 1.2k Followers</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3 style="color: #666; margin-bottom: 20px;">Products ({{ products|length }})</h3>
+        
+        <div class="grid">
+            {% for product in products %}
+                <div class="card">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                        <div style="height: 200px; background:#eee;"></div>
+                    {% endif %}
+                    <div class="card-body">
+                        <p style="font-size: 14px; height: 40px; overflow: hidden;">{{ product.name }}</p>
+                        <p class="card-price">₱{{ product.price }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <p>No products found for this store.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</body>
+</html>

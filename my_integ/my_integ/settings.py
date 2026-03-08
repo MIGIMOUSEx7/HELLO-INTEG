@@ -3,8 +3,6 @@ import sys
 import pymysql
 import os
 
-# --- DATABASE DRIVER INITIALIZATION ---
-# This allows Django to use PyMySQL as the MySQL driver
 pymysql.install_as_MySQLdb()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,7 +13,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-# Application definition
 INSTALLED_APPS = [
     'rest_framework',
     'corsheaders', 
@@ -59,7 +56,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'my_integ.wsgi.application'
 
-# --- DATABASE CONFIGURATION ---
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -75,23 +71,18 @@ DATABASES = {
     }
 }
 
-# --- CRITICAL FIX FOR MARIADB ---
-# 1. Bypass the version support check for older MariaDB versions
 from django.db.backends.base.base import BaseDatabaseWrapper
 BaseDatabaseWrapper.check_database_version_supported = lambda self: None
 
-# 2. Fix the "RETURNING" syntax error for Django 6.0 + MariaDB 10.4-10.5
 from django.db.backends.mysql.features import DatabaseFeatures
 DatabaseFeatures.can_return_rows_from_bulk_insert = property(lambda self: False)
 DatabaseFeatures.can_return_columns_from_insert = property(lambda self: False)
-# -------------------------------------
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny', # Allows public access to Shop page
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # FIXED: Use SessionAuth so it respects your Login page (No more popup!)
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_FILTER_BACKENDS': [
@@ -107,12 +98,12 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# --- STATIC FILES ---
-STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- MEDIA FILES (Images) ---
-# This allows product images to be displayed
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
 MEDIA_URL = '/media/'
-# Using pathlib syntax (/) to match your BASE_DIR definition
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
