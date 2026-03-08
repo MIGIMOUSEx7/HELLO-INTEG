@@ -7,16 +7,14 @@
     <title>Shopping Cart | Shopee Clone</title>
     <link rel="stylesheet" href="{% static 'css/cart.css' %}">
 </head>
-<body>
+<body data-theme="light">
 
     <div class="bg-shapes">
         <div class="shape shape1"></div>
         <div class="shape shape2"></div>
     </div>
 
-    <div style="display:none;">
-        {% csrf_token %}
-    </div>
+    <div style="display:none;">{% csrf_token %}</div>
 
     <nav class="navbar">
         <div class="navbar-top">
@@ -41,13 +39,14 @@
     </nav>
 
     <div class="container">
+        <!-- Cart Table Header -->
         <div class="cart-header">
             <input type="checkbox" id="select-all">
-            <div>Product</div>
-            <div>Unit Price</div>
-            <div style="text-align:center;">Quantity</div>
-            <div style="text-align:right;">Total Price</div>
-            <div style="text-align:right;">Actions</div>
+            <div>Produkto</div>
+            <div>Presyo</div>
+            <div style="text-align:center;">Dami</div>
+            <div style="text-align:right;">Kabuuan</div>
+            <div style="text-align:right;">Aksyon</div>
         </div>
 
         {% if cart_items %}
@@ -64,7 +63,7 @@
                     <div class="product-info">
                         <div class="product-img">
                             {% if item.product.image %}
-                                <img src="{{ item.product.image.url }}" alt="Product">
+                                <img src="{{ item.product.image.url }}" alt="Produkto">
                             {% else %}
                                 <span>No Img</span>
                             {% endif %}
@@ -96,6 +95,7 @@
         {% endif %}
     </div>
 
+    <!-- Sticky Checkout Footer -->
     <div class="checkout-footer">
         <div class="footer-content">
             <div class="footer-left">
@@ -133,6 +133,7 @@
             if (res.ok) location.reload();
         }
 
+        // ─── Remove Item ──────────────────────────────────────────────────
         async function removeItem(itemId) {
             if (!confirm('Remove item?')) return;
             const res = await fetch(`/api/cartitems/${itemId}/`, {
@@ -142,17 +143,34 @@
             if (res.ok) location.reload();
         }
 
+        // ─── Select All ───────────────────────────────────────────────────
+        document.getElementById('select-all')?.addEventListener('change', function () {
+            document.querySelectorAll('.item-checkbox, .store-checkbox').forEach(cb => cb.checked = this.checked);
+            document.getElementById('footer-select-all').checked = this.checked;
+        });
+
+        document.getElementById('footer-select-all')?.addEventListener('change', function () {
+            document.querySelectorAll('.item-checkbox, .store-checkbox').forEach(cb => cb.checked = this.checked);
+            document.getElementById('select-all').checked = this.checked;
+        });
+
+        document.querySelectorAll('.store-checkbox').forEach(storeCb => {
+            storeCb.addEventListener('change', function () {
+                const group = this.closest('.store-group');
+                group.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = this.checked);
+            });
+        });
+
+        // ─── Cookie Helper ────────────────────────────────────────────────
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                document.cookie.split(';').forEach(cookie => {
+                    cookie = cookie.trim();
+                    if (cookie.startsWith(name + '=')) {
                         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
                     }
-                }
+                });
             }
             return cookieValue;
         }

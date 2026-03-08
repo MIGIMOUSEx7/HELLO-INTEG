@@ -23,63 +23,92 @@
     <div class="main-content">
         <div class="content-wrapper">
             <div class="welcome-side">
-                <h1>Welcome Back!</h1>
-                <p>Log in to access exclusive deals and your personalized shopping experience</p>
-                
+                <div class="welcome-badge">🇵🇭 Mabuhay!</div>
+                <h1>Balik ka na, <span>suki!</span></h1>
+                <p>Mag-login para sa iyong personalized na karanasan sa pamimili at mga eksklusibong deals</p>
+
+                <div class="vintage-divider"><span>✦</span></div>
+
                 <div class="features">
                     <div class="feature-item">
                         <div class="feature-icon">🛍️</div>
                         <div class="feature-text">
-                            <h3>Track Your Orders</h3>
-                            <p>Real-time updates on all purchases</p>
+                            <h3>Subaybayan ang Orders</h3>
+                            <p>Real-time updates sa lahat ng binili mo</p>
                         </div>
                     </div>
-                    
                     <div class="feature-item">
                         <div class="feature-icon">💰</div>
                         <div class="feature-text">
-                            <h3>Exclusive Deals</h3>
-                            <p>Members-only discounts & offers</p>
+                            <h3>Eksklusibong Deals</h3>
+                            <p>Members-only na diskwento at alok</p>
                         </div>
                     </div>
-                    
                     <div class="feature-item">
                         <div class="feature-icon">⭐</div>
                         <div class="feature-text">
-                            <h3>Saved Favorites</h3>
-                            <p>Access your wishlist anywhere</p>
+                            <h3>Mga Paboritong Item</h3>
+                            <p>I-access ang iyong wishlist kahit saan</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="login-box">
-                <h2>Log In</h2>
-                <p class="subtitle">Enter your credentials to continue</p>
+                <div class="login-header">
+                    <h2>Mag-Login</h2>
+                    <p class="subtitle">Ilagay ang iyong mga kredensyal</p>
+                </div>
                 
-                <form method="POST">
-                    {% csrf_token %}
-                    <input type="text" name="username" placeholder="Username" required>
-                    <input type="password" name="password" placeholder="Password" required>
+               <form method="POST" autocomplete="off">
+    {% csrf_token %}
+    <div class="input-group">
+        <label class="input-label">Username</label>
+        <input type="text" name="username" placeholder="Ilagay ang username" required autocomplete="off">
+    </div>
 
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="err">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
+                    <div class="input-group">
+    <label class="input-label">Password</label>
+    <div style="position: relative; display: flex; align-items: center;">
+        <input type="password" name="password" id="loginPassword" placeholder="Ilagay ang password" autocomplete="new-password" style="padding-right: 46px;">
+        <button type="button" onclick="togglePassword('loginPassword', this)"
+            style="position:absolute; right:13px; background:none; border:none; cursor:pointer;
+                   font-size:18px; color:var(--text-light); padding:4px; line-height:1;
+                   transition: color 0.2s, transform 0.2s;"
+            onmouseover="this.style.color='var(--primary)'; this.style.transform='scale(1.15)'"
+            onmouseout="this.style.color='var(--text-light)'; this.style.transform=''"
+            aria-label="Show password">👁️</button> 
+    </div>
+</div>
+
+                                    {% if request.method == 'GET' and messages %}
+                    {% for message in messages %}
+                        <div class="err">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                
+                                    {% if request.method == 'POST' and messages %}
+                    {% for message in messages %}
+                        <div class="err">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
                     
-                    <button type="submit">LOG IN</button>
+                    <button type="submit">Mag-Login</button>
                 </form>
 
-                <div class="divider">OR</div>
+                <div class="divider">o kaya</div>
 
                 <div class="actions">
-                    New to ShopeeClone? 
-                    <a href="{% url 'register' %}" class="signup-link">Sign Up</a>
+                    Bago sa Tindahan? 
+                    <a href="{% url 'register' %}" class="signup-link">Mag-Sign Up</a>
                 </div>
             </div>
+
         </div>
     </div>
+
+    <div class="footer-strip"></div>
 
     <script>
         function toggleTheme() {

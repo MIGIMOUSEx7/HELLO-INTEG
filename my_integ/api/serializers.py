@@ -1,8 +1,11 @@
 from rest_framework import serializers
 from .models import (
     Cart, CartItem, Product, Order, OrderItem, User, Category, Store, 
-    Voucher, Shipment, Address, Payment
+    Voucher, Shipment, Address, Payment, Review
 )
+from rest_framework.decorators import action
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated 
 
 # --- Basic Serializers ---
 
@@ -98,3 +101,45 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ['id', 'user', 'created_at', 'items']
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all().order_by('-order_date')
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    # ... (existing create and partial_update methods) ...
+
+    @action(detail=True, methods=['post'], url_path='submit-review')
+    def submit_review(self, request, pk=None):
+        order = self.get_object()
+        
+        # Kunin ang unang product sa order bilang default target ng review
+        first_item = order.items.first()
+        if not first_item:
+            return Response({"error": "No items found in this order."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # I-prepare ang data para sa serializer
+        review_data = {
+            'order': order.id,
+            'product': first_item.product.id,
+            'rating': request.data.get('rating'),
+            'comment': request.data.get('text') # 'text' ang key sa JS modal mo
+        }
+
+        serializer = ReviewSerializer(data=review_data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# api/serializers.py
+
+class ReviewSerializer(serializers.ModelSerializer): # <--- Siguraduhin ang spelling nito
+    class Meta:
+        model = Review
+        fields = ['id', 'order', 'product', 'rating', 'comment']
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)

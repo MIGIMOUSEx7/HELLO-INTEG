@@ -1,29 +1,28 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db import transaction # Needed for atomic database updates
-from django.db.models import F, Sum
+from django.db import transaction
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.messages import get_messages
 
 from .forms import RegisterForm
 from .models import (
     Product, Order, OrderItem, User, Category, Store, 
-    Voucher, Shipment, Address, Payment,
-    Cart, CartItem 
+    Voucher, Shipment, Address, Payment, Cart, CartItem, Review
 )
 from .serializers import (
     ProductSerializer, OrderSerializer, UserSerializer, 
     CategorySerializer, StoreSerializer, VoucherSerializer, 
     ShipmentSerializer, AddressSerializer, PaymentSerializer,
-    CartSerializer, CartItemSerializer 
+    CartSerializer, CartItemSerializer, ReviewSerializer
 )
 
 # --- 1. AUTHENTICATION VIEWS ---
@@ -34,8 +33,7 @@ def register_view(request):
         if form.is_valid():
             new_user = form.save()
             Cart.objects.get_or_create(user=new_user)
-            username = form.cleaned_data.get('username')
-            messages.success(request, f'Account created for {username}! You can now log in.')
+            messages.success(request, f'Account created for {new_user.username}!')
             return redirect("login")
     else:
         form = RegisterForm()
@@ -45,16 +43,26 @@ def login_view(request):
     if request.method == 'POST':
         user_val = request.POST.get('username')
         pass_val = request.POST.get('password')
-        user = authenticate(request, username=user_val, password=pass_val)
-        if user is not None:
-            login(request, user)
-            return redirect('home') 
+        
+        if user_val and pass_val:
+            user = authenticate(request, username=user_val, password=pass_val)
+            if user is not None:
+                login(request, user)
+                return redirect('home') 
+            else:
+                messages.error(request, "Maling username o password.")
         else:
-            messages.error(request, "Invalid username or password")
-    return render(request, 'login/login.html')
+            messages.error(request, "Mangyaring ilagay ang iyong credentials.")
+    
+    # DITO NATIN LILINISIN PAG GET REQUEST (KASAMA ANG GALING SA LOGOUT)
+    else:
+        # Ito ang magbubura ng "stale" messages
+        list(get_messages(request)) 
 
+    return render(request, 'login/login.html')
 def logout_view(request):
     logout(request)
+    messages.info(request, "Naka-logout ka na.") 
     return redirect('login')
 
 
@@ -83,139 +91,166 @@ def view_cart(request):
     user_cart, _ = Cart.objects.get_or_create(user=request.user)
     cart_items = CartItem.objects.filter(cart=user_cart).order_by('product__store__store_name')
     cart_total = sum(item.product.price * item.quantity for item in cart_items)
-    
-    context = {
-        'cart_items': cart_items,
-        'cart_total': cart_total
-    }
-    return render(request, 'cart.html', context)
+    return render(request, 'cart.html', {'cart_items': cart_items, 'cart_total': cart_total})
 
 @login_required(login_url='login')
 def checkout_view(request):
     product_id = request.GET.get('product_id')
     quantity = int(request.GET.get('quantity', 1))
+    address = Address.objects.filter(user=request.user, is_default=True).first()
     
     if product_id:
-        # Buy Now Flow
         product = get_object_or_404(Product, id=product_id)
-        items = [{
-            'product': product,
-            'quantity': quantity,
-            'item_total': product.price * quantity
-        }]
+        items = [{'product': product, 'quantity': quantity, 'item_total': product.price * quantity}]
         merchandise_subtotal = product.price * quantity
     else:
-        # Cart Checkout Flow
         user_cart, _ = Cart.objects.get_or_create(user=request.user)
-        cart_items = CartItem.objects.filter(cart=user_cart)
-        items = cart_items
-        merchandise_subtotal = sum(item.quantity * item.product.price for item in cart_items)
+        items = CartItem.objects.filter(cart=user_cart)
+        merchandise_subtotal = sum(item.quantity * item.product.price for item in items)
 
-    shipping_fee = 115 
-    merchandise_protection = 4 
-    total_payment = merchandise_subtotal + shipping_fee + merchandise_protection
+    shipping_fee, protection = 115, 4 
+    total_payment = merchandise_subtotal + shipping_fee + protection
     
-    address = Address.objects.filter(user=request.user, is_default=True).first()
-
     context = {
-        'items': items,
-        'address': address,
-        'subtotal': merchandise_subtotal,
-        'protection': merchandise_protection,
-        'shipping_fee': shipping_fee,
-        'total_payment': total_payment
+        'items': items, 'address': address, 'subtotal': merchandise_subtotal,
+        'protection': protection, 'shipping_fee': shipping_fee, 'total_payment': total_payment
     }
-    return render(request, 'checkout.html', context)
+    return render(request, 'orders/checkout.html', context)
 
 @login_required(login_url='login')
-def purchase_history(request):
-    orders = Order.objects.filter(user=request.user).order_by('-order_date')
-    context = {'orders': orders}
-    return render(request, 'orders/PurchaseHistory.html', context)
+def checkout_pay(request, pk):
+    # 1. Kunin ang specific order
+    order = get_object_or_404(Order, pk=pk, user=request.user)
+
+    # 2. I-prepare ang items mula sa OrderItem model para lumabas sa Checkout Table
+    items = order.items.all() 
+    
+    # Reverse calculation para sa subtotal display (Total - Shipping - Protection)
+    merchandise_subtotal = order.total_amount - 119 
+
+    context = {
+        'order': order,
+        'items': items, 
+        'address': order.address,
+        'subtotal': merchandise_subtotal,
+        'shipping_fee': 115,
+        'protection': 4,
+        'total_payment': order.total_amount
+    }
+    return render(request, 'orders/checkout.html', context)
+
+@login_required(login_url='login')
+def purchase_history(request, pk=None):
+    if pk:
+        order = get_object_or_404(Order.objects.prefetch_related('items__product'), pk=pk, user=request.user)
+        return render(request, 'orders/OrderDetail.html', {'order': order})
+    
+    orders = Order.objects.filter(user=request.user).prefetch_related('items__product').order_by('-order_date')
+    return render(request, 'orders/PurchaseHistory.html', {'orders': orders})
+
+@login_required(login_url='login')
+def product_detail(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    return render(request, 'orders/product_detail.html', {'product': product})
 
 
 # --- 3. API VIEWSETS ---
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().order_by('-order_date')
     serializer_class = OrderSerializer 
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user).order_by('-order_date')
 
     def create(self, request, *args, **kwargs):
         user = request.user
         data = request.data
-        
-        # 1. Gather Items & Calculate Total
-        product_id = data.get('product') or data.get('product_id')
+        product_id = data.get('product_id') or data.get('product')
         items_to_process = []
         calculated_total = 0
 
+        user_address = Address.objects.filter(user=user, is_default=True).first()
+        if user_address:
+            formatted_address = f"{user_address.street}, {user_address.city}, {user_address.province}, {user_address.zip_code}"
+        else:
+            formatted_address = data.get('shipping_address', 'Default Address')
+
         if product_id:
-            # Case A: Buy Now (Single Item)
             try:
                 prod = Product.objects.get(id=product_id)
                 qty = int(data.get('quantity', 1))
-                items_to_process.append({'product': prod, 'quantity': qty})
-                calculated_total += prod.price * qty
+                items_to_process.append({'product': prod, 'quantity': qty, 'price': prod.price})
+                calculated_total = prod.price * qty
             except Product.DoesNotExist:
                 return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
         else:
-            # Case B: Cart Checkout (Multiple Items)
-            user_cart, _ = Cart.objects.get_or_create(user=user)
-            cart_items = CartItem.objects.filter(cart=user_cart)
-            
+            cart_items = CartItem.objects.filter(cart__user=user)
             if not cart_items.exists():
                 return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
-            
             for item in cart_items:
-                items_to_process.append({'product': item.product, 'quantity': item.quantity})
+                items_to_process.append({'product': item.product, 'quantity': item.quantity, 'price': item.product.price})
                 calculated_total += item.product.price * item.quantity
 
-        # 2. Atomic Transaction: Create Order -> Create Items -> Update Stock
         try:
             with transaction.atomic():
-                # A. Create the Parent Order
-                # We do NOT pass 'product' or 'quantity' here anymore.
                 order = Order.objects.create(
                     user=user,
-                    total_amount=calculated_total, 
-                    status='Pending',
+                    total_amount=calculated_total + 119, # Idagdag ang fees sa total
+                    status='to_pay',
                     payment_method=data.get('payment_method', 'COD'),
-                    shipping_address=data.get('shipping_address', 'Default Address')
+                    address=user_address,
+                    shipping_address=formatted_address 
                 )
                 
-                # B. Create the Children (OrderItems)
                 for item in items_to_process:
-                    product = item['product']
-                    quantity = item['quantity']
-                    
-                    if product.stock_quantity < quantity:
-                        raise ValueError(f"Not enough stock for {product.name}")
+                    if item['product'].stock_quantity < item['quantity']:
+                        raise ValueError(f"Not enough stock for {item['product'].name}")
+                    OrderItem.objects.create(order=order, product=item['product'], quantity=item['quantity'], price=item['price'])
+                    item['product'].stock_quantity -= item['quantity']
+                    item['product'].save()
 
-                    OrderItem.objects.create(
-                        order=order,
-                        product=product,
-                        quantity=quantity,
-                        price=product.price
-                    )
-                    
-                    # Deduct Stock
-                    product.stock_quantity -= quantity
-                    product.save()
-
-                # C. Clear Cart only if it was a cart checkout
                 if not product_id:
                     CartItem.objects.filter(cart__user=user).delete()
 
-        except ValueError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            serializer = self.get_serializer(order)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
-            print(f"Order Error: {e}") 
-            return Response({"error": "An error occurred processing the order."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = self.get_serializer(order)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        new_status = request.data.get('status')
+        if new_status == 'cancelled' and instance.status != 'cancelled':
+            with transaction.atomic():
+                for item in instance.items.all():
+                    item.product.stock_quantity += item.quantity
+                    item.product.save()
+                instance.status = 'cancelled'
+                instance.save()
+            return Response({'status': 'Cancelled, stock returned.'})
+        if new_status == 'completed':
+            instance.status = 'completed'
+            instance.save()
+            return Response({'status': 'Order received.'})
+        return super().partial_update(request, *args, **kwargs)
 
+    @action(detail=True, methods=['post'], url_path='submit-review')
+    def submit_review(self, request, pk=None):
+        order = self.get_object()
+        first_item = order.items.first()
+        if not first_item:
+            return Response({"error": "No products in order"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = ReviewSerializer(data={
+            'order': order.id,
+            'product': first_item.product.id,
+            'rating': request.data.get('rating'),
+            'comment': request.data.get('text')
+        }, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -227,16 +262,18 @@ class ProductViewSet(viewsets.ModelViewSet):
 class CartItemViewSet(viewsets.ModelViewSet):
     serializer_class = CartItemSerializer
     permission_classes = [IsAuthenticated]
-
     def get_queryset(self):
-        if not self.request.user.is_authenticated:
-            return CartItem.objects.none()
         user_cart, _ = Cart.objects.get_or_create(user=self.request.user)
         return CartItem.objects.filter(cart=user_cart)
-
     def perform_create(self, serializer):
         user_cart, _ = Cart.objects.get_or_create(user=self.request.user)
         serializer.save(cart=user_cart)
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        return Review.objects.filter(user=self.request.user)
 
 class UserViewSet(viewsets.ModelViewSet): queryset = User.objects.all(); serializer_class = UserSerializer
 class CategoryViewSet(viewsets.ModelViewSet): queryset = Category.objects.all(); serializer_class = CategorySerializer

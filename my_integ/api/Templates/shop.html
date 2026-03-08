@@ -8,7 +8,7 @@
     
     <link rel="stylesheet" href="{% static 'css/shop.css' %}">
 </head>
-<body>
+<body data-theme="light">
 
     <div class="bg-shapes">
         <div class="shape shape1"></div>
@@ -18,38 +18,44 @@
 
     <nav class="navbar">
         <div class="navbar-top">
-            <a href="{% url 'purchase_history' %}">📋 Purchase History</a>
-            
+            <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
             {% if user.is_authenticated %}
-                <span>👤 {{ user.username }}</span>
-                <a href="{% url 'logout' %}">Logout</a>
+                <span class="user-chip">👤 {{ user.username }}</span>
+                <a href="{% url 'logout' %}">Mag-Logout</a>
             {% else %}
                 <a href="{% url 'login' %}">Login / Sign Up</a>
             {% endif %}
+            <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
         </div>
         <div class="navbar-main">
-            <div class="logo" onclick="window.location.reload()">ShopeeClone</div>
+            <div class="logo-wrap" onclick="window.location.reload()">
+                <div class="logo">Tindahan</div>
+                <div class="logo-tagline">Ang iyong merkado</div>
+            </div>
+
             <div class="search-bar">
-                <input type="text" id="search-input" class="search-input" placeholder="Search products..." onkeyup="handleSearch(event)">
+                <input type="text" id="search-input" class="search-input" placeholder="Hanapin ang produkto..." onkeyup="handleSearch(event)">
                 <button class="search-btn" onclick="performSearch()">🔍</button>
             </div>
-            
-            <a href="{% url 'cart' %}" class="cart-link">
-                🛒
-                <span id="cart-count" class="cart-badge">0</span>
-            </a>
+
+            <div class="navbar-actions">
+                <a href="{% url 'cart' %}" class="cart-link">
+                    🛒
+                    <span id="cart-count" class="cart-badge">0</span>
+                </a>
+            </div>
         </div>
     </nav>
 
     <div class="container">
         <aside>
             <div class="sidebar-card">
-                <h4>📂 Categories</h4>
-                <div id="category-list">Loading...</div>
+                <h4><span class="h4-accent"></span>Mga Kategorya</h4>
+                <div id="category-list">Naglo-load...</div>
             </div>
             <div class="sidebar-card">
-                <h4>⭐ Top Stores</h4>
-                <div id="store-list">Loading...</div>
+                <h4><span class="h4-accent"></span>Mga Tindahan</h4>
+                <div id="store-list">Naglo-load...</div>
             </div>
         </aside>
 
@@ -58,14 +64,46 @@
         </main>
     </div>
 
+    <div class="footer-strip"></div>
+
     <div id="toast" class="toast">
         <span id="toast-icon">✅</span>
-        <span id="toast-message">Success!</span>
+        <span id="toast-message">Tagumpay!</span>
     </div>
 
     <script>
         const API_URL = "http://127.0.0.1:8000/api/";
         let allProducts = [];
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCartBadge();
+            initShop();
+        });
+
+        async function updateCartBadge() {
+            try {
+                const res = await fetch(`${API_URL}cartitems/`);
+                if (res.ok) {
+                    const items = await res.json();
+                    const badge = document.getElementById('cart-count');
+                    if (badge) badge.innerText = items.length;
+                }
+            } catch (err) {
+                console.error("Badge update error:", err);
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const btns = document.querySelectorAll('.theme-toggle-nav');
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.setAttribute('data-theme', 'light');
+                btns.forEach(b => b.textContent = '🌙 Mode');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                btns.forEach(b => b.textContent = '☀️ Mode');
+            }
+        }
 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -76,20 +114,8 @@
             setTimeout(() => { toast.style.display = 'none'; }, 3000);
         }
 
-        async function updateCartBadge() {
-            try {
-                const res = await fetch(`${API_URL}cartitems/`);
-                const items = await res.json();
-                document.getElementById('cart-count').innerText = items.length;
-            } catch (err) {
-                console.error("Badge update error:", err);
-            }
-        }
-
         async function initShop(filterQuery = "") {
             try {
-                updateCartBadge();
-
                 const [catRes, storeRes, prodRes] = await Promise.all([
                     fetch(`${API_URL}categories/`),
                     fetch(`${API_URL}stores/`),
@@ -97,7 +123,7 @@
                 ]);
 
                 const categories = await catRes.json();
-                document.getElementById('category-list').innerHTML = categories.map(c => 
+                document.getElementById('category-list').innerHTML = categories.map(c =>
                     `<div class="list-item" onclick="initShop('category=${c.id}')"><span>${c.category_name}</span><span>→</span></div>`
                 ).join('');
 
@@ -121,25 +147,29 @@
         function displayProducts(products) {
             const grid = document.getElementById('product-grid');
             if (products.length === 0) {
-                grid.innerHTML = `<div style="text-align:center; grid-column:1/-1; padding:60px; font-size:18px; color:var(--text-light);">No products found 🔍</div>`;
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-icon">🔍</span>
+                        <p>Walang produktong nahanap</p>
+                    </div>`;
                 return;
             }
             grid.innerHTML = products.map(p => {
                 const isSoldOut = p.stock_quantity <= 0;
                 return `
                     <div class="card">
-                        ${isSoldOut ? '<div class="sold-out-overlay">SOLD OUT</div>' : ''}
+                        ${isSoldOut ? '<div class="sold-out-overlay">Ubos na</div>' : ''}
                         <div class="card-image"><img src="${p.image || ''}" onerror="this.parentNode.innerHTML='📦'"></div>
                         <div class="card-body">
                             <div class="product-name">${p.name}</div>
                             <div class="product-description">${p.description}</div>
                             <div class="price-row">
                                 <div class="price">₱${parseFloat(p.price).toLocaleString()}</div>
-                                <div class="stock-badge ${isSoldOut ? 'out' : ''}">${isSoldOut ? 'Sold Out' : p.stock_quantity + ' in stock'}</div>
+                                <div class="stock-badge ${isSoldOut ? 'out' : ''}">${isSoldOut ? 'Ubos' : p.stock_quantity + ' natitira'}</div>
                             </div>
                             <div class="btn-group">
                                 <button class="cart-btn" onclick="addToCart(${p.id})" ${isSoldOut ? 'disabled' : ''}>🛒 Cart</button>
-                                <button class="order-btn" onclick="buyNow(${p.id})" ${isSoldOut ? 'disabled' : ''}>Buy Now</button>
+                                <button class="order-btn" onclick="buyNow(${p.id})" ${isSoldOut ? 'disabled' : ''}>Bilhin</button>
                             </div>
                         </div>
                     </div>`;
@@ -150,17 +180,17 @@
             try {
                 const res = await fetch(`${API_URL}cartitems/`, {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken')
                     },
                     body: JSON.stringify({ cart: 1, product: productId, quantity: 1 })
                 });
                 if (res.ok) {
-                    showToast("Added to cart!");
+                    showToast("Naidagdag sa cart!");
                     updateCartBadge();
                 } else {
-                    showToast("Failed to add", "error");
+                    showToast("Hindi naidagdag", "error");
                 }
             } catch (err) { console.error(err); }
         }
@@ -169,8 +199,8 @@
             window.location.href = `/checkout/?product_id=${productId}&quantity=1`;
         }
 
-        function handleSearch(e) { if(e.key === 'Enter') performSearch(); }
-        
+        function handleSearch(e) { if (e.key === 'Enter') performSearch(); }
+
         function performSearch() {
             const query = document.getElementById('search-input').value.toLowerCase();
             const filtered = allProducts.filter(p => p.name.toLowerCase().includes(query));
@@ -191,8 +221,6 @@
             }
             return cookieValue;
         }
-
-        initShop();
     </script>
 </body>
 </html>

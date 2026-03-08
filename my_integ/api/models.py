@@ -93,21 +93,45 @@ class Payment(models.Model):
     def __str__(self):
         return f"{self.method}: {self.amount}"
 
+# --- NEW ORDER STRUCTURE ---
+
 class Order(models.Model):
+    STATUS_CHOICES = [
+        ('to_pay', 'To Pay'),
+        ('paid', 'Paid'),
+        ('shipping', 'Shipping'),
+        ('to_receive', 'To Receive'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('return_refund', 'Return/Refund'),
+    ]
+
+    # I-define ang choices para sa payment method
+    PAYMENT_CHOICES = [
+        ('COD', 'Cash on Delivery'),
+        ('GCASH', 'GCash / e-Wallet'),
+        ('BANK', 'Online Banking'),
+        ('CARD', 'Credit / Debit Card'),
+    ]
+
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE) 
     address = models.ForeignKey(Address, on_delete=models.PROTECT, null=True, blank=True)
     payment = models.ForeignKey(Payment, on_delete=models.PROTECT, null=True, blank=True)
     shipment = models.ForeignKey(Shipment, on_delete=models.SET_NULL, null=True, blank=True)
+
+    # Note: 'product' and 'quantity' are removed from here.
+    # They are now in the OrderItem class below.
+
     payment_method = models.CharField(max_length=50, default="COD")
     shipping_address = models.TextField(default="Default Address")
     order_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=100, default="Pending")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return f"Order #{self.id} by {self.user.username}"
+        return f"Order #{self.id} by {self.user.username} (Total: {self.total_amount})"
 
+# CRITICAL FIX: This class handles the items inside the order
 class OrderItem(models.Model):
     id = models.BigAutoField(primary_key=True)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
@@ -135,3 +159,15 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
+
+class Review(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=5)
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name} ({self.rating} Stars)"

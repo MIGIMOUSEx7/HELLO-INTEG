@@ -7,31 +7,35 @@
     <title>Purchase History | Shopee Clone</title>
     <link rel="stylesheet" href="{% static 'css/history.css' %}">
 </head>
-<body>
+<body data-theme="light">
 
-    <div class="bg-shapes">
-        <div class="shape shape1"></div>
-        <div class="shape shape2"></div>
-        <div class="shape shape3"></div>
-    </div>
+    <div class="bg-pattern"></div>
+    <div class="border-strip"></div>
 
     <nav class="navbar">
         <div class="navbar-top">
-            <a href="{% url 'purchase_history' %}">📋 Purchase History</a>
+            <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Pagbili</a>
             {% if user.is_authenticated %}
-                <span>👤 {{ user.username }}</span>
-                <a href="{% url 'logout' %}">Logout</a>
+                <span class="user-chip">👤 {{ user.username }}</span>
+                <a href="{% url 'logout' %}">Mag-Logout</a>
             {% else %}
                 <a href="{% url 'login' %}">Login / Sign Up</a>
             {% endif %}
         </div>
         <div class="navbar-main">
-            <div class="logo" onclick="window.location.href='/'">ShopeeClone</div>
+            <div class="logo-wrap" onclick="window.location.href='/'">
+                <div class="logo">Tindahan</div>
+                <div class="logo-tagline">Ang iyong merkado</div>
+            </div>
             <div class="search-bar">
-                <input type="text" id="search-input" class="search-input" placeholder="Search products..." onkeyup="handleSearch(event)">
+                <input type="text" id="search-input" class="search-input" placeholder="Hanapin ang produkto..." onkeyup="handleSearch(event)">
                 <button class="search-btn" onclick="performSearch()">🔍</button>
             </div>
-            <a href="{% url 'cart' %}" class="cart-link">🛒<span id="cart-count" class="cart-badge">0</span></a>
+            
+            <a href="{% url 'cart' %}" class="cart-link">
+                🛒
+                <span id="cart-count" class="cart-badge">0</span>
+            </a>
         </div>
     </nav>
 
@@ -123,6 +127,17 @@
 
         function buyAgain(productId) {
             window.location.href = `/checkout/?product_id=${productId}&quantity=1`;
+        }
+
+        function handleSearch(event) {
+            if (event.key === 'Enter') performSearch();
+        }
+
+        function performSearch() {
+            const query = document.getElementById('search-input').value;
+            if (query) {
+                window.location.href = `/?search=${encodeURIComponent(query)}`;
+            }
         }
     </script>
 </body>
