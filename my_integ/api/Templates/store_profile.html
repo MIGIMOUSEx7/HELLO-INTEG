@@ -6,23 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ store.store_name }} | Tindahan</title>
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
-    <link rel="stylesheet" href="{% static 'css/shop.css' %}">
     <link rel="stylesheet" href="{% static 'css/store_profile.css' %}">
 </head>
-<body data-theme="light">
+<body data-theme="dark">
 
-    <div class="bg-shapes">
-        <div class="shape shape1"></div>
-        <div class="shape shape2"></div>
-        <div class="shape shape3"></div>
-    </div>
+    <div class="bg-texture"></div>
 
     <nav class="navbar">
+        <div class="woven"></div>
         <div class="navbar-top">
             <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
             {% if user.is_authenticated %}
-                <span class="user-chip">👤 {{ user.username }}</span>
-                <a href="{% url 'logout' %}">Mag-Logout</a>
+                <div class="user-dropdown-wrap">
+                    <a class="user-chip" tabindex="0">👤 {{ user.username }} ▾</a>
+                    <div class="user-dropdown">
+                        <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
+                        <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
+                    </div>
+                </div>
             {% else %}
                 <a href="{% url 'login' %}">Login / Sign Up</a>
             {% endif %}
@@ -34,111 +35,140 @@
                 <div class="logo-tagline">Ang iyong merkado</div>
             </div>
             <div class="search-bar">
-                <input type="text" id="search-input" class="search-input"
-                       placeholder="Hanapin ang produkto..." onkeyup="handleSearch(event)">
+                <input type="text" id="search-input" class="search-input" placeholder="Hanapin sa tindahang ito...">
                 <button class="search-btn" onclick="performSearch()">🔍</button>
             </div>
             <div class="navbar-actions">
                 <a href="{% url 'cart' %}" class="cart-link">
-                    🛒
-                    <span id="cart-count" class="cart-badge">0</span>
+                    🛒 <span id="cart-count" class="cart-badge">0</span>
                 </a>
             </div>
         </div>
     </nav>
 
-    <div class="store-banner"
-         {% if store.banner_image %}
-         style="background-image: linear-gradient(rgba(238,77,45,0.65), rgba(180,40,10,0.82)), url('{{ store.banner_image.url }}'); background-size: cover; background-position: center;"
-         {% endif %}>
+    <!-- ── Store Banner ── -->
+    <section class="store-banner"
+        {% if store.banner_image %}
+        style="background-image: linear-gradient(160deg, rgba(26,12,5,0.38) 0%, rgba(26,12,5,0.88) 100%), url('{{ store.banner_image.url }}');"
+        {% endif %}>
         <div class="banner-content">
-            <div class="store-avatar">
+            <div class="store-avatar-lg">
                 {% if store.profile_picture %}
-                    <img src="{{ store.profile_picture.url }}" alt="{{ store.store_name }}">
+                    <img src="{{ store.profile_picture }}" alt="{{ store.store_name }}">
                 {% else %}
                     🏪
                 {% endif %}
             </div>
-            <div class="store-info">
-                <h1 class="store-title">{{ store.store_name }}</h1>
-                <div class="store-stats">
-                    <span>⭐ {{ store.rating|default:"0.0" }} Ratings</span>
-                    <span class="stat-sep">|</span>
+            <div class="store-profile-info">
+                <h1 class="store-profile-name">{{ store.store_name }}</h1>
+                <div class="store-profile-stats">
+                    <span>⭐ {{ store.rating|default:"5.0" }} Ratings</span>
+                    <div class="stat-divider"></div>
                     <span>📦 {{ products|length }} Produkto</span>
-                    <span class="stat-sep">|</span>
+                    <div class="stat-divider"></div>
                     <span>👥 1.2k Followers</span>
                 </div>
-                <div class="store-actions">
-                    <button class="btn-follow">+ Sundan</button>
-                    <button class="btn-chat-store"
+            </div>
+            <div class="store-profile-actions">
+                <button class="btn btn-primary">+ Sundan</button>
+                <button class="btn-store-chat"
                         onclick="toggleChat('{{ store.id }}', '{{ store.store_name|escapejs }}', '{{ store.user.id }}')">
-                        💬 Makipag-chat
-                    </button>
-                </div>
+                    💬 Makipag-chat
+                </button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="container store-container">
-        <main>
-            <div class="store-products-header">
-                <h3>Mga Produkto
-                    <span class="product-count-badge">{{ products|length }}</span>
-                </h3>
+    <!-- ── Main Layout ── -->
+    <div class="container store-container layout-2col">
+
+        <main class="store-main">
+            <div class="store-section-title">
+                Mga Produkto
+                <span class="badge badge-gold">{{ products|length }}</span>
             </div>
 
             <div class="product-grid">
                 {% for product in products %}
                 <div class="card" onclick="window.location.href='/products/{{ product.id }}/'">
+                    {% if product.stock_quantity <= 0 %}
+                        <div class="sold-out-overlay">UBOS NA</div>
+                    {% endif %}
                     <div class="card-image">
                         {% if product.image %}
                             <img src="{{ product.image.url }}" alt="{{ product.name }}">
                         {% else %}
-                            📦
+                            <div style="font-size: 40px; opacity: 0.4;">📦</div>
                         {% endif %}
                     </div>
                     <div class="card-body">
                         <div class="product-name">{{ product.name }}</div>
                         <div class="price-row">
                             <div class="price">₱{{ product.price }}</div>
-                            <div class="stock-badge {% if product.stock_quantity <= 0 %}out{% endif %}">
+                            <span class="stock-badge {% if product.stock_quantity <= 0 %}out{% endif %}">
                                 {% if product.stock_quantity <= 0 %}Ubos{% else %}{{ product.stock_quantity }} natitira{% endif %}
-                            </div>
+                            </span>
                         </div>
                         <div class="btn-group">
-                            {% if product.stock_quantity <= 0 %}
-                                <button class="cart-btn" disabled>🛒 Cart</button>
-                                <button class="order-btn" disabled>Bilhin</button>
-                            {% else %}
-                                <button class="cart-btn" onclick="event.stopPropagation(); addToCart('{{ product.id }}')">🛒 Cart</button>
-                                <button class="order-btn" onclick="event.stopPropagation(); buyNow('{{ product.id }}')">Bilhin</button>
-                            {% endif %}
+                            <button class="cart-btn"
+                                    onclick="event.stopPropagation(); addToCart('{{ product.id }}')"
+                                    {% if product.stock_quantity <= 0 %}disabled{% endif %}>🛒 Cart</button>
+                            <button class="order-btn"
+                                    onclick="event.stopPropagation(); buyNow('{{ product.id }}')"
+                                    {% if product.stock_quantity <= 0 %}disabled{% endif %}>Bilhin</button>
                         </div>
                     </div>
-                    {% if product.stock_quantity <= 0 %}
-                        <div class="sold-out-overlay">Ubos na</div>
-                    {% endif %}
                 </div>
                 {% empty %}
                 <div class="empty-state">
-                    <span class="empty-icon">📦</span>
-                    <p>Wala pang produkto sa tindahang ito.</p>
+                    <span class="empty-state-icon">📦</span>
+                    <h2 class="empty-state-title">Walang Produkto</h2>
+                    <p class="text-soft text-sm">Wala pang naka-list na produkto sa tindahang ito.</p>
                 </div>
                 {% endfor %}
             </div>
         </main>
+
+        <!-- ── Sidebar ── -->
+        <aside class="sidebar-right">
+            <div class="p-card">
+                <div class="p-card-header">
+                    <span class="p-card-title">ℹ️ Tungkol sa Store</span>
+                </div>
+                <div class="p-card-body">
+                    <p class="text-soft text-sm mb-16">
+                        {{ store.description|default:"Maligayang pagdating sa aming tindahan! Kami ay nag-aalok ng de-kalidad na mga produkto para sa inyo." }}
+                    </p>
+                    <div class="sidebar-heading">Impormasyon</div>
+                    <div class="flex flex-col gap-8">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-muted">Lokasyon:</span>
+                            <span class="font-bold">Cagayan de Oro</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-muted">Sumali noong:</span>
+                            <span class="font-bold">{{ store.created_at|date:"M Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="promo-card">
+                <span class="promo-card-emoji">🛡️</span>
+                <div class="promo-card-title">Tindahan Guarantee</div>
+                <div class="promo-card-text">Siguradong safe ang iyong bayad sa tindahang ito.</div>
+            </div>
+        </aside>
     </div>
 
-    <div class="footer-strip"></div>
-
-    <button class="chat-widget-btn" onclick="toggleChat('{{ store.id }}', '{{ store.store_name|escapejs }}', '{{ store.user.id }}')" title="Makipag-usap sa amin">💬</button>
+    <!-- ── Chat Widget ── -->
     <div id="chat-window" class="chat-window" style="display: none;">
         <div class="chat-header">
             <span id="chat-target-name">💬 Chat</span>
             <button class="chat-close" onclick="toggleChat()">✕</button>
         </div>
         <div id="chat-messages" class="chat-messages">
-            <div class="msg received">Kumusta! Paano kita matutulungan? 😊</div>
+            <div class="msg received">Kumusta! May itatanong ka ba tungkol sa aming mga produkto? 😊</div>
         </div>
         <div class="chat-input-area">
             <input type="text" id="chat-input" placeholder="Mag-type ng mensahe..."
@@ -147,10 +177,9 @@
         </div>
     </div>
 
-    <div id="toast" class="toast">
-        <span id="toast-icon">✅</span>
-        <span id="toast-message">Tagumpay!</span>
-    </div>
+    <footer class="footer-strip" style="margin-top: 60px;"></footer>
+
+    <div id="toast" class="toast"><span id="toast-message"></span></div>
 
     <script>
         const API_URL = "http://127.0.0.1:8000/api/";
@@ -158,11 +187,8 @@
         let activeOwnerId = null;
         const currentUserId = "{{ user.id|default:'' }}";
 
-        /* ── Init ── */
         window.addEventListener('DOMContentLoaded', () => {
             updateCartBadge();
-
-            // 🛠️ AUTO-OPEN LOGIC: Tinitingnan ang URL parameter
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('open_chat') === 'true') {
                 toggleChat('{{ store.id }}', '{{ store.store_name|escapejs }}', '{{ store.user.id }}');
@@ -174,40 +200,31 @@
                 const res = await fetch(`${API_URL}cartitems/`);
                 if (res.ok) {
                     const items = await res.json();
-                    const badge = document.getElementById('cart-count');
-                    if (badge) badge.innerText = items.length;
+                    document.getElementById('cart-count').innerText = items.length;
                 }
-            } catch (err) { console.error("Badge update error:", err); }
+            } catch (err) { console.error(err); }
         }
 
-        /* ── Theme ── */
         function toggleTheme() {
             const body = document.body;
             const isDark = body.getAttribute('data-theme') === 'dark';
             body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            document.querySelectorAll('.theme-toggle-nav').forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
+            document.querySelectorAll('.theme-toggle-nav').forEach(b =>
+                b.textContent = isDark ? '☀️ Mode' : '🌙 Mode'
+            );
         }
 
-        /* ── Toast ── */
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = message;
-            document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
-            toast.className = `toast ${type}`;
-            toast.style.display = 'flex';
-            setTimeout(() => { toast.style.display = 'none'; }, 3000);
-        }
-
-        /* ── Cart ── */
         async function addToCart(productId) {
             try {
                 const res = await fetch(`${API_URL}cartitems/`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
                     body: JSON.stringify({ cart: 1, product: productId, quantity: 1 })
                 });
                 if (res.ok) { showToast("Naidagdag sa cart!"); updateCartBadge(); }
-                else showToast("Hindi naidagdag.", "error");
             } catch (err) { console.error(err); }
         }
 
@@ -215,19 +232,10 @@
             window.location.href = `/checkout/?product_id=${productId}&quantity=1`;
         }
 
-        /* ── Search ── */
-        function handleSearch(e) { if (e.key === 'Enter') performSearch(); }
-        function performSearch() {
-            const q = document.getElementById('search-input').value;
-            if (q) window.location.href = `/?search=${encodeURIComponent(q)}`;
-        }
-
-        /* ── Chat Logic ── */
         function toggleChat(storeId = null, storeName = "Customer Service", ownerId = null) {
             const win = document.getElementById('chat-window');
-            const isOpening = win.style.display === 'none' || win.style.display === '';
+            const isOpening = win.style.display === 'none';
             win.style.display = isOpening ? 'flex' : 'none';
-
             if (isOpening && storeId) {
                 activeStoreId = storeId;
                 activeOwnerId = ownerId;
@@ -242,21 +250,24 @@
                 const res = await fetch(`${API_URL}messages/?store=${activeStoreId}`);
                 const data = await res.json();
                 const container = document.getElementById('chat-messages');
-                container.innerHTML = data.map(m => `
-                    <div class="msg ${m.sender == currentUserId ? 'sent' : 'received'}">${m.message}</div>
-                `).join('');
+                container.innerHTML = data.map(m =>
+                    `<div class="msg ${m.sender == currentUserId ? 'sent' : 'received'}">${m.message}</div>`
+                ).join('');
                 container.scrollTop = container.scrollHeight;
-            } catch (err) { console.error("Load Error:", err); }
+            } catch (err) { console.error(err); }
         }
 
         async function sendMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
-            if (!text || !activeStoreId || !activeOwnerId) return;
+            if (!text || !activeStoreId) return;
             try {
                 const res = await fetch(`${API_URL}messages/`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
                     body: JSON.stringify({
                         store: parseInt(activeStoreId),
                         message: text,
@@ -264,28 +275,25 @@
                     })
                 });
                 if (res.ok) { input.value = ''; loadMessages(); }
-                else { const e = await res.json(); console.error("API Error:", e); }
-            } catch (err) { console.error("Send Error:", err); }
+            } catch (err) { console.error(err); }
         }
 
-        setInterval(() => {
-            const win = document.getElementById('chat-window');
-            if (win.style.display === 'flex' && activeStoreId) loadMessages();
-        }, 5000);
-
         function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
+            let v = null;
+            if (document.cookie) {
+                for (const c of document.cookie.split(';')) {
+                    const t = c.trim();
+                    if (t.startsWith(name + '=')) v = decodeURIComponent(t.slice(name.length + 1));
                 }
             }
-            return cookieValue;
+            return v;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.className = 'toast success show';
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
     </script>
 </body>

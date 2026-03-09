@@ -6,156 +6,244 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Cart | Tindahan</title>
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
-    <link rel="stylesheet" href="{% static 'css/cart.css' %}">
 </head>
-<body data-theme="light">
+<body data-theme="dark">
 
-    <div class="bg-shapes">
-        <div class="shape shape1"></div>
-        <div class="shape shape2"></div>
-    </div>
-
+    <div class="bg-texture"></div>
     <div style="display:none;">{% csrf_token %}</div>
 
+    <!-- ══ NAVBAR ══ -->
     <nav class="navbar">
+        <div class="woven"></div>
         <div class="navbar-top">
             <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
             {% if user.is_authenticated %}
-                <span class="user-chip">👤 {{ user.username }}</span>
-                <a href="{% url 'logout' %}">Mag-Logout</a>
+                <div class="user-dropdown-wrap">
+                    <a class="user-chip" tabindex="0">👤 {{ user.username }} ▾</a>
+                    <div class="user-dropdown">
+                        <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
+                        <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
+                    </div>
+                </div>
             {% else %}
                 <a href="{% url 'login' %}">Login / Sign Up</a>
             {% endif %}
             <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
         </div>
-      <div class="navbar-main">
+        <div class="navbar-main">
             <div class="logo-wrap" onclick="window.location.href='/'">
                 <div class="logo">Tindahan</div>
                 <div class="logo-tagline">Ang iyong merkado</div>
             </div>
-            <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Hanapin ang produkto...">
-                <button class="search-btn">🔍</button>
+            <div class="navbar-page-title">🛒 Shopping Cart</div>
+            <div class="navbar-actions">
+                <a href="{% url 'cart' %}" class="cart-link">
+                    🛒 <span id="cart-count" class="cart-badge">{{ cart_items|length }}</span>
+                </a>
             </div>
-            <a href="{% url 'cart' %}" class="cart-link">
-                🛒 <span id="cart-count" class="cart-badge">{{ cart_items|length }}</span>
-            </a>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="cart-header">
-            <input type="checkbox" id="select-all">
-            <div>Produkto</div>
-            <div>Presyo</div>
-            <div style="text-align:center;">Dami</div>
-            <div style="text-align:right;">Kabuuan</div>
-            <div style="text-align:right;">Aksyon</div>
-        </div>
+ 
 
-        {% if cart_items %}
-            {% regroup cart_items by product.store as store_list %}
-            {% for store in store_list %}
-            <div class="store-group">
-                <div class="store-header">
-                    <input type="checkbox" class="store-checkbox">
-                    <span>{{ store.grouper.store_name|default:"SariSariStore" }}</span>
-                </div>
-                {% for item in store.list %}
-                <div class="cart-item">
-                    <input type="checkbox" class="item-checkbox" checked>
-                    <div class="product-info">
-                        <div class="product-img">
-                            {% if item.product.image %}
-                                <img src="{{ item.product.image.url }}" alt="Produkto">
-                            {% else %}
-                                <span>📦</span>
-                            {% endif %}
+    <!-- ══ CART BODY ══ -->
+    <div class="cart-wrap">
+        <div class="cart-grid">
+
+            <!-- ── LEFT: Items ── -->
+            <div class="cart-col-main">
+
+                {% if cart_items %}
+
+                    <!-- Select-all bar -->
+                    <div class="cart-toolbar">
+                        <label class="flex items-center gap-12">
+                            <input type="checkbox" id="select-all" checked>
+                            <span class="font-bold text-soft">Piliin Lahat ({{ cart_items|length }})</span>
+                        </label>
+                        <button class="btn btn-danger btn-sm" onclick="deleteSelected()">🗑 Burahin ang Pinili</button>
+                    </div>
+
+                    <!-- Store groups -->
+                    {% regroup cart_items by product.store as store_list %}
+                    {% for store in store_list %}
+                    <div class="store-card">
+
+                        <!-- Store header -->
+                        <div class="store-card-header">
+                            <input type="checkbox" class="store-checkbox" checked>
+                            <div class="store-avatar">{{ store.grouper.store_name|default:"S"|slice:":1"|upper }}</div>
+                            <span class="store-card-name">{{ store.grouper.store_name|default:"SariSariStore" }}</span>
+                            <span class="store-badge">Shop</span>
                         </div>
+
+                        <!-- Column labels -->
+                        <div class="cart-col-labels">
+                            <span style="flex:1; padding-left: 92px;">Produkto</span>
+                            <span class="col-label-price">Presyo</span>
+                            <span class="col-label-qty">Dami</span>
+                            <span class="col-label-total">Kabuuan</span>
+                            <span class="col-label-action"></span>
+                        </div>
+
+                        <!-- Items -->
+                        {% for item in store.list %}
+                        <div class="cart-row" data-item-id="{{ item.id }}">
+                            <input type="checkbox" class="item-checkbox" checked>
+
+                            <div class="cart-row-img">
+                                {% if item.product.image %}
+                                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                                {% else %}
+                                    <span>📦</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="cart-row-info">
+                                <div class="cart-row-name">{{ item.product.name }}</div>
+                                <div class="cart-row-variant text-muted text-sm">Uri: Standard</div>
+                            </div>
+
+                            <div class="cart-row-price">₱{{ item.product.price }}</div>
+
+                            <div class="cart-row-qty">
+                                <div class="qty-stepper">
+                                    <button class="qty-btn" onclick="updateQty('{{ item.id }}', '{{ item.quantity }}', -1)">−</button>
+                                    <div class="qty-val">{{ item.quantity }}</div>
+                                    <button class="qty-btn" onclick="updateQty('{{ item.id }}', '{{ item.quantity }}', 1)">+</button>
+                                </div>
+                            </div>
+
+                            <div class="cart-row-total">₱{{ item.item_total }}</div>
+
+                            <div class="cart-row-action">
+                                <button class="btn btn-ghost btn-sm" onclick="removeItem('{{ item.id }}')">🗑</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                    </div>
+                    {% endfor %}
+
+                {% else %}
+                    <!-- Empty state -->
+                    <div class="cart-empty">
+                        <div class="cart-empty-icon">🛒</div>
+                        <h2 class="cart-empty-title">Walang laman ang iyong cart</h2>
+                        <p class="cart-empty-sub">Hanapin ang iyong mga paboritong produkto at idagdag sa cart.</p>
+                        <a href="/" class="btn btn-primary" style="margin-top: 24px;">Mamili Na →</a>
+                    </div>
+                {% endif %}
+
+            </div>
+
+            <!-- ── RIGHT: Summary ── -->
+            <div class="cart-col-side">
+
+                <!-- Order summary -->
+                <div class="summary-card">
+                    <div class="summary-card-title">Buod ng Order</div>
+
+                    <div class="summary-line">
+                        <span>Mga Item</span>
+                        <span>{{ cart_items|length }}</span>
+                    </div>
+                    <div class="summary-line">
+                        <span>Subtotal</span>
+                        <span>₱{{ cart_total }}</span>
+                    </div>
+                    <div class="summary-line">
+                        <span>Delivery</span>
+                        <span class="badge badge-success">Libre</span>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-line summary-total">
+                        <span>Kabuuan</span>
+                        <span class="summary-total-val">₱{{ cart_total }}</span>
+                    </div>
+
+                    <button
+                        class="btn btn-primary btn-block"
+                        style="margin-top: 28px; padding: 16px; font-size: 16px;"
+                        onclick="window.location.href='/checkout/'"
+                        {% if not cart_items %}disabled{% endif %}>
+                        Mag-Checkout ({{ cart_items|length }}) →
+                    </button>
+                </div>
+
+                <!-- Trust badges -->
+                <div class="trust-card">
+                    <div class="trust-item">
+                        <span class="trust-icon">🔒</span>
                         <div>
-                            <div class="product-name">{{ item.product.name }}</div>
-                            <div class="product-variant">Standard</div>
+                            <div class="trust-title">Ligtas na Bayad</div>
+                            <div class="trust-sub">100% secure checkout</div>
                         </div>
                     </div>
-                    <div class="unit-price">₱{{ item.product.price }}</div>
-                    <div style="display:flex; justify-content:center;">
-                        <div class="qty-control">
-                            <button class="qty-btn" onclick="updateQty('{{ item.id }}', '{{ item.quantity }}', -1)">−</button>
-                            <input type="text" class="qty-input" value="{{ item.quantity }}" readonly>
-                            <button class="qty-btn" onclick="updateQty('{{ item.id }}', '{{ item.quantity }}', 1)">+</button>
+                    <div class="trust-divider"></div>
+                    <div class="trust-item">
+                        <span class="trust-icon">🚀</span>
+                        <div>
+                            <div class="trust-title">Mabilis na Delivery</div>
+                            <div class="trust-sub">Hatid sa iyong pintuan</div>
                         </div>
                     </div>
-                    <div class="total-price" style="text-align:right;">₱{{ item.item_total }}</div>
-                    <div class="actions" style="text-align:right;" onclick="removeItem('{{ item.id }}')">🗑 Burahin</div>
+                    <div class="trust-divider"></div>
+                    <div class="trust-item">
+                        <span class="trust-icon">📦</span>
+                        <div>
+                            <div class="trust-title">Protektadong Order</div>
+                            <div class="trust-sub">Garantisadong delivery</div>
+                        </div>
+                    </div>
                 </div>
-                {% endfor %}
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="empty-cart">
-                <div class="empty-icon">🛒</div>
-                <p>Walang laman ang iyong cart</p>
-                <a href="/">Mamili Na</a>
-            </div>
-        {% endif %}
-    </div>
 
-    <div class="checkout-footer">
-        <div class="footer-content">
-            <div class="footer-left">
-                <label><input type="checkbox" id="footer-select-all" checked> Piliin Lahat</label>
-                <span class="footer-delete" onclick="deleteSelected()">🗑 Burahin</span>
             </div>
-            <div class="footer-right">
-                <span class="footer-total-label">Kabuuan:</span>
-                <span class="final-price">₱{{ cart_total }}</span>
-                <button class="btn-checkout" onclick="handleCheckout()" {% if not cart_items %}disabled{% endif %}>
-                    Mag-Checkout ({{ cart_items|length }})
-                </button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Chat Widget -->
-    <button class="chat-widget-btn" onclick="toggleChat()" title="Makipag-usap sa amin">💬</button>
-    <div class="chat-window" id="chat-window">
-        <div class="chat-header">
-            <span>💬 Tindahan Support</span>
-            <button onclick="toggleChat()" class="chat-close">✕</button>
         </div>
-        <div class="chat-messages" id="chat-messages">
-            <div class="msg received">Kumusta! Paano kita matutulungan ngayon? 😊</div>
-        </div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Mag-type ng mensahe..." onkeyup="handleChatEnter(event)">
-            <button class="chat-send-btn" onclick="sendMessage()">➤</button>
-        </div>
-    </div>
+    </div><!-- /cart-wrap -->
 
-    <div id="toast" class="toast"><span id="toast-message"></span></div>
+    <div class="footer-strip"></div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">
+        <span id="toast-icon">✅</span>
+        <span id="toast-message">Tagumpay!</span>
+    </div>
 
     <script>
-        function toggleTheme() {
-            const body = document.body;
-            const btns = document.querySelectorAll('.theme-toggle-nav');
-            const isDark = body.getAttribute('data-theme') === 'dark';
-            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            btns.forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
-        }
+        const API_URL = "http://127.0.0.1:8000/api/";
 
-        function handleCheckout() { window.location.href = '{% url "checkout" %}'; }
+        document.getElementById('select-all')?.addEventListener('change', function () {
+            document.querySelectorAll('.item-checkbox, .store-checkbox').forEach(cb => cb.checked = this.checked);
+        });
 
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = message;
-            toast.style.display = 'flex';
-            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        document.querySelectorAll('.store-checkbox').forEach(storeCb => {
+            storeCb.addEventListener('change', function () {
+                this.closest('.store-card').querySelectorAll('.item-checkbox').forEach(cb => cb.checked = this.checked);
+            });
+        });
+
+        async function deleteSelected() {
+            const checked = document.querySelectorAll('.item-checkbox:checked');
+            if (checked.length === 0) { showToast("Pumili muna ng item.", "error"); return; }
+            if (!confirm(`Burahin ang ${checked.length} na napiling item?`)) return;
+            const ids = Array.from(checked).map(cb => cb.closest('.cart-row').dataset.itemId);
+            try {
+                const res = await fetch(`${API_URL}cartitems/bulk_delete/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                    body: JSON.stringify({ ids })
+                });
+                if (res.ok) { showToast("Nabura na!"); setTimeout(() => location.reload(), 1000); }
+                else showToast("Error sa pagbura.", "error");
+            } catch (e) { console.error(e); }
         }
 
         async function updateQty(itemId, currentQty, change) {
             const newQty = parseInt(currentQty) + change;
             if (newQty < 1) return;
-            const res = await fetch(`/api/cartitems/${itemId}/`, {
+            const res = await fetch(`${API_URL}cartitems/${itemId}/`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
                 body: JSON.stringify({ quantity: newQty })
@@ -164,37 +252,19 @@
         }
 
         async function removeItem(itemId) {
-            if (!confirm('Burahin ang item?')) return;
-            const res = await fetch(`/api/cartitems/${itemId}/`, {
+            if (!confirm('Burahin ang item na ito?')) return;
+            const res = await fetch(`${API_URL}cartitems/${itemId}/`, {
                 method: 'DELETE',
                 headers: { 'X-CSRFToken': getCookie('csrftoken') }
             });
             if (res.ok) location.reload();
         }
 
-        document.getElementById('select-all')?.addEventListener('change', function () {
-            document.querySelectorAll('.item-checkbox, .store-checkbox').forEach(cb => cb.checked = this.checked);
-            document.getElementById('footer-select-all').checked = this.checked;
-        });
-
-        document.getElementById('footer-select-all')?.addEventListener('change', function () {
-            document.querySelectorAll('.item-checkbox, .store-checkbox').forEach(cb => cb.checked = this.checked);
-            document.getElementById('select-all').checked = this.checked;
-        });
-
-        document.querySelectorAll('.store-checkbox').forEach(storeCb => {
-            storeCb.addEventListener('change', function () {
-                this.closest('.store-group').querySelectorAll('.item-checkbox').forEach(cb => cb.checked = this.checked);
-            });
-        });
-
         function toggleChat() {
             const win = document.getElementById('chat-window');
             win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
         }
-
         function handleChatEnter(e) { if (e.key === 'Enter') sendMessage(); }
-
         function sendMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
@@ -204,22 +274,316 @@
             input.value = '';
             msgs.scrollTop = msgs.scrollHeight;
             setTimeout(() => {
-                msgs.innerHTML += `<div class="msg received">Salamat sa iyong mensahe! Ikaw ay sasagutan sa lalong madaling panahon. 🙏</div>`;
+                msgs.innerHTML += `<div class="msg received">Salamat! Sasagutan ka namin agad. 🙏</div>`;
                 msgs.scrollTop = msgs.scrollHeight;
             }, 800);
         }
 
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
         function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                document.cookie.split(';').forEach(cookie => {
-                    cookie = cookie.trim();
-                    if (cookie.startsWith(name + '='))
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                });
+            let v = null;
+            if (document.cookie) for (const c of document.cookie.split(';')) {
+                const t = c.trim();
+                if (t.startsWith(name + '=')) { v = decodeURIComponent(t.slice(name.length + 1)); break; }
             }
-            return cookieValue;
+            return v;
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            document.querySelectorAll('.theme-toggle-nav').forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
         }
     </script>
+
+    <style>
+        /* ══ PAGE HEADER ══ */
+        .cart-page-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 28px 0;
+            position: relative;
+            z-index: 1;
+        }
+        .cart-page-header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .cart-page-title {
+            font-family: var(--font-display);
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .cart-page-sub {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* ══ OUTER WRAP ══ */
+        .cart-wrap {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 36px 48px 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ══ TWO-COLUMN GRID ══ */
+        .cart-grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 32px;
+            align-items: start;
+        }
+        .cart-col-main { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+        .cart-col-side  { position: sticky; top: 108px; display: flex; flex-direction: column; gap: 20px; }
+
+        /* ══ TOOLBAR ══ */
+        .cart-toolbar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ══ STORE CARD ══ */
+        .store-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .store-card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+        }
+
+        .store-card-name {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* ══ COLUMN LABELS ══ */
+        .cart-col-labels {
+            display: flex;
+            align-items: center;
+            padding: 12px 28px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,0.15);
+            gap: 16px;
+        }
+        .cart-col-labels span {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+        }
+        .col-label-price  { width: 110px; text-align: center; flex-shrink: 0; }
+        .col-label-qty    { width: 130px; text-align: center; flex-shrink: 0; }
+        .col-label-total  { width: 110px; text-align: right;  flex-shrink: 0; }
+        .col-label-action { width: 52px;  flex-shrink: 0; }
+
+        /* ══ CART ROW ══ */
+        .cart-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 24px 28px;
+            border-bottom: 1px solid var(--border);
+            transition: background .15s;
+        }
+        .cart-row:last-child { border-bottom: none; }
+        .cart-row:hover { background: rgba(200,132,26,0.03); }
+
+        .cart-row-img {
+            width: 92px;
+            height: 92px;
+            border-radius: var(--radius-sm);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .cart-row-img img { width: 100%; height: 100%; object-fit: cover; }
+
+        .cart-row-info { flex: 1; min-width: 0; }
+        .cart-row-name {
+            font-family: var(--font-display);
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 5px;
+            line-height: 1.3;
+        }
+        .cart-row-variant { margin-top: 4px; }
+
+        .cart-row-price {
+            width: 110px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-soft);
+            flex-shrink: 0;
+        }
+
+        .cart-row-qty {
+            width: 130px;
+            display: flex;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .cart-row-total {
+            width: 110px;
+            text-align: right;
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gold-lite);
+            flex-shrink: 0;
+        }
+
+        .cart-row-action {
+            width: 52px;
+            display: flex;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* ══ EMPTY STATE ══ */
+        .cart-empty {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 100px 40px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+        .cart-empty-icon  { font-size: 72px; display: block; margin-bottom: 20px; }
+        .cart-empty-title {
+            font-family: var(--font-display);
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+        .cart-empty-sub { font-size: 16px; color: var(--text-muted); }
+
+        /* ══ SUMMARY CARD ══ */
+        .summary-card {
+            background: var(--surface);
+            border: 1px solid var(--border-lit);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: var(--shadow);
+        }
+        .summary-card-title {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+            color: var(--text-soft);
+            margin-bottom: 14px;
+        }
+        .summary-divider {
+            height: 1px;
+            background: var(--border-lit);
+            margin: 16px 0;
+        }
+        .summary-total {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0;
+        }
+        .summary-total-val {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gold-lite);
+        }
+
+        /* ══ TRUST CARD ══ */
+        .trust-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            box-shadow: var(--shadow-sm);
+        }
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 0;
+        }
+        .trust-icon { font-size: 28px; flex-shrink: 0; }
+        .trust-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+        .trust-sub   { font-size: 12px; color: var(--text-muted); }
+        .trust-divider { height: 1px; background: var(--border); }
+
+        /* ══ CHAT ══ */
+        .chat-widget-btn { bottom: 32px; right: 32px; z-index: 1001; }
+        .chat-window     { bottom: 104px; right: 32px; z-index: 1002; }
+
+        /* ══ RESPONSIVE ══ */
+        @media (max-width: 1100px) {
+            .cart-grid { grid-template-columns: 1fr 320px; }
+            .cart-wrap { padding: 28px 32px 80px; }
+            .cart-page-header-inner { padding: 0 32px; }
+        }
+        @media (max-width: 900px) {
+            .cart-grid { grid-template-columns: 1fr; }
+            .cart-col-side { position: static; }
+            .cart-wrap { padding: 20px 16px 80px; }
+            .cart-page-header-inner { padding: 0 16px; }
+            .cart-col-labels { display: none; }
+            .cart-row { flex-wrap: wrap; }
+            .cart-row-price, .cart-row-qty, .cart-row-total, .cart-row-action { width: auto; }
+        }
+    </style>
+
 </body>
 </html>
