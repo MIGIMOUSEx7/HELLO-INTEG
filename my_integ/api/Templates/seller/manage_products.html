@@ -1,0 +1,220 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pamahalaan ang Produkto | Tindahan</title>
+    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
+    <link rel="stylesheet" href="{% static 'css/profile_custom.css' %}">
+    <style>
+        /* ── Inventory Dashboard Layout ── */
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .inv-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            opacity: 0; /* Hidden initially for the JS stagger animation */
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                        box-shadow 0.3s ease, 
+                        border-color 0.3s ease;
+            animation: fadeInUpInventory 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            will-change: transform, opacity;
+        }
+
+        .inv-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px var(--gold-glow);
+            border-color: var(--gold);
+        }
+
+        .inv-img-wrap {
+            width: 100%;
+            aspect-ratio: 16 / 9; /* Prevents layout shift/stuttering */
+            background: var(--surface-2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .inv-img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .inv-card:hover .inv-img { transform: scale(1.08); }
+
+        .stock-badge {
+            position: absolute;
+            top: 12px; right: 12px;
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 2;
+        }
+        .stock-ok { background: var(--success); color: #fff; }
+        .stock-low { background: var(--gold); color: #000; }
+        .stock-out { background: var(--red); color: #fff; }
+
+        .inv-details { padding: 20px; }
+        .inv-name { 
+            font-family: var(--font-display); 
+            font-size: 18px; font-weight: 700;
+            margin-bottom: 10px; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .inv-meta { display: flex; justify-content: space-between; align-items: center; }
+        .inv-price { color: var(--gold-lite); font-weight: 800; font-size: 17px; }
+        .inv-category { 
+            font-size: 11px; font-weight: 700;
+            color: var(--text-muted); background: var(--surface-3); 
+            padding: 4px 10px; border-radius: 20px;
+        }
+
+        .inv-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-top: 1px solid var(--border);
+            background: var(--surface-2);
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 14px; text-align: center;
+            text-decoration: none; font-size: 12px; font-weight: 700;
+            transition: all 0.2s;
+        }
+        .btn-edit { color: var(--text-soft); border-right: 1px solid var(--border); }
+        .btn-edit:hover { color: var(--gold); background: rgba(212, 175, 55, 0.05); }
+        .btn-delete { color: var(--text-muted); background: none; border: none; cursor: pointer; font-family: inherit; }
+        .btn-delete:hover { color: var(--red-lite); background: rgba(184, 48, 32, 0.05); }
+
+        /* ── Stats ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; margin-bottom: 30px;
+        }
+        .stat-box {
+            background: var(--surface);
+            padding: 20px; border-radius: var(--radius);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--gold);
+        }
+        .stat-val { display: block; font-size: 28px; font-weight: 800; color: var(--text); }
+        .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+        @keyframes fadeInUpInventory {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="bg-texture"></div>
+
+    <div class="profile-wrapper">
+        <div class="profile-page-header">
+            <h1 class="profile-page-title">Aking Imbentaryo</h1>
+            <a href="{% url 'create_product' %}" class="btn-profile-action">+ Magdagdag ng Produkto</a>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <span class="stat-val">{{ products.count }}</span>
+                <span class="stat-label">Lahat ng Produkto</span>
+            </div>
+            <div class="stat-box" style="border-left-color: var(--red);">
+                <span class="stat-val">{{ out_of_stock_count|default:"0" }}</span>
+                <span class="stat-label">Out of Stock</span>
+            </div>
+        </div>
+
+        <div class="inventory-grid">
+            {% for product in products %}
+            <div class="inv-card js-inv-card">
+                <div class="inv-img-wrap">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" class="inv-img" alt="{{ product.name }}">
+                    {% else %}
+                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; background: var(--surface-3);">📦</div>
+                    {% endif %}
+                    
+                    {% if product.stock_quantity == 0 %}
+                        <span class="stock-badge stock-out">Sold Out</span>
+                    {% elif product.stock_quantity < 5 %}
+                        <span class="stock-badge stock-low">Low Stock: {{ product.stock_quantity }}</span>
+                    {% else %}
+                        <span class="stock-badge stock-ok">Stock: {{ product.stock_quantity }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="inv-details">
+                    <div class="inv-name">{{ product.name }}</div>
+                    <div class="inv-meta">
+                        <span class="inv-price">₱{{ product.price }}</span>
+                        <span class="inv-category">{{ product.category.category_name }}</span>
+                    </div>
+                </div>
+
+                <div class="inv-actions">
+                    <a href="{% url 'edit_product' product.pk %}" class="btn-edit">✏️ I-edit</a>
+                    <form method="POST" action="{% url 'delete_product' product.pk %}" style="margin:0;" onsubmit="return confirm('Sigurado ka bang buburahin ang {{ product.name }}?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-delete">🗑️ Burahin</button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-card" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+                <div style="font-size: 50px; margin-bottom: 15px; opacity: 0.3;">📭</div>
+                <h3 style="color: var(--text-soft); margin-bottom: 10px;">Wala ka pang tinitindang produkto</h3>
+                <a href="{% url 'create_product' %}" class="btn-profile-ghost">Magdagdag ng Unang Produkto</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <span id="toast-icon">✅</span>
+        <span id="toast-message"></span>
+    </div>
+
+    <script>
+        // STAGGER SCRIPT: Calculates animation delays without Django math filters
+        document.addEventListener("DOMContentLoaded", function() {
+            const cards = document.querySelectorAll('.js-inv-card');
+            cards.forEach((card, index) => {
+                // Adds a 0.05s delay per card index for a 'wave' effect
+                card.style.animationDelay = (index * 0.05) + "s";
+            });
+        });
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            if(!toast) return;
+            document.getElementById('toast-message').textContent = msg;
+            document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        {% if messages %}
+            {% for message in messages %}
+                showToast("{{ message }}", "{% if message.tags == 'error' %}error{% else %}success{% endif %}");
+            {% endfor %}
+        {% endif %}
+    </script>
+</body>
+</html>

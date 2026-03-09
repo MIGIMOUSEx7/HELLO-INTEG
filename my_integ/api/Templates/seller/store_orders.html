@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mga Natatanggap na Orders | Tindahan</title>
+    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
+    <link rel="stylesheet" href="{% static 'css/checkout_v2.css' %}">
+</head>
+<body data-theme="dark">
+    <div class="bg-pattern"></div>
+    <div class="border-strip"></div>
+
+    <div class="shopee-header">
+        <div class="header-content">
+            <a href="{% url 'user_profile' %}" class="brand-text" style="font-size: 20px; color: var(--text-light); text-decoration: none;">
+                ← Bumalik sa Profile
+            </a>
+            <div class="page-title">Mga Benta (Seller Orders)</div>
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 900px; margin-top: 40px;">
+        {% if orders %}
+            {% for order in orders %}
+            <div class="card">
+                <div class="p-card-header">
+                    <div class="p-card-title">
+                        Order #{{ order.id }} 
+                        <span style="font-size: 13px; color: var(--text-light); margin-left: 10px;">
+                            👤 Bumili: {{ order.user.username }}
+                        </span>
+                    </div>
+                    <span class="protection-badge" style="font-size: 11px; padding: 4px 10px;">
+                        {{ order.status|upper }}
+                    </span>
+                </div>
+
+                <div class="p-card-body" style="padding: 20px 32px;">
+                    <div style="margin-bottom: 20px; font-size: 14px; color: var(--text-secondary); line-height: 1.6; background: var(--bg); padding: 15px; border-radius: 4px; border: 1px dashed var(--border-color);">
+                        <strong>📍 Delivery Address:</strong> {{ order.shipping_address }}<br>
+                        <strong>💳 Paraan ng Bayad:</strong> {{ order.get_payment_method_display|default:order.payment_method }}<br>
+                        <strong>📅 Petsa:</strong> {{ order.order_date|date:"M d, Y" }}
+                    </div>
+                    
+                    <div class="product-table-header" style="background: transparent; border-bottom: 1px dashed var(--border-color); padding: 10px 0;">
+                        <div class="col-prod">Produkto Mo</div>
+                        <div class="col-qty">Dami</div>
+                        <div class="col-total">Presyo</div>
+                    </div>
+
+                    {% for item in order.items.all %}
+                        {% if item.product.store == store %}
+                        <div class="product-item" style="padding: 15px 0;">
+                            <div class="col-prod" style="display:flex; align-items:center;">
+                                <div class="prod-img" style="width: 50px; height: 50px;">
+                                    {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    {% else %}
+                                        📦
+                                    {% endif %}
+                                </div>
+                                <div class="prod-name">{{ item.product.name }}</div>
+                            </div>
+                            <div class="col-qty-val">x{{ item.quantity }}</div>
+                            <div class="col-total-val" style="font-size: 15px;">₱{{ item.price }}</div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card" style="text-align: center; padding: 60px;">
+                <div style="font-size: 50px; margin-bottom: 15px;">🛍️</div>
+                <h2 style="font-family: 'Playfair Display', serif; color: var(--text-main); margin-bottom: 10px;">Wala pang benta</h2>
+                <p style="color: var(--text-light); font-size: 14px;">Maghintay lamang, may bibili rin sa iyong tindahan!</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

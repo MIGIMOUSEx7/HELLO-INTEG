@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mag-dagdag ng Produkto | Tindahan</title>
+    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
+    <link rel="stylesheet" href="{% static 'css/checkout_v2.css' %}"> 
+</head>
+<body data-theme="dark">
+    <div class="bg-pattern"></div>
+    <div class="border-strip"></div>
+
+    <div class="shopee-header">
+        <div class="header-content">
+            <a href="{% url 'user_profile' %}" class="brand-text" style="font-size: 20px; color: var(--text-muted); text-decoration: none;">
+                ← Bumalik sa Profile
+            </a>
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 700px; margin-top: 40px;">
+        <div class="card">
+            <div class="p-card-header">
+                <div class="p-card-title">📦 Mag-dagdag ng Produkto</div>
+            </div>
+            <div class="p-card-body" style="padding: 30px;">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="form-grid" style="margin-bottom: 20px;">
+                        <div class="form-group full">
+                            <label class="form-label">Pangalan ng Produkto</label>
+                            <input type="text" name="name" class="form-input" placeholder="Halimbawa: Vintage Lamp" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Presyo (₱)</label>
+                            <input type="number" name="price" class="form-input" step="0.01" placeholder="1500.00" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Dami ng Stock</label>
+                            <input type="number" name="stock_quantity" class="form-input" placeholder="20" required>
+                        </div>
+                        
+                        <div class="form-group full">
+                            <label class="form-label">Kategorya</label>
+                            <select name="category" id="categorySelect" class="form-input" required style="cursor: pointer; background: var(--bg);" onchange="checkNewCategory(this)">
+                                <option value="" disabled selected>Pumili ng kategorya...</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.category_name }}</option>
+                                {% endfor %}
+                                <option value="NEW" style="color: var(--gold); font-weight: bold;">+ Magdagdag ng bagong kategorya...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group full" id="newCategoryWrapper" style="display: none; margin-top: 10px;">
+                            <label class="form-label" style="color: var(--gold);">Pangalan ng Bagong Kategorya</label>
+                            <input type="text" name="new_category_name" id="newCategoryInput" class="form-input" placeholder="Halimbawa: Antiques o Kasangkapan">
+                        </div>
+
+                        <div class="form-group full">
+                            <label class="form-label">Paglalarawan (Description)</label>
+                            <textarea name="description" class="form-input" rows="4" placeholder="Ilarawan ang kondisyon, sukat, at iba pang detalye..."></textarea>
+                        </div>
+
+                        <div class="form-group full" style="margin-bottom: 10px;">
+                            <label class="form-label">Litrato ng Produkto</label>
+                            <input type="file" name="image" class="form-input" accept="image/*" style="padding: 8px;">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="place-order-btn" style="width: 100%;">
+                        I-post ang Produkto 🚀
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <span id="toast-icon">✅</span>
+        <span id="toast-message">Tagumpay!</span>
+    </div>
+
+    <script>
+        // Logic to show/hide the "New Category" text field
+        function checkNewCategory(select) {
+            const wrapper = document.getElementById('newCategoryWrapper');
+            const input = document.getElementById('newCategoryInput');
+            
+            if (select.value === "NEW") {
+                wrapper.style.display = 'block';
+                input.required = true;
+                input.focus();
+            } else {
+                wrapper.style.display = 'none';
+                input.required = false;
+            }
+        }
+
+        // Standard Toast Function
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Consume Django messages instantly
+        {% if messages %}
+            {% for message in messages %}
+                showToast("{{ message }}", "{% if message.tags == 'error' %}error{% else %}success{% endif %}");
+            {% endfor %}
+        {% endif %}
+    </script>
+</body>
+</html>

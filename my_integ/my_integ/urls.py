@@ -3,7 +3,6 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from api import views
-# Import Django's built-in auth views to handle password reset
 from django.contrib.auth import views as auth_views
 
 from rest_framework.authtoken.views import obtain_auth_token
@@ -26,6 +25,16 @@ urlpatterns = [
     path('checkout/', views.checkout_view, name='checkout'),
     path('orders/checkout/pay/<int:pk>/', views.checkout_pay, name='checkout_pay'),
     path('products/<int:pk>/', views.product_detail, name='product_detail'),
+    path('store/create/', views.create_store, name='create_store'),
+    path('store/<int:store_id>/', views.store_profile, name='store_profile'),
+    path('products/create/', views.create_product, name='create_product'),
+    path('products/<int:pk>/', views.product_detail, name='product_detail'),
+    path('store/orders/', views.seller_orders, name='store_orders'),
+    path('store/<int:store_id>/', views.store_profile, name='store_profile'),
+    path('store/manage-products/', views.manage_products, name='manage_products'),
+    path('store/edit-product/<int:pk>/', views.edit_product, name='edit_product'),
+    path('store/delete-product/<int:pk>/', views.delete_product, name='delete_product'),
+
 
     # Authentication
     path('login/', views.login_view, name='login'),

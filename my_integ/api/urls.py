@@ -1,6 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
+from django.conf.urls.static import static
+from django.conf import settings
 
 router = DefaultRouter()
 
@@ -24,4 +26,10 @@ urlpatterns = [
     path('seller/messages/', views.seller_message_center, name='seller_messages'),
     path('profile/', views.profile_view, name='user_profile'),
     path('profile/add-address/', views.add_address, name='add_address'),
+    
 ]
+
+
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

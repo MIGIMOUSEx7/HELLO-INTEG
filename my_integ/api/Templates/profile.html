@@ -6,309 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aking Profile | Tindahan</title>
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
-    <style>
-        /* ══════════════════════════════════════
-           USER PROFILE PAGE — tindahan.css ext.
-        ══════════════════════════════════════ */
-
-        body { padding-bottom: 80px; }
-
-        /* ── Page wrapper ── */
-        .profile-wrapper {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 40px 24px;
-            position: relative; z-index: 1;
-        }
-
-        /* ── Page header strip ── */
-        .profile-page-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 36px;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .profile-page-title {
-            font-family: var(--font-display);
-            font-size: 36px; font-weight: 800;
-            color: var(--text);
-            display: flex; align-items: center; gap: 14px;
-        }
-        .profile-page-title::before {
-            content: '';
-            display: block;
-            width: 5px; height: 36px;
-            background: linear-gradient(180deg, var(--red), var(--gold));
-            border-radius: 3px;
-            flex-shrink: 0;
-        }
-
-        /* ── Section card — matches co-card from checkout ── */
-        .p-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 24px;
-            transition: box-shadow .2s;
-        }
-        .p-card:hover { box-shadow: var(--shadow); }
-
-        .p-card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 20px 28px;
-            border-bottom: 1px solid var(--border);
-            background: var(--surface-2);
-        }
-        .p-card-title {
-            font-family: var(--font-display);
-            font-size: 20px; font-weight: 700;
-            color: var(--text);
-            display: flex; align-items: center; gap: 10px;
-        }
-        /* Gold left-border accent on section title */
-        .section-title {
-            font-family: var(--font-display);
-            font-size: 16px; font-weight: 800;
-            color: var(--text);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            padding-left: 14px;
-            border-left: 4px solid var(--red);
-            margin-bottom: 20px;
-            line-height: 1.2;
-        }
-        .p-card-body { padding: 28px; }
-
-        /* ── Profile header ── */
-        .profile-header-container {
-            display: flex;
-            align-items: center;
-            gap: 28px;
-            flex-wrap: wrap;
-        }
-
-        /* Avatar */
-        .main-avatar-wrap { position: relative; flex-shrink: 0; }
-        .main-avatar-img,
-        .avatar-circle {
-            width: 88px; height: 88px;
-            border-radius: 50%;
-            border: 3px solid var(--gold);
-            box-shadow: 0 0 0 3px var(--gold-glow), var(--shadow);
-        }
-        .main-avatar-img { object-fit: cover; }
-        .avatar-circle {
-            background: var(--surface-3);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 36px;
-        }
-        .avatar-online-dot {
-            position: absolute;
-            bottom: 4px; right: 4px;
-            width: 14px; height: 14px;
-            background: var(--success);
-            border-radius: 50%;
-            border: 2px solid var(--surface);
-        }
-
-        .profile-meta { flex: 1; min-width: 200px; }
-        .profile-username {
-            font-family: var(--font-display);
-            font-size: 28px; font-weight: 800;
-            color: var(--text); margin-bottom: 4px;
-        }
-        .profile-email { font-size: 14px; color: var(--text-muted); margin-bottom: 10px; }
-        .profile-badges { display: flex; gap: 8px; flex-wrap: wrap; }
-
-        /* ── Side-by-side group row ── */
-        .group-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 24px;
-        }
-        @media (max-width: 700px) { .group-row { grid-template-columns: 1fr; } }
-
-        /* ── Action items (buyer/seller actions) ── */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 14px;
-        }
-        .buyer-grid { display: flex; flex-direction: column; gap: 14px; }
-
-        .action-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-            padding: 16px 20px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            transition: border-color .2s, background .2s;
-        }
-        .action-item:hover {
-            border-color: var(--border-lit);
-            background: var(--surface-3);
-        }
-        .action-item-info { flex: 1; min-width: 0; }
-        .action-item-label {
-            font-weight: 700; font-size: 14px;
-            color: var(--text); margin-bottom: 3px;
-        }
-        .action-item-sub { font-size: 12px; color: var(--text-muted); }
-
-        /* Profile action button */
-        .btn-profile-action {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 9px 18px;
-            background: linear-gradient(135deg, var(--red), var(--red-lite));
-            color: #fff; border: none;
-            border-radius: var(--radius-sm);
-            font-family: var(--font-body);
-            font-size: 13px; font-weight: 700;
-            cursor: pointer; text-decoration: none;
-            white-space: nowrap;
-            box-shadow: 0 3px 10px var(--red-glow);
-            transition: all .2s;
-            flex-shrink: 0;
-        }
-        .btn-profile-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px var(--red-glow);
-        }
-
-        /* Ghost variant */
-        .btn-profile-ghost {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 9px 18px;
-            background: transparent;
-            color: var(--text-soft);
-            border: 1.5px solid var(--border-lit);
-            border-radius: var(--radius-sm);
-            font-family: var(--font-body);
-            font-size: 13px; font-weight: 700;
-            cursor: pointer; text-decoration: none;
-            white-space: nowrap;
-            transition: all .2s;
-            flex-shrink: 0;
-        }
-        .btn-profile-ghost:hover {
-            border-color: var(--gold);
-            color: var(--gold-lite);
-        }
-
-        /* Logout link */
-        .logout-link {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
-            transition: color .2s;
-            display: inline-flex; align-items: center; gap: 6px;
-        }
-        .logout-link:hover { color: var(--red-lite); }
-
-        /* ── Settings grid ── */
-        .settings-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            align-items: start;
-        }
-        @media (max-width: 640px) { .settings-grid { grid-template-columns: 1fr; } }
-
-        /* Form rows — re-uses tindahan.css form-group / form-label / form-input */
-        .form-row { margin-bottom: 16px; }
-
-        /* ── Picture uploader ── */
-        .pic-uploader-label { display: block; margin-bottom: 12px; }
-        .pic-uploader {
-            width: 160px; height: 160px;
-            border: 2px dashed var(--border-lit);
-            border-radius: var(--radius);
-            background: var(--surface-2);
-            cursor: pointer;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            text-align: center;
-            position: relative; overflow: hidden;
-            transition: border-color .2s, background .2s;
-        }
-        .pic-uploader:hover {
-            border-color: var(--gold);
-            background: rgba(200,132,26,0.05);
-        }
-        .pic-uploader input[type="file"] {
-            position: absolute; inset: 0;
-            opacity: 0; cursor: pointer;
-            width: 100%; height: 100%;
-        }
-        .pic-uploader-preview {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            position: absolute; inset: 0;
-        }
-        .uploader-overlay {
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            background: rgba(0,0,0,0.65);
-            color: #fff; font-size: 11px;
-            font-weight: 700; padding: 6px;
-            text-align: center;
-        }
-        .empty-pic-preview {
-            font-size: 44px; color: var(--border-lit);
-            margin-bottom: 10px; pointer-events: none;
-        }
-        .uploader-label {
-            font-size: 12px; color: var(--text-muted);
-            padding: 0 12px; pointer-events: none;
-            line-height: 1.4;
-        }
-
-        /* ── Danger zone ── */
-        .danger-row {
-            display: flex; align-items: center;
-            justify-content: space-between; gap: 16px;
-            padding: 18px 20px;
-            background: rgba(184,48,32,0.06);
-            border: 1px solid rgba(184,48,32,0.2);
-            border-radius: var(--radius);
-        }
-        .danger-row-label { font-weight: 700; color: var(--text); font-size: 14px; margin-bottom: 2px; }
-        .danger-row-sub { font-size: 12px; color: var(--text-muted); }
-
-        /* ── Responsive ── */
-        @media (max-width: 600px) {
-            .profile-page-title { font-size: 26px; }
-            .profile-wrapper { padding: 24px 16px; }
-            .p-card-body { padding: 20px; }
-            .p-card-header { padding: 16px 20px; }
-            .action-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/profile_custom.css' %}">
 </head>
 <body data-theme="dark">
 
     <div class="bg-texture"></div>
 
-    <!-- ══ NAVBAR ══ -->
     <nav class="navbar">
         <div class="woven"></div>
         <div class="navbar-top">
             <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
             {% if user.is_authenticated %}
                 <div class="user-dropdown-wrap">
-                    <a class="user-chip" tabindex="0">👤 {{ user.username }} ▾</a>
+                    <a class="user-chip" tabindex="0">👤 {{ user.first_name|default:user.username }} ▾</a>
                     <div class="user-dropdown">
                         <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
                         <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
@@ -333,12 +43,8 @@
         </div>
     </nav>
 
-    <!-- ══ PAGE CONTENT ══ -->
     <div class="profile-wrapper">
 
-        
-
-        <!-- ══ HEADER CARD — avatar + name ══ -->
         <div class="p-card">
             <div class="p-card-header">
                 <div class="p-card-title">👤 Impormasyon ng Account</div>
@@ -355,11 +61,11 @@
                         <div class="avatar-online-dot"></div>
                     </div>
                     <div class="profile-meta">
-                        <div class="profile-username">{{ user.username }}</div>
+                        <div class="profile-username">{{ profile.full_name|default:user.username }}</div>
                         <div class="profile-email">{{ user.email }}</div>
                         <div class="profile-badges">
                             <span class="badge badge-gold">Bumibili</span>
-                            {% if profile.is_seller %}
+                            {% if is_approved_seller %}
                                 <span class="badge badge-success">Nagbebenta</span>
                             {% endif %}
                         </div>
@@ -371,10 +77,8 @@
             </div>
         </div>
 
-        <!-- ══ SELLER + BUYER ACTIONS ══ -->
         <div class="group-row">
-
-            <!-- Seller Actions -->
+            {% if is_approved_seller %}
             <div class="p-card" style="margin-bottom:0;">
                 <div class="p-card-header">
                     <div class="p-card-title">🏪 Nagbebenta</div>
@@ -382,13 +86,13 @@
                 <div class="p-card-body">
                     <div class="section-title">Mga Aksyon</div>
                     <div class="action-grid">
-                        {% if profile.is_seller %}
+                        {% if has_store %}
                             <div class="action-item">
                                 <div class="action-item-info">
-                                    <div class="action-item-label">Aking Tindahan</div>
-                                    <div class="action-item-sub">Pamahalaan ang iyong store</div>
+                                    <div class="action-item-label">Aking Imbentaryo</div>
+                                    <div class="action-item-sub">I-edit o burahin ang mga produkto</div>
                                 </div>
-                                <a href="/store/{{ profile.store.id }}/" class="btn-profile-action">Pumunta →</a>
+                                <a href="{% url 'manage_products' %}" class="btn-profile-action">Pamahalaan →</a>
                             </div>
                             <div class="action-item">
                                 <div class="action-item-info">
@@ -416,8 +120,8 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
-            <!-- Buyer Actions -->
             <div class="p-card" style="margin-bottom:0;">
                 <div class="p-card-header">
                     <div class="p-card-title">🛍 Bumibili</div>
@@ -454,46 +158,35 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-        </div><!-- /group-row -->
-
-        <!-- ══ SETTINGS CARD ══ -->
         <div class="p-card" id="settings-card">
             <div class="p-card-header">
                 <div class="p-card-title">⚙ Mga Setting</div>
             </div>
             <div class="p-card-body">
                 <div class="settings-grid">
-
-                    <!-- Left: Profile form -->
                     <div>
                         <div class="section-title">Personal na Impormasyon</div>
                         <form method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
                             <input type="hidden" name="form_type" value="profile">
-
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Buong Pangalan</label>
-                                    <input type="text" name="full_name" class="form-input"
-                                           placeholder="Juan dela Cruz"
-                                           value="{{ profile.full_name|default:'' }}">
+                                    <input type="text" name="full_name" class="form-input" value="{{ profile.full_name|default:'' }}">
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Email</label>
-                                    <input type="email" name="email" class="form-input"
-                                           placeholder="juan@email.com"
-                                           value="{{ user.email }}">
+                                    <input type="email" name="email" class="form-input" value="{{ user.email }}">
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Telepono</label>
-                                    <input type="text" name="phone" class="form-input"
-                                           placeholder="09XXXXXXXXX"
-                                           value="{{ address.phone|default:'' }}">
+                                    <input type="text" name="phone" class="form-input" value="{{ address.phone|default:'' }}">
                                 </div>
                             </div>
 
@@ -501,123 +194,80 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Kalye / Blk / Lot</label>
-                                    <input type="text" name="street" class="form-input"
-                                           placeholder="Blk 1 Lot 2, Sampaguita St."
-                                           value="{{ address.street|default:'' }}">
+                                    <input type="text" name="street" class="form-input" value="{{ address.street|default:'' }}">
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group mb-0" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                                     <div>
                                         <label class="form-label">Lungsod</label>
-                                        <input type="text" name="city" class="form-input"
-                                               placeholder="Cagayan de Oro"
-                                               value="{{ address.city|default:'' }}">
+                                        <input type="text" name="city" class="form-input" value="{{ address.city|default:'' }}">
                                     </div>
                                     <div>
                                         <label class="form-label">ZIP</label>
-                                        <input type="text" name="zip_code" class="form-input"
-                                               placeholder="9000"
-                                               value="{{ address.zip_code|default:'' }}">
+                                        <input type="text" name="zip_code" class="form-input" value="{{ address.zip_code|default:'' }}">
                                     </div>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Lalawigan</label>
-                                    <input type="text" name="province" class="form-input"
-                                           placeholder="Misamis Oriental"
-                                           value="{{ address.province|default:'' }}">
+                                    <input type="text" name="province" class="form-input" value="{{ address.province|default:'' }}">
                                 </div>
                             </div>
-
-                            <button type="submit" class="btn-profile-action mt-8" style="padding:12px 28px; font-size:14px;">
-                                💾 I-save ang Pagbabago
-                            </button>
+                            <button type="submit" class="btn-profile-action mt-8">💾 I-save ang Pagbabago</button>
                         </form>
                     </div>
 
-                    <!-- Right: Picture uploader + password -->
                     <div>
                         <div class="section-title">Profile Picture</div>
                         <form method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
                             <input type="hidden" name="form_type" value="picture">
-
                             <label class="pic-uploader-label">
                                 <div class="pic-uploader" id="pic-uploader">
                                     {% if profile.profile_picture %}
-                                        <img src="{{ profile.profile_picture.url }}"
-                                             class="pic-uploader-preview" id="pic-preview" alt="Preview">
+                                        <img src="{{ profile.profile_picture.url }}" class="pic-uploader-preview" id="pic-preview">
                                         <div class="uploader-overlay">Palitan</div>
                                     {% else %}
                                         <div class="empty-pic-preview" id="pic-empty">📷</div>
-                                        <div class="uploader-label">I-click para mag-upload ng larawan</div>
+                                        <div class="uploader-label">I-click para mag-upload</div>
                                     {% endif %}
-                                    <input type="file" name="profile_picture" accept="image/*"
-                                           onchange="previewPic(this)">
+                                    <input type="file" name="profile_picture" accept="image/*" onchange="previewPic(this)">
                                 </div>
                             </label>
-
-                            <button type="submit" class="btn-profile-ghost mt-8">
-                                ⬆ I-upload
-                            </button>
+                            <button type="submit" class="btn-profile-ghost mt-8">⬆ I-upload</button>
                         </form>
 
-                        <!-- Change password -->
                         <div class="section-title mt-28">Palitan ang Password</div>
                         <form method="POST">
                             {% csrf_token %}
                             <input type="hidden" name="form_type" value="password">
-                            <div class="form-group mb-12">
-                                <label class="form-label">Kasalukuyang Password</label>
-                                <input type="password" name="old_password" class="form-input"
-                                       placeholder="••••••••">
-                            </div>
-                            <div class="form-group mb-12">
-                                <label class="form-label">Bagong Password</label>
-                                <input type="password" name="new_password1" class="form-input"
-                                       placeholder="••••••••">
-                            </div>
-                            <div class="form-group mb-16">
-                                <label class="form-label">Kumpirmahin</label>
-                                <input type="password" name="new_password2" class="form-input"
-                                       placeholder="••••••••">
-                            </div>
-                            <button type="submit" class="btn-profile-ghost">
-                                🔒 Palitan ang Password
-                            </button>
+                            <div class="form-group mb-12"><label class="form-label">Password Ngayon</label><input type="password" name="old_password" class="form-input"></div>
+                            <div class="form-group mb-12"><label class="form-label">Bagong Password</label><input type="password" name="new_password1" class="form-input"></div>
+                            <div class="form-group mb-16"><label class="form-label">Kumpirmahin</label><input type="password" name="new_password2" class="form-input"></div>
+                            <button type="submit" class="btn-profile-ghost">🔒 Palitan Password</button>
                         </form>
                     </div>
-
                 </div>
             </div>
         </div>
 
-        <!-- ══ DANGER ZONE ══ -->
         <div class="p-card">
-            <div class="p-card-header">
-                <div class="p-card-title" style="color:var(--red-lite);">⚠ Danger Zone</div>
-            </div>
+            <div class="p-card-header"><div class="p-card-title" style="color:var(--red-lite);">⚠ Danger Zone</div></div>
             <div class="p-card-body" style="display:flex; flex-direction:column; gap:14px;">
                 <div class="danger-row">
-                    <div>
-                        <div class="danger-row-label">Mag-Logout</div>
-                        <div class="danger-row-sub">Lumabas sa iyong account sa device na ito</div>
-                    </div>
+                    <div><div class="danger-row-label">Mag-Logout</div></div>
                     <a href="{% url 'logout' %}" class="logout-link">🚪 Mag-Logout</a>
                 </div>
                 <div class="danger-row">
-                    <div>
-                        <div class="danger-row-label">I-delete ang Account</div>
-                        <div class="danger-row-sub">Permanenteng burahin ang iyong account at lahat ng data</div>
-                    </div>
+                    <div><div class="danger-row-label">I-delete ang Account</div></div>
                     <button class="btn btn-danger btn-sm" onclick="confirmDelete()">Burahin</button>
                 </div>
             </div>
         </div>
 
-    </div><!-- /profile-wrapper -->
+    </div>
 
     <div class="footer-strip"></div>
 
@@ -631,7 +281,6 @@
             const body = document.body;
             const isDark = body.getAttribute('data-theme') === 'dark';
             body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            document.querySelectorAll('.theme-toggle-nav').forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
         }
 
         function previewPic(input) {
@@ -642,7 +291,6 @@
                 const empty = document.getElementById('pic-empty');
                 if (empty) empty.style.display = 'none';
                 uploader.querySelectorAll('.uploader-label').forEach(el => el.style.display = 'none');
-
                 let preview = document.getElementById('pic-preview');
                 if (!preview) {
                     preview = document.createElement('img');
@@ -651,20 +299,12 @@
                     uploader.prepend(preview);
                 }
                 preview.src = e.target.result;
-
-                let overlay = uploader.querySelector('.uploader-overlay');
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.className = 'uploader-overlay';
-                    overlay.textContent = 'Palitan';
-                    uploader.appendChild(overlay);
-                }
             };
             reader.readAsDataURL(input.files[0]);
         }
 
         function confirmDelete() {
-            if (confirm('Sigurado ka bang gusto mong i-delete ang iyong account? Hindi ito mababawi.')) {
+            if (confirm('Sigurado ka bang gusto mong i-delete ang iyong account?')) {
                 window.location.href = '/accounts/delete/';
             }
         }
@@ -676,10 +316,12 @@
             toast.className = `toast ${type} show`;
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
-
-        // Show toast if Django messages present
-       
+        
+        {% if messages %}
+            {% for message in messages %}
+                showToast("{{ message }}", "{% if message.tags == 'error' %}error{% else %}success{% endif %}");
+            {% endfor %}
+        {% endif %}
     </script>
-
 </body>
 </html>

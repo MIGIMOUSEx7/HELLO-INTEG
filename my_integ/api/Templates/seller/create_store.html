@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mag-Open ng Tindahan | Tindahan</title>
+    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
+    <link rel="stylesheet" href="{% static 'css/checkout_v2.css' %}"> </head>
+<body data-theme="dark">
+    <div class="bg-pattern"></div>
+    <div class="border-strip"></div>
+
+    <div class="shopee-header">
+        <div class="header-content">
+            <a href="{% url 'user_profile' %}" class="brand-text" style="font-size: 20px; color: var(--text-muted);">
+                ← Bumalik sa Profile
+            </a>
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 600px; margin-top: 40px;">
+        <div class="card">
+            <div class="p-card-header">
+                <div class="p-card-title">🏪 Mag-Open ng Tindahan</div>
+            </div>
+            <div class="p-card-body" style="padding: 30px;">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label">Pangalan ng Tindahan</label>
+                        <input type="text" name="store_name" class="form-input" placeholder="Halimbawa: Juan's Sari-Sari Store" required>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 30px;">
+                        <label class="form-label">Paglalarawan (Description)</label>
+                        <textarea name="store_description" class="form-input" rows="4" placeholder="Ilarawan ang mga ibinebenta mo dito..."></textarea>
+                    </div>
+
+                    <button type="submit" class="place-order-btn" style="width: 100%;">
+                        Magsimula ng Negosyo 🚀
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

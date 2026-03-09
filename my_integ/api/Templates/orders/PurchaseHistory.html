@@ -8,15 +8,26 @@
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
     <link rel="stylesheet" href="{% static 'css/history.css' %}">
     <style>
-        /* Make body a flex column so history-body can fill the rest */
         body {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
         }
-        /* history-body fills all remaining vertical space */
         .history-body {
             flex: 1;
+        }
+        /* Added this to allow the tabs to scroll left/right on smaller screens since there are 8 tabs now */
+        .status-tabs {
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none; /* Firefox */
+        }
+        .status-tabs::-webkit-scrollbar {
+            display: none; /* Safari/Chrome */
+        }
+        .status-tab {
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -24,7 +35,6 @@
 
 <div class="bg-texture"></div>
 
-<!-- ══ NAVBAR ══ -->
 <nav class="navbar">
     <div class="woven"></div>
     <div class="navbar-top">
@@ -56,19 +66,20 @@
     </div>
 </nav>
 
-<!-- ══ STATUS TABS ══ -->
 <div class="status-tabs">
     <button class="status-tab active" onclick="filterOrders('All', this)">✦ Lahat</button>
-    <button class="status-tab" onclick="filterOrders('Pending', this)">⏳ Babayaran</button>
+    <button class="status-tab" onclick="filterOrders('Pending', this)">🕒 Pending</button>
+    <button class="status-tab" onclick="filterOrders('To Pay', this)">⏳ Babayaran</button>
+    <button class="status-tab" onclick="filterOrders('Paid', this)">💸 Bayad Na</button>
+    <button class="status-tab" onclick="filterOrders('Shipping', this)">🚚 Naka-ship</button>
+    <button class="status-tab" onclick="filterOrders('To Receive', this)">📦 Darating</button>
     <button class="status-tab" onclick="filterOrders('Completed', this)">✅ Natapos</button>
     <button class="status-tab" onclick="filterOrders('Cancelled', this)">❌ Nakansela</button>
-    <button class="status-tab" onclick="filterOrders('Shipped', this)">🚚 Naka-ship</button>
+    <button class="status-tab" onclick="filterOrders('Return/Refund', this)">🔄 Return/Refund</button>
 </div>
 
-<!-- ══ 2-COLUMN BODY ══ -->
 <div class="history-body">
 
-    <!-- ── LEFT: Order list ── -->
     <main class="history-main">
 
         <div class="history-heading">
@@ -84,10 +95,9 @@
             {% with store=first_item.product.store %}
 
             <div class="order-card"
-                 data-status="{{ order.status|default:'Pending' }}"
+                 data-status="{{ order.status }}"
                  id="order-{{ order.id }}">
 
-                <!-- Store header -->
                 <div class="order-store-header">
                     <div class="order-store-left">
                         <span class="order-store-name">🏪 {{ store.store_name|default:"SariSariStore" }}</span>
@@ -103,12 +113,11 @@
                             </button>
                         {% endif %}
                     </div>
-                    <span class="order-status-badge status-{{ order.status|lower }}">
-                        {{ order.status }}
+                    <span class="order-status-badge status-{{ order.status|lower|slugify }}">
+                        {{ order.status|upper }}
                     </span>
                 </div>
 
-                <!-- Items -->
                 <div class="order-items-list">
                     {% for item in order.items.all %}
                     <div class="order-item-row">
@@ -128,14 +137,13 @@
                     {% endfor %}
                 </div>
 
-                <!-- Footer -->
                 <div class="order-card-footer">
                     <div class="total-wrap">
                         <span class="order-total-label">Order Total:</span>
                         <span class="order-total-price">₱{{ order.total_amount }}</span>
                     </div>
                     <div class="action-wrap">
-                        {% if order.status == 'Pending' %}
+                        {% if order.status == 'Pending' or order.status == 'To Pay' %}
                             <button class="btn-cancel" onclick="cancelOrder('{{ order.id }}')">
                                 Kanselahin
                             </button>
@@ -163,7 +171,6 @@
 
     </main>
 
-    <!-- ── RIGHT: Stats sidebar ── -->
     <aside class="history-sidebar">
 
         <div class="sidebar-heading">Kabuuang Gastos</div>
@@ -193,10 +200,9 @@
             </div>
         </div>
 
+    </aside>
 
-</div><!-- /history-body -->
-
-<div class="footer-strip"></div>
+</div><div class="footer-strip"></div>
 
 <div id="toast" class="toast">
     <span id="toast-icon">✅</span>
@@ -224,7 +230,12 @@
 
     function buildStats() {
         const cards = [...document.querySelectorAll('.order-card')];
-        const counts = { Pending: 0, Completed: 0, Cancelled: 0, Shipped: 0, Confirmed: 0 };
+        
+        // Track all 8 possible statuses from your database
+        const counts = { 
+            'Pending': 0, 'To Pay': 0, 'Paid': 0, 'Shipping': 0, 
+            'To Receive': 0, 'Completed': 0, 'Cancelled': 0, 'Return/Refund': 0 
+        };
         let total = 0;
 
         cards.forEach(card => {
@@ -234,25 +245,13 @@
             if (p) total += parseFloat(p.textContent.replace(/[₱,\s]/g, '')) || 0;
         });
 
+        // Update Sidebar Stats
         setEl('count-all',     cards.length);
-        setEl('count-pending', counts.Pending);
-        setEl('count-done',    counts.Completed);
-        setEl('count-cancel',  counts.Cancelled);
+        setEl('count-pending', counts['Pending']); 
+        setEl('count-done',    counts['Completed']);
+        setEl('count-cancel',  counts['Cancelled']);
         setEl('total-spend',   '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }));
         setEl('spend-sub',     `Sa ${cards.length} order${cards.length !== 1 ? 's' : ''}`);
-
-        document.getElementById('status-breakdown').innerHTML = [
-            { label: 'Pending',   val: counts.Pending,   cls: 'dot-pending' },
-            { label: 'Completed', val: counts.Completed, cls: 'dot-completed' },
-            { label: 'Cancelled', val: counts.Cancelled, cls: 'dot-cancelled' },
-            { label: 'Shipped',   val: counts.Shipped,   cls: 'dot-other' },
-        ].map(d => `
-            <div class="status-breakdown-item">
-                <span class="status-breakdown-label">
-                    <span class="status-dot ${d.cls}"></span>${d.label}
-                </span>
-                <span class="status-breakdown-val">${d.val}</span>
-            </div>`).join('');
     }
 
     function setEl(id, val) {
@@ -274,7 +273,8 @@
         tabEl.classList.add('active');
         let visible = 0;
         document.querySelectorAll('.order-card').forEach(card => {
-            const show = status === 'All' || card.getAttribute('data-status') === status;
+            const cardStatus = card.getAttribute('data-status');
+            const show = status === 'All' || cardStatus === status;
             card.style.display = show ? '' : 'none';
             if (show) visible++;
         });

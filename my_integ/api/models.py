@@ -186,12 +186,10 @@ class Review(models.Model):
     
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    # This handles the media file path defined in settings.py
     profile_picture = models.ImageField(upload_to='profiles/', null=True, blank=True)
-    # Add other info you want to manage here
     bio = models.TextField(max_length=500, blank=True)
     phone_number = models.CharField(max_length=15, blank=True)
+    is_seller = models.BooleanField(default=False, verbose_name="Is a Shop Owner?")
 
-    def __cl_str__(self):
+    def __str__(self):
         return f'{self.user.username} Profile'
-    
