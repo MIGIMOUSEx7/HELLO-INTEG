@@ -4,86 +4,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ store.store_name }} | ShopeeClone</title>
-    <link rel="stylesheet" href="{% static 'css/store.css' %}">
-    <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+    <title>{{ store.store_name }} | Tindahan</title>
+    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
+    <link rel="stylesheet" href="{% static 'css/shop.css' %}">
+    <link rel="stylesheet" href="{% static 'css/store_profile.css' %}">
 </head>
-<body>
+<body data-theme="light">
 
-    <div class="store-banner" style="{% if store.banner_image %}background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{{ store.banner_image.url }}'); background-size: cover; background-position: center;{% endif %}">
-        <div class="banner-content">
-            {% if store.profile_picture %}
-                <img src="{{ store.profile_picture.url }}" alt="Logo" class="store-logo">
+    <div class="bg-shapes">
+        <div class="shape shape1"></div>
+        <div class="shape shape2"></div>
+        <div class="shape shape3"></div>
+    </div>
+
+    <!-- ══ NAVBAR ══ -->
+    <nav class="navbar">
+        <div class="navbar-top">
+            <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
+            {% if user.is_authenticated %}
+                <span class="user-chip">👤 {{ user.username }}</span>
+                <a href="{% url 'logout' %}">Mag-Logout</a>
             {% else %}
-                <div class="store-logo" style="display:flex; align-items:center; justify-content:center; color:black; background:#fff; font-size:12px; text-align:center;">No Logo</div>
+                <a href="{% url 'login' %}">Login / Sign Up</a>
             {% endif %}
-            
+            <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
+        </div>
+        <div class="navbar-main">
+            <div class="logo-wrap" onclick="window.location.href='/'">
+                <div class="logo">Tindahan</div>
+                <div class="logo-tagline">Ang iyong merkado</div>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="search-input" class="search-input"
+                       placeholder="Hanapin ang produkto..." onkeyup="handleSearch(event)">
+                <button class="search-btn" onclick="performSearch()">🔍</button>
+            </div>
+            <div class="navbar-actions">
+                <a href="{% url 'cart' %}" class="cart-link">
+                    🛒
+                    <span id="cart-count" class="cart-badge">0</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ══ STORE BANNER ══ -->
+    <div class="store-banner"
+         {% if store.banner_image %}
+         style="background-image: linear-gradient(rgba(238,77,45,0.65), rgba(180,40,10,0.82)), url('{{ store.banner_image.url }}'); background-size: cover; background-position: center;"
+         {% endif %}>
+        <div class="banner-content">
+            <div class="store-avatar">
+                {% if store.profile_picture %}
+                    <img src="{{ store.profile_picture.url }}" alt="{{ store.store_name }}">
+                {% else %}
+                    🏪
+                {% endif %}
+            </div>
             <div class="store-info">
-                <h1>{{ store.store_name }}</h1>
+                <h1 class="store-title">{{ store.store_name }}</h1>
                 <div class="store-stats">
-                    <span>⭐ {{ store.rating|default:"0.0" }} Ratings</span> | 
-                    <span>1.2k Followers</span>
+                    <span>⭐ {{ store.rating|default:"0.0" }} Ratings</span>
+                    <span class="stat-sep">|</span>
+                    <span>📦 {{ products|length }} Produkto</span>
+                    <span class="stat-sep">|</span>
+                    <span>👥 1.2k Followers</span>
                 </div>
                 <div class="store-actions">
-                    <button class="btn-follow">+ Follow</button>
-                    <button class="btn-chat" onclick="toggleChat('{{ store.id }}', '{{ store.store_name }}', '{{ store.user.id }}')">Chat Now</button>
+                    <button class="btn-follow">+ Sundan</button>
+                    <button class="btn-chat-store"
+                        onclick="toggleChat('{{ store.id }}', '{{ store.store_name }}', '{{ store.user.id }}')">
+                        💬 Makipag-chat
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="container">
-        <h3 style="color: #666; margin: 30px 0 20px;">Products ({{ products|length }})</h3>
-        
-        <div class="grid">
-            {% for product in products %}
+    <!-- ══ PRODUCTS ══ -->
+    <div class="container store-container">
+        <main>
+            <div class="store-products-header">
+                <h3>Mga Produkto
+                    <span class="product-count-badge">{{ products|length }}</span>
+                </h3>
+            </div>
+
+            <div class="product-grid">
+                {% for product in products %}
                 <div class="card" onclick="window.location.href='/products/{{ product.id }}/'">
-                    <div class="card-img-wrapper">
+                    <div class="card-image">
                         {% if product.image %}
                             <img src="{{ product.image.url }}" alt="{{ product.name }}">
                         {% else %}
-                            <div class="no-image-placeholder">📦</div>
+                            📦
                         {% endif %}
                     </div>
                     <div class="card-body">
-                        <p class="product-title">{{ product.name }}</p>
-                        <p class="card-price">₱{{ product.price }}</p>
+                        <div class="product-name">{{ product.name }}</div>
+                        <div class="price-row">
+                            <div class="price">₱{{ product.price }}</div>
+                            <div class="stock-badge {% if product.stock_quantity <= 0 %}out{% endif %}">
+                                {% if product.stock_quantity <= 0 %}Ubos{% else %}{{ product.stock_quantity }} natitira{% endif %}
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            {% if product.stock_quantity <= 0 %}
+                                <button class="cart-btn" disabled>🛒 Cart</button>
+                                <button class="order-btn" disabled>Bilhin</button>
+                            {% else %}
+                                <button class="cart-btn" onclick="event.stopPropagation(); addToCart({{ product.id }})">🛒 Cart</button>
+                                <button class="order-btn" onclick="event.stopPropagation(); buyNow({{ product.id }})">Bilhin</button>
+                            {% endif %}
+                        </div>
                     </div>
+                    {% if product.stock_quantity <= 0 %}
+                        <div class="sold-out-overlay">Ubos na</div>
+                    {% endif %}
                 </div>
-            {% empty %}
-                <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
-                    <p>No products found for this store.</p>
+                {% empty %}
+                <div class="empty-state">
+                    <span class="empty-icon">📦</span>
+                    <p>Wala pang produkto sa tindahang ito.</p>
                 </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+
+    <div class="footer-strip"></div>
+
+    <!-- ══ CHAT WIDGET ══ -->
+    <button class="chat-widget-btn" onclick="toggleChat()" title="Makipag-usap sa amin">💬</button>
+    <div id="chat-window" class="chat-window">
+        <div class="chat-header">
+            <span id="chat-target-name">💬 Chat</span>
+            <button class="chat-close" onclick="toggleChat()">✕</button>
+        </div>
+        <div id="chat-messages" class="chat-messages">
+            <div class="msg received">Kumusta! Paano kita matutulungan? 😊</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Mag-type ng mensahe..."
+                   onkeypress="if(event.key==='Enter') sendMessage()">
+            <button class="chat-send-btn" onclick="sendMessage()">➤</button>
         </div>
     </div>
 
-    <div id="chat-window" class="chat-window" style="display:none;">
-        <div class="chat-header">
-            <span id="chat-target-name">Chat</span>
-            <span style="cursor:pointer" onclick="toggleChat()">✖</span>
-        </div>
-        <div id="chat-messages" class="chat-messages"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button class="chat-send-btn" onclick="sendMessage()">Send</button>
-        </div>
+    <div id="toast" class="toast">
+        <span id="toast-icon">✅</span>
+        <span id="toast-message">Tagumpay!</span>
     </div>
 
     <script>
+        const API_URL = "http://127.0.0.1:8000/api/";
         let activeStoreId = null;
-        let activeOwnerId = null; 
+        let activeOwnerId = null;
         const currentUserId = "{{ user.id }}";
 
+        /* ── Init ── */
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCartBadge();
+        });
+
+        async function updateCartBadge() {
+            try {
+                const res = await fetch(`${API_URL}cartitems/`);
+                if (res.ok) {
+                    const items = await res.json();
+                    const badge = document.getElementById('cart-count');
+                    if (badge) badge.innerText = items.length;
+                }
+            } catch (err) { console.error("Badge update error:", err); }
+        }
+
+        /* ── Theme ── */
+        function toggleTheme() {
+            const body = document.body;
+            const btns = document.querySelectorAll('.theme-toggle-nav');
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            btns.forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
+        }
+
+        /* ── Toast ── */
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
+            toast.className = `toast ${type}`;
+            toast.style.display = 'flex';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        /* ── Cart ── */
+        async function addToCart(productId) {
+            try {
+                const res = await fetch(`${API_URL}cartitems/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                    body: JSON.stringify({ cart: 1, product: productId, quantity: 1 })
+                });
+                if (res.ok) { showToast("Naidagdag sa cart!"); updateCartBadge(); }
+                else showToast("Hindi naidagdag.", "error");
+            } catch (err) { console.error(err); }
+        }
+
+        function buyNow(productId) {
+            window.location.href = `/checkout/?product_id=${productId}&quantity=1`;
+        }
+
+        /* ── Search ── */
+        function handleSearch(e) { if (e.key === 'Enter') performSearch(); }
+        function performSearch() {
+            const q = document.getElementById('search-input').value;
+            if (q) window.location.href = `/?search=${encodeURIComponent(q)}`;
+        }
+
+        /* ── Chat (original real-API logic preserved) ── */
         function toggleChat(storeId = null, storeName = "Customer Service", ownerId = null) {
             const win = document.getElementById('chat-window');
-            const isOpening = win.style.display === 'none';
+            const isOpening = win.style.display !== 'flex';
             win.style.display = isOpening ? 'flex' : 'none';
-            
+
             if (isOpening && storeId) {
                 activeStoreId = storeId;
                 activeOwnerId = ownerId;
-                document.getElementById('chat-target-name').innerText = storeName;
+                document.getElementById('chat-target-name').innerText = `💬 ${storeName}`;
                 loadMessages();
             }
         }
@@ -94,11 +241,8 @@
                 const res = await fetch(`/api/messages/?store=${activeStoreId}`);
                 const data = await res.json();
                 const container = document.getElementById('chat-messages');
-                
                 container.innerHTML = data.map(m => `
-                    <div class="msg ${m.sender == currentUserId ? 'sent' : 'received'}">
-                        ${m.message}
-                    </div>
+                    <div class="msg ${m.sender == currentUserId ? 'sent' : 'received'}">${m.message}</div>
                 `).join('');
                 container.scrollTop = container.scrollHeight;
             } catch (err) { console.error("Load Error:", err); }
@@ -108,31 +252,27 @@
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (!text || !activeStoreId || !activeOwnerId) return;
-
             try {
                 const res = await fetch('/api/messages/', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
                     body: JSON.stringify({
                         store: parseInt(activeStoreId),
                         message: text,
                         receiver: parseInt(activeOwnerId)
                     })
                 });
-
-                if (res.ok) {
-                    input.value = '';
-                    loadMessages();
-                } else {
-                    const errData = await res.json();
-                    console.error("API Error:", errData);
-                }
+                if (res.ok) { input.value = ''; loadMessages(); }
+                else { const e = await res.json(); console.error("API Error:", e); }
             } catch (err) { console.error("Send Error:", err); }
         }
 
+        setInterval(() => {
+            const win = document.getElementById('chat-window');
+            if (win.style.display === 'flex' && activeStoreId) loadMessages();
+        }, 5000);
+
+        /* ── Cookie helper ── */
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -147,13 +287,6 @@
             }
             return cookieValue;
         }
-
-        setInterval(() => {
-            const win = document.getElementById('chat-window');
-            if (win.style.display === 'flex' && activeStoreId) {
-                loadMessages();
-            }
-        }, 5000);
     </script>
 </body>
 </html>

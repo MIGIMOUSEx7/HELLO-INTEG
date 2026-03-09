@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShopeeClone - Modern E-Commerce</title>
-    
+    <title>Tindahan - Ang Iyong Merkado</title>
+    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
     <link rel="stylesheet" href="{% static 'css/shop.css' %}">
 </head>
 <body data-theme="light">
@@ -74,7 +74,7 @@
     <script>
         const API_URL = "http://127.0.0.1:8000/api/";
         let allProducts = [];
-        
+
         window.addEventListener('DOMContentLoaded', () => {
             updateCartBadge();
             initShop();
@@ -96,13 +96,9 @@
         function toggleTheme() {
             const body = document.body;
             const btns = document.querySelectorAll('.theme-toggle-nav');
-            if (body.getAttribute('data-theme') === 'dark') {
-                body.setAttribute('data-theme', 'light');
-                btns.forEach(b => b.textContent = '🌙 Mode');
-            } else {
-                body.setAttribute('data-theme', 'dark');
-                btns.forEach(b => b.textContent = '☀️ Mode');
-            }
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            btns.forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
         }
 
         function showToast(message, type = 'success') {
@@ -128,10 +124,10 @@
                 ).join('');
 
                 const stores = await storeRes.json();
-                document.getElementById('store-list').innerHTML = stores.map(s => 
+                document.getElementById('store-list').innerHTML = stores.map(s =>
                     `<div class="list-item" onclick="window.location.href='/store/${s.id}/'" title="View Store Profile">
                         <span>${s.store_name || s.name}</span>
-                        <span style="font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 10px; color: #333;">👁️ View Shop</span>
+                        <span class="view-shop-badge">👁️ View Shop</span>
                     </div>`
                 ).join('');
 

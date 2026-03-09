@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping Cart | Shopee Clone</title>
+    <title>Shopping Cart | Tindahan</title>
+    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
     <link rel="stylesheet" href="{% static 'css/cart.css' %}">
 </head>
 <body data-theme="light">
@@ -18,28 +19,28 @@
 
     <nav class="navbar">
         <div class="navbar-top">
-            <a href="{% url 'purchase_history' %}">Purchase History</a>
+            <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
             {% if user.is_authenticated %}
-                <span>{{ user.username }}</span>
-                <a href="{% url 'logout' %}">Logout</a>
+                <span class="user-chip">👤 {{ user.username }}</span>
+                <a href="{% url 'logout' %}">Mag-Logout</a>
             {% else %}
                 <a href="{% url 'login' %}">Login / Sign Up</a>
             {% endif %}
+            <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
         </div>
         <div class="navbar-main">
-            <a href="/" class="logo">ShopeeClone</a>
+            <a href="/" class="logo">Tindahan</a>
             <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Search products...">
-                <button class="search-btn">Search</button>
+                <input type="text" class="search-input" placeholder="Hanapin ang produkto...">
+                <button class="search-btn">🔍</button>
             </div>
             <a href="{% url 'cart' %}" class="cart-link">
-                Cart <span id="cart-count" class="cart-badge">{{ cart_items|length }}</span>
+                🛒 <span id="cart-count" class="cart-badge">{{ cart_items|length }}</span>
             </a>
         </div>
     </nav>
 
     <div class="container">
-        <!-- Cart Table Header -->
         <div class="cart-header">
             <input type="checkbox" id="select-all">
             <div>Produkto</div>
@@ -65,54 +66,80 @@
                             {% if item.product.image %}
                                 <img src="{{ item.product.image.url }}" alt="Produkto">
                             {% else %}
-                                <span>No Img</span>
+                                <span>📦</span>
                             {% endif %}
                         </div>
                         <div>
                             <div class="product-name">{{ item.product.name }}</div>
-                            <div style="color: #888; font-size: 13px;">Standard</div>
+                            <div class="product-variant">Standard</div>
                         </div>
                     </div>
-                    <div class="unit-price">P{{ item.product.price }}</div>
+                    <div class="unit-price">₱{{ item.product.price }}</div>
                     <div style="display:flex; justify-content:center;">
                         <div class="qty-control">
-                            <button class="qty-btn" onclick="updateQty('{{ item.id }}', '{{ item.quantity }}', -1)">-</button>
+                            <button class="qty-btn" onclick="updateQty('{{ item.id }}', '{{ item.quantity }}', -1)">−</button>
                             <input type="text" class="qty-input" value="{{ item.quantity }}" readonly>
                             <button class="qty-btn" onclick="updateQty('{{ item.id }}', '{{ item.quantity }}', 1)">+</button>
                         </div>
                     </div>
-                    <div class="total-price" style="text-align:right;">P{{ item.item_total }}</div>
-                    <div class="actions" style="text-align:right;" onclick="removeItem('{{ item.id }}')">Delete</div>
+                    <div class="total-price" style="text-align:right;">₱{{ item.item_total }}</div>
+                    <div class="actions" style="text-align:right;" onclick="removeItem('{{ item.id }}')">🗑 Burahin</div>
                 </div>
                 {% endfor %}
             </div>
             {% endfor %}
         {% else %}
             <div class="empty-cart">
-                <p>Your shopping cart is empty</p>
-                <a href="/">Go Shopping Now</a>
+                <div class="empty-icon">🛒</div>
+                <p>Walang laman ang iyong cart</p>
+                <a href="/">Mamili Na</a>
             </div>
         {% endif %}
     </div>
 
-    <!-- Sticky Checkout Footer -->
     <div class="checkout-footer">
         <div class="footer-content">
             <div class="footer-left">
-                <label><input type="checkbox" id="footer-select-all" checked> Select All</label>
-                <span onclick="deleteSelected()">Delete</span>
+                <label><input type="checkbox" id="footer-select-all" checked> Piliin Lahat</label>
+                <span class="footer-delete" onclick="deleteSelected()">🗑 Burahin</span>
             </div>
             <div class="footer-right">
-                <span>Total:</span>
-                <span class="final-price">P{{ cart_total }}</span>
-                <button class="btn-checkout" onclick="handleCheckout()" {% if not cart_items %}disabled{% endif %}>Check Out</button>
+                <span class="footer-total-label">Kabuuan:</span>
+                <span class="final-price">₱{{ cart_total }}</span>
+                <button class="btn-checkout" onclick="handleCheckout()" {% if not cart_items %}disabled{% endif %}>
+                    Mag-Checkout ({{ cart_items|length }})
+                </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Chat Widget -->
+    <button class="chat-widget-btn" onclick="toggleChat()" title="Makipag-usap sa amin">💬</button>
+    <div class="chat-window" id="chat-window">
+        <div class="chat-header">
+            <span>💬 Tindahan Support</span>
+            <button onclick="toggleChat()" class="chat-close">✕</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="msg received">Kumusta! Paano kita matutulungan ngayon? 😊</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Mag-type ng mensahe..." onkeyup="handleChatEnter(event)">
+            <button class="chat-send-btn" onclick="sendMessage()">➤</button>
         </div>
     </div>
 
     <div id="toast" class="toast"><span id="toast-message"></span></div>
 
     <script>
+        function toggleTheme() {
+            const body = document.body;
+            const btns = document.querySelectorAll('.theme-toggle-nav');
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            btns.forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
+        }
+
         function handleCheckout() { window.location.href = '{% url "checkout" %}'; }
 
         function showToast(message) {
@@ -133,9 +160,8 @@
             if (res.ok) location.reload();
         }
 
-        // ─── Remove Item ──────────────────────────────────────────────────
         async function removeItem(itemId) {
-            if (!confirm('Remove item?')) return;
+            if (!confirm('Burahin ang item?')) return;
             const res = await fetch(`/api/cartitems/${itemId}/`, {
                 method: 'DELETE',
                 headers: { 'X-CSRFToken': getCookie('csrftoken') }
@@ -143,7 +169,6 @@
             if (res.ok) location.reload();
         }
 
-        // ─── Select All ───────────────────────────────────────────────────
         document.getElementById('select-all')?.addEventListener('change', function () {
             document.querySelectorAll('.item-checkbox, .store-checkbox').forEach(cb => cb.checked = this.checked);
             document.getElementById('footer-select-all').checked = this.checked;
@@ -156,28 +181,42 @@
 
         document.querySelectorAll('.store-checkbox').forEach(storeCb => {
             storeCb.addEventListener('change', function () {
-                const group = this.closest('.store-group');
-                group.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = this.checked);
+                this.closest('.store-group').querySelectorAll('.item-checkbox').forEach(cb => cb.checked = this.checked);
             });
         });
 
-        // ─── Cookie Helper ────────────────────────────────────────────────
+        function toggleChat() {
+            const win = document.getElementById('chat-window');
+            win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function handleChatEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            const msgs = document.getElementById('chat-messages');
+            msgs.innerHTML += `<div class="msg sent">${text}</div>`;
+            input.value = '';
+            msgs.scrollTop = msgs.scrollHeight;
+            setTimeout(() => {
+                msgs.innerHTML += `<div class="msg received">Salamat sa iyong mensahe! Ikaw ay sasagutan sa lalong madaling panahon. 🙏</div>`;
+                msgs.scrollTop = msgs.scrollHeight;
+            }, 800);
+        }
+
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
                 document.cookie.split(';').forEach(cookie => {
                     cookie = cookie.trim();
-                    if (cookie.startsWith(name + '=')) {
+                    if (cookie.startsWith(name + '='))
                         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    }
                 });
             }
             return cookieValue;
         }
-
-        document.getElementById('select-all')?.addEventListener('change', function() {
-            document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = this.checked);
-        });
     </script>
 </body>
 </html>

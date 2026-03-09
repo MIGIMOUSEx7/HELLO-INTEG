@@ -1,37 +1,46 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap');
 
+/* ══════════════════════════════════════════
+   TINDAHAN — Shared Stylesheet
+   Used by: login.html, register.html
+══════════════════════════════════════════ */
+
+/* ── Variables ── */
 :root {
-    --primary: #ee4d2d;
+    --primary:       #ee4d2d;
     --primary-light: #ff6643;
-    --primary-glow: rgba(238, 77, 45, 0.25);
-    --bg-gray: #f5f5f5;
-    --card-bg: #ffffff;
-    --text-main: #333333;
-    --text-light: #888888;
-    --border-color: #dbdbdb;
+    --primary-glow:  rgba(238, 77, 45, 0.25);
+    --bg-gray:       #f5f5f5;
+    --card-bg:       #ffffff;
+    --text-main:     #333333;
+    --text-light:    #888888;
+    --border-color:  #dbdbdb;
+
+    --font-display: 'Playfair Display', serif;
+    --font-body:    'DM Sans', Helvetica, Arial, sans-serif;
 }
 
 [data-theme="dark"] {
-    --bg-gray: #121212;
-    --card-bg: #1e1e1e;
-    --text-main: #e0e0e0;
-    --text-light: #b0b0b0;
+    --bg-gray:      #121212;
+    --card-bg:      #1e1e1e;
+    --text-main:    #e0e0e0;
+    --text-light:   #b0b0b0;
     --border-color: #333333;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ── Base ── */
 body {
-    font-family: 'DM Sans', Helvetica, Arial, sans-serif;
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
     background: var(--bg-gray);
+    color: var(--text-main);
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    color: var(--text-main);
     transition: background 0.3s ease, color 0.3s ease;
     overflow-x: hidden;
 }
@@ -52,9 +61,9 @@ body {
     animation: float 20s infinite ease-in-out;
 }
 
-.shape1 { width: 320px; height: 320px; background: var(--primary); top: 8%;  left: -110px; }
-.shape2 { width: 210px; height: 210px; background: var(--primary-light); top: 58%; right: -60px; animation-delay: 3s; }
-.shape3 { width: 160px; height: 160px; background: var(--primary); bottom: 18%; left: 18%; animation-delay: 6s; }
+.shape1 { width: 320px; height: 320px; background: var(--primary);       top: 8%;     left: -110px; }
+.shape2 { width: 210px; height: 210px; background: var(--primary-light); top: 58%;    right: -60px; animation-delay: 3s; }
+.shape3 { width: 160px; height: 160px; background: var(--primary);       bottom: 18%; left: 18%;    animation-delay: 6s; }
 
 @keyframes float {
     0%, 100% { transform: translate(0, 0) scale(1); }
@@ -76,29 +85,27 @@ body {
 }
 
 .logo {
-    font-family: 'Playfair Display', serif;
-    color: white;
+    font-family: var(--font-display);
     font-size: 26px;
     letter-spacing: 0.5px;
+    color: white;
     text-decoration: none;
 }
 
 .theme-toggle {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
     background: rgba(255, 255, 255, 0.22);
     border: 1.5px solid rgba(255, 255, 255, 0.35);
     color: white;
     padding: 8px 20px;
     border-radius: 30px;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
     transition: background 0.2s;
 }
 
-.theme-toggle:hover {
-    background: rgba(255, 255, 255, 0.35);
-}
+.theme-toggle:hover { background: rgba(255, 255, 255, 0.35); }
 
 /* ── Main layout ── */
 .main-content {
@@ -119,43 +126,53 @@ body {
     width: 100%;
 }
 
-/* ── Promo side ── */
+/* ── Left info side (login = .welcome-side, register = .promo-side) ── */
+.welcome-side,
 .promo-side {
     flex: 1;
 }
 
+/* Badge pill */
 .welcome-badge {
     display: inline-block;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    color: white;
+    font-family: var(--font-body);
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 1px;
     text-transform: uppercase;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
     padding: 6px 14px;
     border-radius: 20px;
     margin-bottom: 18px;
 }
 
+/* Page heading */
+.welcome-side h1,
 .promo-side h1 {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-display);
     font-size: 40px;
+    font-weight: 700;
     line-height: 1.2;
     margin-bottom: 14px;
     color: var(--text-main);
 }
 
+.welcome-side h1 span,
 .promo-side h1 span {
     background: linear-gradient(135deg, var(--primary), var(--primary-light));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
+/* Tagline paragraph */
+.welcome-side > p,
 .promo-side > p {
-    font-size: 16px;
+    font-size: 15px;
+    font-weight: 400;
     color: var(--text-light);
     margin-bottom: 28px;
-    line-height: 1.6;
+    line-height: 1.7;
 }
 
 /* Vintage divider */
@@ -164,7 +181,7 @@ body {
     align-items: center;
     margin-bottom: 24px;
     color: var(--primary);
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .vintage-divider::before,
@@ -176,13 +193,15 @@ body {
     margin: 0 10px;
 }
 
-/* Benefits list */
+/* ── Feature / Benefit cards ── */
+.features,
 .benefits {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
+.feature-item,
 .benefit-item {
     display: flex;
     align-items: center;
@@ -194,11 +213,13 @@ body {
     transition: box-shadow 0.2s, transform 0.2s;
 }
 
+.feature-item:hover,
 .benefit-item:hover {
     box-shadow: 0 4px 16px var(--primary-glow);
     transform: translateY(-2px);
 }
 
+.feature-icon,
 .benefit-icon {
     width: 46px;
     height: 46px;
@@ -211,18 +232,24 @@ body {
     flex-shrink: 0;
 }
 
+.feature-text h3,
 .benefit-text h3 {
-    font-size: 15px;
+    font-family: var(--font-body);
+    font-size: 14px;
     font-weight: 600;
     margin-bottom: 3px;
+    color: var(--text-main);
 }
 
+.feature-text p,
 .benefit-text p {
     font-size: 13px;
+    font-weight: 400;
     color: var(--text-light);
 }
 
-/* ── Signup card ── */
+/* ── Card (login-box / signup-card) ── */
+.login-box,
 .signup-card {
     background: var(--card-bg);
     padding: 40px 36px;
@@ -234,91 +261,116 @@ body {
     transition: background 0.3s, border-color 0.3s;
 }
 
+/* Card header */
 .login-header {
     text-align: center;
     margin-bottom: 28px;
 }
 
 .login-header h2 {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-display);
     font-size: 28px;
+    font-weight: 700;
     margin-bottom: 6px;
+    color: var(--text-main);
 }
 
 .subtitle {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 400;
     color: var(--text-light);
-    font-size: 14px;
     text-align: center;
 }
 
-/* Form fields (Django-rendered) */
+/* ── Form elements ── */
+
+/* Input group wrapper (login uses .input-group divs; register uses form p) */
+.input-group,
 form p {
-    margin-bottom: 18px;
     display: flex;
     flex-direction: column;
-    font-size: 14px;
+    margin-bottom: 18px;
 }
 
+/* Labels (login uses .input-label; register uses form label) */
+.input-label,
 form label {
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 600;
     color: var(--text-main);
     margin-bottom: 7px;
 }
 
-form input {
+/* All text inputs */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input {
     width: 100%;
     padding: 13px 14px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-main);
+    background: var(--card-bg);
     border: 1.5px solid var(--border-color);
     border-radius: 10px;
-    background: var(--card-bg);
-    color: var(--text-main);
     outline: none;
-    font-size: 14px;
-    font-family: 'DM Sans', sans-serif;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-form input:focus {
+input:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
+/* Help text */
 .helptext {
     font-size: 11px;
+    font-weight: 400;
     color: var(--text-light);
     margin-top: 5px;
     line-height: 1.5;
 }
 
-/* Error */
-.err {
-    color: #ff424f;
-    font-size: 12px;
-    margin-top: 5px;
-    padding: 8px 12px;
-    background: rgba(255, 66, 79, 0.08);
-    border-radius: 6px;
-    border-left: 3px solid #ff424f;
+/* Password toggle */
+.pw-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text-light);
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.pw-toggle:hover {
+    color: var(--primary);
+    transform: scale(1.15);
 }
 
 /* Submit button */
 button[type="submit"] {
     width: 100%;
     padding: 14px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
     background: linear-gradient(135deg, var(--primary), var(--primary-light));
     color: white;
     border: none;
-    font-weight: 700;
-    cursor: pointer;
     border-radius: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    font-size: 14px;
-    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
     box-shadow: 0 4px 14px var(--primary-glow);
     transition: opacity 0.2s, transform 0.15s;
-    margin-top: 6px;
+    margin-top: 4px;
 }
 
 button[type="submit"]:hover {
@@ -326,13 +378,26 @@ button[type="submit"]:hover {
     transform: translateY(-1px);
 }
 
+/* Error */
+.err {
+    font-size: 12px;
+    font-weight: 400;
+    color: #ff424f;
+    padding: 10px 12px;
+    background: rgba(255, 66, 79, 0.08);
+    border-radius: 8px;
+    border-left: 3px solid #ff424f;
+    margin-bottom: 14px;
+}
+
 /* Divider */
 .divider {
-    margin: 24px 0;
     display: flex;
     align-items: center;
-    color: var(--text-light);
+    margin: 24px 0;
     font-size: 12px;
+    font-weight: 400;
+    color: var(--text-light);
 }
 
 .divider::before,
@@ -344,20 +409,25 @@ button[type="submit"]:hover {
     margin: 0 10px;
 }
 
-/* Footer links */
+/* Bottom links */
+.actions,
 .footer-links {
     text-align: center;
     font-size: 14px;
+    font-weight: 400;
     color: var(--text-light);
 }
 
-.signup-link {
+.signup-link,
+.footer-links a {
+    font-size: 14px;
+    font-weight: 600;
     color: var(--primary);
     text-decoration: none;
-    font-weight: 600;
 }
 
-.signup-link:hover {
+.signup-link:hover,
+.footer-links a:hover {
     text-decoration: underline;
 }
 
@@ -374,6 +444,7 @@ button[type="submit"]:hover {
         gap: 36px;
     }
 
+    .welcome-side,
     .promo-side {
         text-align: center;
     }

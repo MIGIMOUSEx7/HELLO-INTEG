@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | ShopeeClone</title>
+    <title>Register | Tindahan</title>
     <link rel="stylesheet" href="{% static 'css/register.css' %}">
 </head>
 <body data-theme="light">
@@ -16,7 +16,7 @@
     </div>
 
     <header class="header">
-        <a href="/" class="logo">ShopeeClone</a>
+        <a href="/" class="logo">Tindahan</a>
         <button class="theme-toggle" onclick="toggleTheme()">Toggle Mode</button>
     </header>
 
@@ -55,12 +55,14 @@
             </div>
 
             <div class="signup-card">
-                <h2>Create Account</h2>
-                <p class="subtitle">Start your shopping journey with us</p>
-                
+                <div class="login-header">
+                    <h2>Mag-Sign Up</h2>
+                    <p class="subtitle">Simulan ang iyong shopping journey</p>
+                </div>
+
                 <form method="POST" novalidate>
                     {% csrf_token %}
-                    
+
                     {% for field in form %}
                         <p>
                             {{ field.label_tag }}
@@ -69,32 +71,30 @@
                                 <span class="helptext">{{ field.help_text }}</span>
                             {% endif %}
                             {% for error in field.errors %}
-                                <span style="color: red;">{{ error }}</span>
+                                <span class="err">{{ error }}</span>
                             {% endfor %}
                         </p>
                     {% endfor %}
-                    
-                    <button type="submit">Complete Registration</button>
+
+                    <button type="submit">Kumpletuhin ang Pagpaparehistro</button>
                 </form>
-                
+
+                <div class="divider">o kaya</div>
+
                 <div class="footer-links">
-                    Already have an account? <a href="{% url 'login' %}">Log In</a>
+                    Mayroon nang account? <a href="{% url 'login' %}" class="signup-link">Mag-Login</a>
                 </div>
             </div>
         </div>
     </div>
 
+    <div class="footer-strip"></div>
+
     <script>
         function toggleTheme() {
             const body = document.body;
-            const toggle = document.querySelector('.theme-toggle');
-            if (body.getAttribute('data-theme') === 'dark') {
-                body.setAttribute('data-theme', 'light');
-                toggle.textContent = 'Toggle Mode';
-            } else {
-                body.setAttribute('data-theme', 'dark');
-                toggle.textContent = 'Toggle Mode';
-            }
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
         }
     </script>
 </body>
