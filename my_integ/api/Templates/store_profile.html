@@ -17,7 +17,6 @@
         <div class="shape shape3"></div>
     </div>
 
-    <!-- ══ NAVBAR ══ -->
     <nav class="navbar">
         <div class="navbar-top">
             <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
@@ -48,7 +47,6 @@
         </div>
     </nav>
 
-    <!-- ══ STORE BANNER ══ -->
     <div class="store-banner"
          {% if store.banner_image %}
          style="background-image: linear-gradient(rgba(238,77,45,0.65), rgba(180,40,10,0.82)), url('{{ store.banner_image.url }}'); background-size: cover; background-position: center;"
@@ -73,7 +71,7 @@
                 <div class="store-actions">
                     <button class="btn-follow">+ Sundan</button>
                     <button class="btn-chat-store"
-                        onclick="toggleChat('{{ store.id }}', '{{ store.store_name }}', '{{ store.user.id }}')">
+                        onclick="toggleChat('{{ store.id }}', '{{ store.store_name|escapejs }}', '{{ store.user.id }}')">
                         💬 Makipag-chat
                     </button>
                 </div>
@@ -81,7 +79,6 @@
         </div>
     </div>
 
-    <!-- ══ PRODUCTS ══ -->
     <div class="container store-container">
         <main>
             <div class="store-products-header">
@@ -134,9 +131,8 @@
 
     <div class="footer-strip"></div>
 
-    <!-- ══ CHAT WIDGET ══ -->
-    <button class="chat-widget-btn" onclick="toggleChat()" title="Makipag-usap sa amin">💬</button>
-    <div id="chat-window" class="chat-window">
+    <button class="chat-widget-btn" onclick="toggleChat('{{ store.id }}', '{{ store.store_name|escapejs }}', '{{ store.user.id }}')" title="Makipag-usap sa amin">💬</button>
+    <div id="chat-window" class="chat-window" style="display: none;">
         <div class="chat-header">
             <span id="chat-target-name">💬 Chat</span>
             <button class="chat-close" onclick="toggleChat()">✕</button>
@@ -160,11 +156,17 @@
         const API_URL = "http://127.0.0.1:8000/api/";
         let activeStoreId = null;
         let activeOwnerId = null;
-        const currentUserId = "{{ user.id }}";
+        const currentUserId = "{{ user.id|default:'' }}";
 
         /* ── Init ── */
         window.addEventListener('DOMContentLoaded', () => {
             updateCartBadge();
+
+            // 🛠️ AUTO-OPEN LOGIC: Tinitingnan ang URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('open_chat') === 'true') {
+                toggleChat('{{ store.id }}', '{{ store.store_name|escapejs }}', '{{ store.user.id }}');
+            }
         });
 
         async function updateCartBadge() {
@@ -181,10 +183,9 @@
         /* ── Theme ── */
         function toggleTheme() {
             const body = document.body;
-            const btns = document.querySelectorAll('.theme-toggle-nav');
             const isDark = body.getAttribute('data-theme') === 'dark';
             body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            btns.forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
+            document.querySelectorAll('.theme-toggle-nav').forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
         }
 
         /* ── Toast ── */
@@ -221,10 +222,10 @@
             if (q) window.location.href = `/?search=${encodeURIComponent(q)}`;
         }
 
-        /* ── Chat (original real-API logic preserved) ── */
+        /* ── Chat Logic ── */
         function toggleChat(storeId = null, storeName = "Customer Service", ownerId = null) {
             const win = document.getElementById('chat-window');
-            const isOpening = win.style.display !== 'flex';
+            const isOpening = win.style.display === 'none' || win.style.display === '';
             win.style.display = isOpening ? 'flex' : 'none';
 
             if (isOpening && storeId) {
@@ -238,7 +239,7 @@
         async function loadMessages() {
             if (!activeStoreId) return;
             try {
-                const res = await fetch(`/api/messages/?store=${activeStoreId}`);
+                const res = await fetch(`${API_URL}messages/?store=${activeStoreId}`);
                 const data = await res.json();
                 const container = document.getElementById('chat-messages');
                 container.innerHTML = data.map(m => `
@@ -253,7 +254,7 @@
             const text = input.value.trim();
             if (!text || !activeStoreId || !activeOwnerId) return;
             try {
-                const res = await fetch('/api/messages/', {
+                const res = await fetch(`${API_URL}messages/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
                     body: JSON.stringify({
@@ -272,7 +273,6 @@
             if (win.style.display === 'flex' && activeStoreId) loadMessages();
         }, 5000);
 
-        /* ── Cookie helper ── */
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
