@@ -6,218 +6,309 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tindahan - Ang Iyong Merkado</title>
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
-    <link rel="stylesheet" href="{% static 'css/shop.css' %}">
 </head>
-<body data-theme="light">
+<body data-theme="dark">
 
-    <div class="bg-shapes">
-        <div class="shape shape1"></div>
-        <div class="shape shape2"></div>
-        <div class="shape shape3"></div>
+<!-- Weave texture overlay -->
+<div class="bg-texture"></div>
+
+<!-- ══ NAVBAR ══ -->
+<nav class="navbar">
+    <div class="woven"></div>
+    <div class="navbar-top">
+        <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
+        {% if user.is_authenticated %}
+            <div class="user-dropdown-wrap">
+                <a class="user-chip" tabindex="0">👤 {{ user.username }} ▾</a>
+                <div class="user-dropdown">
+                    <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
+                    <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
+                </div>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}">Login / Sign Up</a>
+        {% endif %}
+        <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
     </div>
-
-    <nav class="navbar">
-        <div class="navbar-top">
-            <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
-            {% if user.is_authenticated %}
-                <span class="user-chip">👤 {{ user.username }}</span>
-                <a href="{% url 'user_profile' %}">Aking Profile</a>
-                <a href="{% url 'logout' %}">Mag-Logout</a>
-            {% else %}
-                <a href="{% url 'login' %}">Login / Sign Up</a>
-            {% endif %}
-            <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
+    <div class="navbar-main">
+        <div class="logo-wrap" onclick="window.location.reload()">
+            <div class="logo">Tindahan</div>
+            <div class="logo-tagline">Ang iyong merkado</div>
         </div>
-        <div class="navbar-main">
-            <div class="logo-wrap" onclick="window.location.reload()">
-                <div class="logo">Tindahan</div>
-                <div class="logo-tagline">Ang iyong merkado</div>
-            </div>
+        <div class="search-bar">
+            <input type="text" id="search-input" class="search-input"
+                   placeholder="Hanapin ang produkto..." onkeyup="handleSearch(event)">
+            <button class="search-btn" onclick="performSearch()">🔍</button>
+        </div>
+        <div class="navbar-actions">
+            <a href="{% url 'cart' %}" class="cart-link">
+                🛒 <span id="cart-count" class="cart-badge">0</span>
+            </a>
+        </div>
+    </div>
+</nav>
 
-            <div class="search-bar">
-                <input type="text" id="search-input" class="search-input" placeholder="Hanapin ang produkto..." onkeyup="handleSearch(event)">
-                <button class="search-btn" onclick="performSearch()">🔍</button>
-            </div>
+<!-- ══ HERO ══ -->
+<section class="hero z1">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-text">
+        <div class="hero-eyebrow">Maligayang pagdating</div>
+        <h1>Ang Pinakamahusay<br>na <span>Mga Produkto</span></h1>
+        <p class="hero-sub">Tuklasin ang daan-daang produkto mula sa mga lokal na tindahan. Mabilis, madali, at maaasahan.</p>
+        <div class="hero-stats">
+            <div><div class="hero-stat-num" id="stat-products">—</div><div class="hero-stat-label">Produkto</div></div>
+            <div><div class="hero-stat-num" id="stat-stores">—</div><div class="hero-stat-label">Tindahan</div></div>
+            <div><div class="hero-stat-num" id="stat-cats">—</div><div class="hero-stat-label">Kategorya</div></div>
+        </div>
+    </div>
+    <div class="hero-badges">
+        <div class="hero-badge">
+            <div class="hero-badge-icon">🚀</div>
+            <div><div class="hero-badge-title">Mabilis na Delivery</div><div class="hero-badge-sub">Hatid sa iyong pintuan</div></div>
+        </div>
+        <div class="hero-badge">
+            <div class="hero-badge-icon">🔒</div>
+            <div><div class="hero-badge-title">Ligtas na Bayad</div><div class="hero-badge-sub">100% secure checkout</div></div>
+        </div>
+        <div class="hero-badge">
+            <div class="hero-badge-icon">🏪</div>
+            <div><div class="hero-badge-title">Lokal na Tindahan</div><div class="hero-badge-sub">Suportahan ang lokal</div></div>
+        </div>
+    </div>
+</section>
 
-            <div class="navbar-actions">
-                <a href="{% url 'cart' %}" class="cart-link">
-                    🛒
-                    <span id="cart-count" class="cart-badge">0</span>
-                </a>
+<!-- ══ CATEGORY PILL BAR ══ -->
+<div class="cat-bar" id="cat-bar">
+    <span class="cat-bar-label">Filter:</span>
+    <button class="cat-pill active" onclick="initShop(''); setCatActive(this)">✦ Lahat</button>
+    <!-- filled by JS -->
+</div>
+
+<!-- ══ 3-COLUMN LAYOUT ══ -->
+<div class="layout-3col">
+
+    <!-- Left sidebar -->
+    <aside class="sidebar-left">
+        <div class="sidebar-section">
+            <div class="sidebar-heading">Kategorya</div>
+            <div id="category-list">
+                <div class="sidebar-item text-muted">Naglo-load...</div>
             </div>
         </div>
-    </nav>
-
-    <div class="container">
-        <aside>
-            <div class="sidebar-card">
-                <h4><span class="h4-accent"></span>Mga Kategorya</h4>
-                <div id="category-list">Naglo-load...</div>
+        <div class="sidebar-section">
+            <div class="sidebar-heading">Mga Tindahan</div>
+            <div id="store-list">
+                <div class="sidebar-item text-muted">Naglo-load...</div>
             </div>
-            <div class="sidebar-card">
-                <h4><span class="h4-accent"></span>Mga Tindahan</h4>
-                <div id="store-list">Naglo-load...</div>
-            </div>
-        </aside>
+        </div>
+    </aside>
 
-        <main>
-            <div id="product-grid" class="product-grid"></div>
-        </main>
-    </div>
+    <!-- Product area -->
+    <main class="product-area">
+        <div class="product-area-header">
+            <div class="product-area-title">Mga Produkto</div>
+            <div class="product-area-count" id="product-count"></div>
+        </div>
+        <div id="product-grid" class="product-grid"></div>
+    </main>
 
-    <div class="footer-strip"></div>
+    <!-- Right sidebar -->
+    <aside class="sidebar-right">
+        <div class="sidebar-heading">Espesyal</div>
+        <div class="promo-card">
+            <span class="promo-card-emoji">🎉</span>
+            <div class="promo-card-title">Bagong Arrivals</div>
+            <div class="promo-card-text">Tingnan ang pinakabago naming mga produkto ngayon!</div>
+            <button class="promo-btn" onclick="initShop('')">Tingnan Lahat →</button>
+        </div>
+        <div class="promo-card">
+            <span class="promo-card-emoji">🏪</span>
+            <div class="promo-card-title">Mag-Open ng Tindahan</div>
+            <div class="promo-card-text">Gusto mong magbenta? Subukan na ngayon!</div>
+            <button class="promo-btn" onclick="window.location.href='/store/create/'">Magsimula →</button>
+        </div>
 
-    <div id="toast" class="toast">
-        <span id="toast-icon">✅</span>
-        <span id="toast-message">Tagumpay!</span>
-    </div>
+        <div class="sidebar-heading mt-24">Trending</div>
+        <div class="trending-list" id="trending-list"></div>
+    </aside>
 
-    <script>
-        const API_URL = "http://127.0.0.1:8000/api/";
-        let allProducts = [];
+</div><!-- /layout-3col -->
 
-        window.addEventListener('DOMContentLoaded', () => {
-            updateCartBadge();
-            initShop();
-        });
+<div class="footer-strip"></div>
 
-        async function updateCartBadge() {
-            try {
-                const res = await fetch(`${API_URL}cartitems/`);
-                if (res.ok) {
-                    const items = await res.json();
-                    const badge = document.getElementById('cart-count');
-                    if (badge) badge.innerText = items.length;
-                }
-            } catch (err) {
-                console.error("Badge update error:", err);
+<!-- Toast -->
+<div id="toast" class="toast">
+    <span id="toast-icon">✅</span>
+    <span id="toast-message">Tagumpay!</span>
+</div>
+
+<script>
+    const API_URL = "http://127.0.0.1:8000/api/";
+    let allProducts = [];
+
+    window.addEventListener('DOMContentLoaded', () => { updateCartBadge(); initShop(); });
+
+    async function updateCartBadge() {
+        try {
+            const res = await fetch(`${API_URL}cartitems/`);
+            if (res.ok) {
+                const items = await res.json();
+                const badge = document.getElementById('cart-count');
+                if (badge) badge.innerText = items.length;
             }
+        } catch (e) { console.error(e); }
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.querySelectorAll('.theme-toggle-nav').forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
+    }
+
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        document.getElementById('toast-message').textContent = msg;
+        document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
+        toast.className = `toast ${type} show`;
+        setTimeout(() => { toast.classList.remove('show'); toast.style.display = ''; }, 3000);
+    }
+
+    function setCatActive(el) {
+        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    async function initShop(filterQuery = "") {
+        try {
+            const [catRes, storeRes, prodRes] = await Promise.all([
+                fetch(`${API_URL}categories/`),
+                fetch(`${API_URL}stores/`),
+                fetch(filterQuery ? `${API_URL}products/?${filterQuery}` : `${API_URL}products/`)
+            ]);
+
+            const categories = await catRes.json();
+
+            // Left sidebar
+            document.getElementById('category-list').innerHTML = categories.map(c =>
+                `<div class="sidebar-item" onclick="initShop('category=${c.id}')">
+                    <span>${c.category_name}</span><span class="text-muted">›</span>
+                </div>`
+            ).join('');
+
+            // Pill bar
+            const catBar = document.getElementById('cat-bar');
+            catBar.querySelectorAll('.cat-pill.dynamic').forEach(e => e.remove());
+            categories.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = 'cat-pill dynamic';
+                btn.textContent = c.category_name;
+                btn.onclick = function() { initShop(`category=${c.id}`); setCatActive(this); };
+                catBar.appendChild(btn);
+            });
+
+            const stores = await storeRes.json();
+            document.getElementById('store-list').innerHTML = stores.map(s =>
+                `<div class="store-item" onclick="window.location.href='/store/${s.id}/'">
+                    <div class="store-avatar">${(s.store_name||s.name||'?')[0].toUpperCase()}</div>
+                    <span class="store-name">${s.store_name || s.name}</span>
+                    <span class="store-badge">Shop</span>
+                </div>`
+            ).join('');
+
+            const products = await prodRes.json();
+            allProducts = products;
+
+            // Hero stats
+            document.getElementById('stat-products').textContent = products.length;
+            document.getElementById('stat-stores').textContent = stores.length;
+            document.getElementById('stat-cats').textContent = categories.length;
+
+            // Trending
+            const trending = [...products].sort((a, b) => b.price - a.price).slice(0, 5);
+            document.getElementById('trending-list').innerHTML = trending.map((p, i) =>
+                `<div class="trending-item" onclick="buyNow(${p.id})">
+                    <div class="trending-rank">${i + 1}</div>
+                    <div class="trending-info">
+                        <div class="trending-name">${p.name}</div>
+                        <div class="trending-price">₱${parseFloat(p.price).toLocaleString()}</div>
+                    </div>
+                </div>`
+            ).join('');
+
+            displayProducts(products);
+        } catch (err) { console.error("Init error:", err); }
+    }
+
+    function displayProducts(products) {
+        const grid = document.getElementById('product-grid');
+        const countEl = document.getElementById('product-count');
+        if (countEl) countEl.textContent = `${products.length} produkto`;
+
+        if (products.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <span class="empty-state-icon">🔍</span>
+                    <div class="empty-state-title">Walang Nahanap</div>
+                    <p>Subukan ang ibang salita sa paghahanap</p>
+                </div>`;
+            return;
         }
 
-        function toggleTheme() {
-            const body = document.body;
-            const btns = document.querySelectorAll('.theme-toggle-nav');
-            const isDark = body.getAttribute('data-theme') === 'dark';
-            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            btns.forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = message;
-            document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
-            toast.className = `toast ${type}`;
-            toast.style.display = 'flex';
-            setTimeout(() => { toast.style.display = 'none'; }, 3000);
-        }
-
-        async function initShop(filterQuery = "") {
-            try {
-                const [catRes, storeRes, prodRes] = await Promise.all([
-                    fetch(`${API_URL}categories/`),
-                    fetch(`${API_URL}stores/`),
-                    fetch(filterQuery ? `${API_URL}products/?${filterQuery}` : `${API_URL}products/`)
-                ]);
-
-                const categories = await catRes.json();
-                document.getElementById('category-list').innerHTML = categories.map(c =>
-                    `<div class="list-item" onclick="initShop('category=${c.id}')"><span>${c.category_name}</span><span>→</span></div>`
-                ).join('');
-
-                const stores = await storeRes.json();
-                document.getElementById('store-list').innerHTML = stores.map(s =>
-                    `<div class="list-item" onclick="window.location.href='/store/${s.id}/'" title="View Store Profile">
-                        <span>${s.store_name || s.name}</span>
-                        <span class="view-shop-badge">👁️ View Shop</span>
-                    </div>`
-                ).join('');
-
-                const products = await prodRes.json();
-                allProducts = products;
-                displayProducts(products);
-
-            } catch (err) {
-                console.error("Init error:", err);
-            }
-        }
-
-        function displayProducts(products) {
-            const grid = document.getElementById('product-grid');
-            if (products.length === 0) {
-                grid.innerHTML = `
-                    <div class="empty-state">
-                        <span class="empty-icon">🔍</span>
-                        <p>Walang produktong nahanap</p>
-                    </div>`;
-                return;
-            }
-            grid.innerHTML = products.map(p => {
-                const isSoldOut = p.stock_quantity <= 0;
-                return `
-                    <div class="card">
-                        ${isSoldOut ? '<div class="sold-out-overlay">Ubos na</div>' : ''}
-                        <div class="card-image"><img src="${p.image || ''}" onerror="this.parentNode.innerHTML='📦'"></div>
-                        <div class="card-body">
-                            <div class="product-name">${p.name}</div>
-                            <div class="product-description">${p.description}</div>
-                            <div class="price-row">
-                                <div class="price">₱${parseFloat(p.price).toLocaleString()}</div>
-                                <div class="stock-badge ${isSoldOut ? 'out' : ''}">${isSoldOut ? 'Ubos' : p.stock_quantity + ' natitira'}</div>
-                            </div>
-                            <div class="btn-group">
-                                <button class="cart-btn" onclick="addToCart(${p.id})" ${isSoldOut ? 'disabled' : ''}>🛒 Cart</button>
-                                <button class="order-btn" onclick="buyNow(${p.id})" ${isSoldOut ? 'disabled' : ''}>Bilhin</button>
-                            </div>
+        grid.innerHTML = products.map(p => {
+            const isSoldOut = p.stock_quantity <= 0;
+            return `
+                <div class="card">
+                    ${isSoldOut ? '<div class="sold-out-overlay">UBOS NA</div>' : ''}
+                    <div class="card-image">
+                        <img src="${p.image || ''}" onerror="this.parentNode.innerHTML='<div style=font-size:52px>📦</div>'">
+                    </div>
+                    <div class="card-body">
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-description">${p.description || ''}</div>
+                        <div class="price-row">
+                            <div class="price">₱${parseFloat(p.price).toLocaleString()}</div>
+                            <span class="stock-badge ${isSoldOut ? 'out' : ''}">
+                                ${isSoldOut ? 'Ubos' : p.stock_quantity + ' natitira'}
+                            </span>
                         </div>
-                    </div>`;
-            }).join('');
-        }
+                        <div class="btn-group">
+                            <button class="cart-btn" onclick="addToCart(${p.id})" ${isSoldOut ? 'disabled' : ''}>🛒 Cart</button>
+                            <button class="order-btn" onclick="buyNow(${p.id})" ${isSoldOut ? 'disabled' : ''}>Bilhin</button>
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+    }
 
-        async function addToCart(productId) {
-            try {
-                const res = await fetch(`${API_URL}cartitems/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({ cart: 1, product: productId, quantity: 1 })
-                });
-                if (res.ok) {
-                    showToast("Naidagdag sa cart!");
-                    updateCartBadge();
-                } else {
-                    showToast("Hindi naidagdag", "error");
-                }
-            } catch (err) { console.error(err); }
-        }
+    async function addToCart(productId) {
+        try {
+            const res = await fetch(`${API_URL}cartitems/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify({ cart: 1, product: productId, quantity: 1 })
+            });
+            if (res.ok) { showToast("Naidagdag sa cart! 🛒"); updateCartBadge(); }
+            else showToast("Hindi naidagdag", "error");
+        } catch (e) { console.error(e); }
+    }
 
-        function buyNow(productId) {
-            window.location.href = `/checkout/?product_id=${productId}&quantity=1`;
-        }
+    function buyNow(productId) { window.location.href = `/checkout/?product_id=${productId}&quantity=1`; }
+    function handleSearch(e) { if (e.key === 'Enter') performSearch(); }
+    function performSearch() {
+        const q = document.getElementById('search-input').value.toLowerCase();
+        displayProducts(allProducts.filter(p => p.name.toLowerCase().includes(q)));
+    }
 
-        function handleSearch(e) { if (e.key === 'Enter') performSearch(); }
-
-        function performSearch() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const filtered = allProducts.filter(p => p.name.toLowerCase().includes(query));
-            displayProducts(filtered);
+    function getCookie(name) {
+        let v = null;
+        if (document.cookie) for (const c of document.cookie.split(';')) {
+            const t = c.trim();
+            if (t.startsWith(name + '=')) { v = decodeURIComponent(t.slice(name.length + 1)); break; }
         }
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-    </script>
+        return v;
+    }
+</script>
 </body>
 </html>

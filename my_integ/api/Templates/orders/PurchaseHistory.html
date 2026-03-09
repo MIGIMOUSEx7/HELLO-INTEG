@@ -6,248 +6,321 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase History | Tindahan</title>
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
-    <link rel="stylesheet" href="{% static 'css/shop.css' %}">
     <link rel="stylesheet" href="{% static 'css/history.css' %}">
+    <style>
+        /* Make body a flex column so history-body can fill the rest */
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        /* history-body fills all remaining vertical space */
+        .history-body {
+            flex: 1;
+        }
+    </style>
 </head>
-<body data-theme="light">
+<body data-theme="dark">
 
-    <div class="bg-shapes">
-        <div class="shape shape1"></div>
-        <div class="shape shape2"></div>
-        <div class="shape shape3"></div>
+<div class="bg-texture"></div>
+
+<!-- ══ NAVBAR ══ -->
+<nav class="navbar">
+    <div class="woven"></div>
+    <div class="navbar-top">
+        <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
+        {% if user.is_authenticated %}
+            <div class="user-dropdown-wrap">
+                <a class="user-chip" tabindex="0">👤 {{ user.username }} ▾</a>
+                <div class="user-dropdown">
+                    <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
+                    <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
+                </div>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}">Login / Sign Up</a>
+        {% endif %}
+        <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
     </div>
-
-    <nav class="navbar">
-        <div class="navbar-top">
-            <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
-            {% if user.is_authenticated %}
-                <span class="user-chip">👤 {{ user.username }}</span>
-                <a href="{% url 'logout' %}">Mag-Logout</a>
-            {% else %}
-                <a href="{% url 'login' %}">Login / Sign Up</a>
-            {% endif %}
-            <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
+    <div class="navbar-main">
+        <div class="logo-wrap" onclick="window.location.href='/'">
+            <div class="logo">Tindahan</div>
+            <div class="logo-tagline">Ang iyong merkado</div>
         </div>
-        <div class="navbar-main">
-            <div class="logo-wrap" onclick="window.location.href='/'">
-                <div class="logo">Tindahan</div>
-                <div class="logo-tagline">Ang iyong merkado</div>
-            </div>
-            <div class="search-bar">
-                <input type="text" id="search-input" class="search-input"
-                       placeholder="Hanapin ang produkto..." onkeyup="handleSearch(event)">
-                <button class="search-btn" onclick="performSearch()">🔍</button>
-            </div>
-            <div class="navbar-actions">
-                <a href="{% url 'cart' %}" class="cart-link">
-                    🛒
-                    <span id="cart-count" class="cart-badge">0</span>
-                </a>
-            </div>
+        <div class="navbar-page-title">📋 Purchase History</div>
+        <div class="navbar-actions">
+            <a href="{% url 'cart' %}" class="cart-link">
+                🛒 <span id="cart-count" class="cart-badge">0</span>
+            </a>
         </div>
-    </nav>
-
-    <div class="nav-tabs">
-        <div class="nav-item active" onclick="filterOrders('All', this)">Lahat</div>
-        <div class="nav-item" onclick="filterOrders('Pending', this)">Babayaran</div>
-        <div class="nav-item" onclick="filterOrders('Completed', this)">Natapos</div>
-        <div class="nav-item" onclick="filterOrders('Cancelled', this)">Nakansela</div>
     </div>
+</nav>
 
-    <div class="history-container">
+<!-- ══ STATUS TABS ══ -->
+<div class="status-tabs">
+    <button class="status-tab active" onclick="filterOrders('All', this)">✦ Lahat</button>
+    <button class="status-tab" onclick="filterOrders('Pending', this)">⏳ Babayaran</button>
+    <button class="status-tab" onclick="filterOrders('Completed', this)">✅ Natapos</button>
+    <button class="status-tab" onclick="filterOrders('Cancelled', this)">❌ Nakansela</button>
+    <button class="status-tab" onclick="filterOrders('Shipped', this)">🚚 Naka-ship</button>
+</div>
+
+<!-- ══ 2-COLUMN BODY ══ -->
+<div class="history-body">
+
+    <!-- ── LEFT: Order list ── -->
+    <main class="history-main">
+
+        <div class="history-heading">
+            <div class="history-title">Mga Orders</div>
+            <span class="history-count" id="order-count">
+                {{ orders|length }} order{{ orders|length|pluralize }}
+            </span>
+        </div>
+
         {% if orders %}
             {% for order in orders %}
-            
             {% with first_item=order.items.first %}
             {% with store=first_item.product.store %}
-            
-            <div class="order-card" data-status="{{ order.status|default:'Pending' }}" id="order-{{ order.id }}">
-                
+
+            <div class="order-card"
+                 data-status="{{ order.status|default:'Pending' }}"
+                 id="order-{{ order.id }}">
+
+                <!-- Store header -->
                 <div class="order-store-header">
                     <div class="order-store-left">
                         <span class="order-store-name">🏪 {{ store.store_name|default:"SariSariStore" }}</span>
-                        
-                        <button class="btn-chat" 
+                        <span class="order-id-label">#{{ order.id }}</span>
+                        <button class="btn-chat"
                                 onclick="openStoreChat('{{ store.id }}', '{{ store.store_name|escapejs }}')">
                             💬 Chat
                         </button>
-
                         {% if store.id %}
-                            <button class="btn-view-shop" 
+                            <button class="btn-view-shop"
                                     onclick="window.location.href='/store/{{ store.id }}/'">
                                 👁️ View Shop
                             </button>
                         {% endif %}
                     </div>
-                    <span class="order-status-badge status-{{ order.status|lower }}">{{ order.status }}</span>
+                    <span class="order-status-badge status-{{ order.status|lower }}">
+                        {{ order.status }}
+                    </span>
                 </div>
 
-                {% for item in order.items.all %}
-                <div class="order-item-row">
-                    <div class="order-item-img">
-                        {% if item.product.image %}
-                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
-                        {% else %}
-                            📦
-                        {% endif %}
+                <!-- Items -->
+                <div class="order-items-list">
+                    {% for item in order.items.all %}
+                    <div class="order-item-row">
+                        <div class="order-item-img">
+                            {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                            {% else %}
+                                📦
+                            {% endif %}
+                        </div>
+                        <div class="order-item-info">
+                            <div class="order-item-name">{{ item.product.name }}</div>
+                            <span class="order-item-qty">x{{ item.quantity }}</span>
+                        </div>
+                        <div class="order-item-price">₱{{ item.price }}</div>
                     </div>
-                    <div class="order-item-info">
-                        <div class="order-item-name">{{ item.product.name }}</div>
-                        <div class="order-item-qty">x{{ item.quantity }}</div>
-                    </div>
-                    <div class="order-item-price">₱{{ item.price }}</div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
 
+                <!-- Footer -->
                 <div class="order-card-footer">
                     <div class="total-wrap">
                         <span class="order-total-label">Order Total:</span>
                         <span class="order-total-price">₱{{ order.total_amount }}</span>
                     </div>
-                    
                     <div class="action-wrap">
                         {% if order.status == 'Pending' %}
-                            <button class="order-action-btn btn-cancel" onclick="cancelOrder('{{ order.id }}')">Kanselahin</button>
+                            <button class="btn-cancel" onclick="cancelOrder('{{ order.id }}')">
+                                Kanselahin
+                            </button>
                         {% else %}
-                            <button class="order-action-btn btn-buy-again" onclick="buyAgain('{{ first_item.product.id }}')">Bilhin Ulit</button>
+                            <button class="btn-buy-again" onclick="buyAgain('{{ first_item.product.id }}')">
+                                🔁 Bilhin Ulit
+                            </button>
                         {% endif %}
                     </div>
                 </div>
+
             </div>
             {% endwith %}
             {% endwith %}
-
             {% endfor %}
+
         {% else %}
-            <div class="order-empty">
-                <div class="order-empty-icon">🛍️</div>
-                <p>Wala pang orders.</p>
-                <button class="order-action-btn btn-buy-again" onclick="window.location.href='/'">Mamili Na</button>
+            <div class="history-empty">
+                <div class="history-empty-icon">🛍️</div>
+                <div class="history-empty-title">Wala pang Orders</div>
+                <p class="history-empty-sub">Mag-shopping ka na at makita ang iyong mga orders dito.</p>
+                <button class="btn btn-primary" onclick="window.location.href='/'">Mamili Na →</button>
             </div>
         {% endif %}
-    </div>
 
-    <div class="footer-strip"></div>
+    </main>
 
-    <div id="toast" class="toast" style="display: none;">
-        <span id="toast-icon">✅</span>
-        <span id="toast-message">Tagumpay!</span>
-    </div>
+    <!-- ── RIGHT: Stats sidebar ── -->
+    <aside class="history-sidebar">
 
-    <script>
-        const API_URL = "http://127.0.0.1:8000/api/";
+        <div class="sidebar-heading">Kabuuang Gastos</div>
+        <div class="spend-box">
+            <div class="spend-box-label">Total Spend</div>
+            <div class="spend-box-amount" id="total-spend">₱0.00</div>
+            <div class="spend-box-sub" id="spend-sub">Sa lahat ng orders</div>
+        </div>
 
-        window.addEventListener('DOMContentLoaded', () => {
-            updateCartBadge();
+        <div class="sidebar-heading">Buod</div>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-num" id="count-all">{{ orders|length }}</div>
+                <div class="stat-label">Lahat</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="count-pending" style="color:var(--warning)">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="count-done" style="color:var(--success)">0</div>
+                <div class="stat-label">Natapos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="count-cancel" style="color:var(--error)">0</div>
+                <div class="stat-label">Nakansela</div>
+            </div>
+        </div>
+
+
+</div><!-- /history-body -->
+
+<div class="footer-strip"></div>
+
+<div id="toast" class="toast">
+    <span id="toast-icon">✅</span>
+    <span id="toast-message">Tagumpay!</span>
+</div>
+
+<script>
+    const API_URL = "http://127.0.0.1:8000/api/";
+
+    window.addEventListener('DOMContentLoaded', () => {
+        updateCartBadge();
+        buildStats();
+    });
+
+    async function updateCartBadge() {
+        try {
+            const res = await fetch(`${API_URL}cartitems/`);
+            if (res.ok) {
+                const items = await res.json();
+                const b = document.getElementById('cart-count');
+                if (b) b.innerText = items.length;
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function buildStats() {
+        const cards = [...document.querySelectorAll('.order-card')];
+        const counts = { Pending: 0, Completed: 0, Cancelled: 0, Shipped: 0, Confirmed: 0 };
+        let total = 0;
+
+        cards.forEach(card => {
+            const s = card.getAttribute('data-status') || 'Pending';
+            counts[s] = (counts[s] || 0) + 1;
+            const p = card.querySelector('.order-total-price');
+            if (p) total += parseFloat(p.textContent.replace(/[₱,\s]/g, '')) || 0;
         });
 
-        async function updateCartBadge() {
-            try {
-                const res = await fetch(`${API_URL}cartitems/`);
-                if (res.ok) {
-                    const items = await res.json();
-                    const badge = document.getElementById('cart-count');
-                    if (badge) badge.innerText = items.length;
-                }
-            } catch (err) { console.error("Badge update error:", err); }
-        }
+        setEl('count-all',     cards.length);
+        setEl('count-pending', counts.Pending);
+        setEl('count-done',    counts.Completed);
+        setEl('count-cancel',  counts.Cancelled);
+        setEl('total-spend',   '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }));
+        setEl('spend-sub',     `Sa ${cards.length} order${cards.length !== 1 ? 's' : ''}`);
 
-        function toggleTheme() {
-            const body = document.body;
-            const isDark = body.getAttribute('data-theme') === 'dark';
-            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            document.querySelectorAll('.theme-toggle-nav').forEach(b => {
-                b.textContent = isDark ? '🌙 Mode' : '☀️ Mode';
+        document.getElementById('status-breakdown').innerHTML = [
+            { label: 'Pending',   val: counts.Pending,   cls: 'dot-pending' },
+            { label: 'Completed', val: counts.Completed, cls: 'dot-completed' },
+            { label: 'Cancelled', val: counts.Cancelled, cls: 'dot-cancelled' },
+            { label: 'Shipped',   val: counts.Shipped,   cls: 'dot-other' },
+        ].map(d => `
+            <div class="status-breakdown-item">
+                <span class="status-breakdown-label">
+                    <span class="status-dot ${d.cls}"></span>${d.label}
+                </span>
+                <span class="status-breakdown-val">${d.val}</span>
+            </div>`).join('');
+    }
+
+    function setEl(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.querySelectorAll('.theme-toggle-nav').forEach(b =>
+            b.textContent = isDark ? '🌙 Mode' : '☀️ Mode'
+        );
+    }
+
+    function filterOrders(status, tabEl) {
+        document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+        tabEl.classList.add('active');
+        let visible = 0;
+        document.querySelectorAll('.order-card').forEach(card => {
+            const show = status === 'All' || card.getAttribute('data-status') === status;
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        setEl('order-count', visible + ' order' + (visible !== 1 ? 's' : ''));
+    }
+
+    async function cancelOrder(orderId) {
+        if (!orderId || orderId === 'None') { showToast('Maling Order ID.', 'error'); return; }
+        if (!confirm('Sigurado ka bang gustong kanselahin ang order na ito?')) return;
+        try {
+            const res = await fetch(`/api/orders/${orderId}/`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify({ status: 'Cancelled' })
             });
+            if (res.ok) { showToast('Order nakansela.'); setTimeout(() => location.reload(), 1000); }
+            else showToast('Hindi nakansela ang order.', 'error');
+        } catch (e) { showToast('Network error.', 'error'); }
+    }
+
+    function buyAgain(productId) {
+        if (!productId || productId === 'None') return;
+        window.location.href = `/checkout/?product_id=${productId}&quantity=1`;
+    }
+
+    function openStoreChat(storeId) {
+        if (!storeId || storeId === 'None') { showToast("Hindi nahanap ang tindahan.", "error"); return; }
+        window.location.href = `/store/${storeId}/?open_chat=true`;
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        document.getElementById('toast-message').textContent = message;
+        document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
+        toast.className = `toast ${type} show`;
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function getCookie(name) {
+        let v = null;
+        if (document.cookie) for (const c of document.cookie.split(';')) {
+            const t = c.trim();
+            if (t.startsWith(name + '=')) { v = decodeURIComponent(t.slice(name.length + 1)); break; }
         }
-
-        function filterOrders(status, tabEl) {
-            document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
-            tabEl.classList.add('active');
-            document.querySelectorAll('.order-card').forEach(card => {
-                const cardStatus = card.getAttribute('data-status');
-                if (status === 'All' || cardStatus === status) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        async function cancelOrder(orderId) {
-            if (!orderId || orderId === 'None' || orderId === '') {
-                showToast('Maling Order ID.', 'error');
-                return;
-            }
-            if (!confirm('Sigurado ka bang gustong kanselahin ang order na ito?')) return;
-
-            try {
-                const res = await fetch(`/api/orders/${orderId}/`, {
-                    method: 'PATCH',
-                    headers: { 
-                        'Content-Type': 'application/json', 
-                        'X-CSRFToken': getCookie('csrftoken') 
-                    },
-                    body: JSON.stringify({ status: 'Cancelled' })
-                });
-
-                if (res.ok) {
-                    showToast('Order nakansela.');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showToast('Hindi nakansela ang order.', 'error');
-                }
-            } catch (err) {
-                console.error(err);
-                showToast('Network error.', 'error');
-            }
-        }
-
-        function buyAgain(productId) {
-            if (!productId || productId === 'None' || productId === '') return;
-            window.location.href = `/checkout/?product_id=${productId}&quantity=1`;
-        }
-
-        function openStoreChat(storeId, storeName) {
-            // Safety check for the Store ID to prevent 404 (store//)
-            if (!storeId || storeId === '' || storeId === 'None' || storeId === 'undefined') {
-                showToast("ID ng tindahan ay hindi nahanap.", "error");
-                return;
-            }
-            // Redirect using the parameter 'storeId'
-            window.location.href = `/store/${storeId}/?open_chat=true`;
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = message;
-            document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
-            toast.className = `toast ${type}`;
-            toast.style.display = 'flex';
-            setTimeout(() => { toast.style.display = 'none'; }, 3000);
-        }
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        function performSearch() {
-            const q = document.getElementById('search-input').value;
-            if (q) window.location.href = `/?search=${encodeURIComponent(q)}`;
-        }
-
-        function handleSearch(e) { if (e.key === 'Enter') performSearch(); }
-    </script>
+        return v;
+    }
+</script>
 </body>
 </html>
