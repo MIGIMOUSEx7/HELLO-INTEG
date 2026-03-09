@@ -110,8 +110,8 @@
                                 <button class="cart-btn" disabled>🛒 Cart</button>
                                 <button class="order-btn" disabled>Bilhin</button>
                             {% else %}
-                                <button class="cart-btn" onclick="event.stopPropagation(); addToCart({{ product.id }})">🛒 Cart</button>
-                                <button class="order-btn" onclick="event.stopPropagation(); buyNow({{ product.id }})">Bilhin</button>
+                                <button class="cart-btn" onclick="event.stopPropagation(); addToCart('{{ product.id }}')">🛒 Cart</button>
+                                <button class="order-btn" onclick="event.stopPropagation(); buyNow('{{ product.id }}')">Bilhin</button>
                             {% endif %}
                         </div>
                     </div>
