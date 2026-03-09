@@ -171,7 +171,7 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
 
-# --- Reviews ---
+
 class Review(models.Model):
     id = models.BigAutoField(primary_key=True)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='reviews')
@@ -183,3 +183,15 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.product.name} ({self.rating} Stars)"
+    
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    # This handles the media file path defined in settings.py
+    profile_picture = models.ImageField(upload_to='profiles/', null=True, blank=True)
+    # Add other info you want to manage here
+    bio = models.TextField(max_length=500, blank=True)
+    phone_number = models.CharField(max_length=15, blank=True)
+
+    def __cl_str__(self):
+        return f'{self.user.username} Profile'
+    

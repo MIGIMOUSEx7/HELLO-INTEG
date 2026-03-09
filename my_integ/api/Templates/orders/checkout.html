@@ -1,959 +1,14 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Tindahan</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #c0392b;
-            --primary-dark: #8b1e0f;
-            --primary-light: #e05a3a;
-            --accent: #e8a838;
-            --accent-warm: #f0c060;
-            --bg: #f5ede0;
-            --card-bg: #fdf6ec;
-            --text-main: #3b2a1a;
-            --text-secondary: #6b4c30;
-            --text-light: #8a6a50;
-            --border-color: #d9c4a8;
-            --success: #2e7d32;
-            --info: #1565c0;
-        }
-
-        [data-theme="dark"] {
-            --bg: #1a1008;
-            --card-bg: #261808;
-            --text-main: #f0dfc0;
-            --text-secondary: #c8a880;
-            --text-light: #b09070;
-            --border-color: #4a3020;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'Lato', sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            padding-bottom: 60px;
-            overflow-x: hidden;
-            transition: background 0.3s;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            opacity: 0.03;
-            pointer-events: none;
-            z-index: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-            background-repeat: repeat;
-            background-size: 150px;
-        }
-
-        .bg-pattern {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 0; pointer-events: none; overflow: hidden;
-        }
-
-        .bg-pattern::before {
-            content: '';
-            position: absolute;
-            top: -200px; right: -200px;
-            width: 600px; height: 600px;
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--accent-warm) 0%, transparent 70%);
-            opacity: 0.2;
-            animation: drift 20s infinite ease-in-out;
-        }
-
-        .bg-pattern::after {
-            content: '';
-            position: absolute;
-            bottom: -150px; left: -100px;
-            width: 500px; height: 500px;
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
-            opacity: 0.08;
-            animation: drift 26s infinite ease-in-out reverse;
-        }
-
-        @keyframes drift {
-            0%, 100% { transform: translate(0,0) scale(1); }
-            50% { transform: translate(40px,-40px) scale(1.1); }
-        }
-
-        /* Border strip */
-        .border-strip {
-            height: 6px;
-            background: repeating-linear-gradient(
-                90deg,
-                var(--primary) 0px, var(--primary) 20px,
-                var(--accent) 20px, var(--accent) 40px,
-                var(--primary-light) 40px, var(--primary-light) 60px,
-                var(--accent-warm) 60px, var(--accent-warm) 80px
-            );
-            position: relative; z-index: 1001;
-        }
-
-        /* Header */
-        .shopee-header {
-            background: linear-gradient(135deg, #2c1008 0%, #4a1e0a 50%, #3a1508 100%);
-            padding: 18px 0;
-            margin-bottom: 28px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
-            animation: slideDown 0.6s ease;
-            position: relative; z-index: 10;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .brand-text {
-            color: var(--accent-warm);
-            font-family: 'Playfair Display', serif;
-            font-size: 28px;
-            font-weight: 900;
-            letter-spacing: 2px;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.4);
-            text-decoration: none;
-            cursor: pointer;
-            transition: transform 0.3s;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .brand-text:hover { transform: scale(1.04); }
-
-        .brand-tagline {
-            color: var(--accent);
-            font-size: 9px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            opacity: 0.8;
-            font-family: 'Lato', sans-serif;
-        }
-
-        .page-title {
-            border-left: 2px solid rgba(240,192,96,0.35);
-            padding-left: 20px;
-            font-family: 'Playfair Display', serif;
-            font-size: 20px;
-            color: var(--accent-warm);
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        /* Container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            position: relative; z-index: 1;
-            animation: fadeInUp 1s ease;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Cards */
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            box-shadow: 4px 4px 0px var(--border-color);
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s;
-            animation: cardFadeIn 0.8s ease backwards;
-        }
-
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
-        .card:nth-child(4) { animation-delay: 0.4s; }
-
-        @keyframes cardFadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .card:hover {
-            box-shadow: 7px 7px 0px var(--border-color);
-            transform: translate(-2px, -2px);
-        }
-
-        /* Address Card */
-        .address-border {
-            height: 5px;
-            background: repeating-linear-gradient(
-                90deg,
-                var(--primary) 0px, var(--primary) 15px,
-                var(--accent) 15px, var(--accent) 30px,
-                var(--accent-warm) 30px, var(--accent-warm) 45px,
-                var(--primary-light) 45px, var(--primary-light) 60px
-            );
-        }
-
-        .address-content { padding: 28px 32px 24px; }
-
-        .section-header {
-            font-family: 'Playfair Display', serif;
-            color: var(--primary);
-            font-size: 16px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-
-        .section-icon {
-            width: 28px; height: 28px;
-            background: rgba(192,57,43,0.1);
-            border: 1px solid rgba(192,57,43,0.25);
-            border-radius: 3px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px;
-        }
-
-        .address-details {
-            display: flex;
-            align-items: center;
-            font-size: 14px;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .user-info {
-            font-weight: 700;
-            color: var(--text-main);
-            font-family: 'Playfair Display', serif;
-        }
-
-        .address-text { flex: 1; color: var(--text-secondary); }
-
-        .default-badge {
-            font-size: 10px;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            padding: 2px 8px;
-            border-radius: 2px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .btn-change {
-            color: var(--info);
-            font-weight: 700;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 3px;
-            border: 1px solid rgba(21,101,192,0.3);
-            background: rgba(21,101,192,0.06);
-            transition: all 0.3s;
-            white-space: nowrap;
-        }
-
-        .btn-change:hover {
-            background: rgba(21,101,192,0.12);
-            border-color: var(--info);
-        }
-
-        /* Address Edit Form (hidden by default) */
-        .address-form {
-            display: none;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px dashed var(--border-color);
-            animation: fadeInUp 0.3s ease;
-        }
-
-        .address-form.open { display: block; }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .form-group.full { grid-column: 1 / -1; }
-
-        .form-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-light);
-        }
-
-        .form-input {
-            padding: 11px 14px;
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            background: var(--bg);
-            color: var(--text-main);
-            font-family: 'Lato', sans-serif;
-            font-size: 14px;
-            outline: none;
-            transition: all 0.3s;
-            box-shadow: 2px 2px 0px var(--border-color);
-        }
-
-        .form-input:focus {
-            border-color: var(--primary);
-            box-shadow: 3px 3px 0px var(--primary);
-            transform: translate(-1px,-1px);
-        }
-
-        .form-input::placeholder { color: var(--border-color); }
-
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 16px;
-        }
-
-        /* Product Table */
-        .product-table-header {
-            display: flex;
-            padding: 18px 32px;
-            background: rgba(192,57,43,0.04);
-            color: var(--text-light);
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .col-prod { flex: 4; }
-        .col-price { flex: 1; text-align: center; }
-        .col-qty   { flex: 1; text-align: center; }
-        .col-total { flex: 1; text-align: right; }
-
-        .store-header-row {
-            padding: 16px 32px;
-            font-family: 'Playfair Display', serif;
-            font-size: 14px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(232,168,56,0.05);
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-main);
-        }
-
-        .chat-link {
-            color: var(--success);
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 4px 10px;
-            border: 1px solid rgba(46,125,50,0.3);
-            border-radius: 3px;
-            transition: all 0.3s;
-            font-family: 'Lato', sans-serif;
-        }
-
-        .chat-link:hover { background: rgba(46,125,50,0.08); }
-
-        .product-item {
-            display: flex;
-            align-items: center;
-            padding: 20px 32px;
-            border-bottom: 1px dashed var(--border-color);
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .product-item:hover { background: rgba(192,57,43,0.02); padding-left: 38px; }
-
-        .prod-img {
-            width: 56px; height: 56px;
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            margin-right: 16px;
-            object-fit: cover;
-            box-shadow: 2px 2px 0px var(--border-color);
-            background: var(--bg);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px;
-            flex-shrink: 0;
-            overflow: hidden;
-            transition: all 0.3s;
-        }
-
-        .prod-img img { width: 100%; height: 100%; object-fit: cover; }
-        .product-item:hover .prod-img { box-shadow: 4px 4px 0px var(--border-color); }
-
-        .prod-name {
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--text-main);
-        }
-
-        .prod-meta { font-size: 12px; color: var(--text-light); margin-top: 3px; font-style: italic; }
-
-        .col-price-val { flex: 1; text-align: center; color: var(--text-secondary); font-weight: 700; }
-        .col-qty-val   { flex: 1; text-align: center; font-weight: 700; }
-        .col-total-val { flex: 1; text-align: right; color: var(--primary); font-weight: 900; font-family: 'Playfair Display', serif; }
-
-        /* Extra rows */
-        .extra-row {
-            padding: 18px 32px;
-            border-bottom: 1px dashed var(--border-color);
-            display: flex;
-            align-items: center;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-
-        .extra-row:hover { background: rgba(192,57,43,0.02); }
-        .extra-row:last-child { border-bottom: none; }
-
-        .protection-badge {
-            background: var(--primary);
-            color: white;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 2px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-left: 8px;
-        }
-
-        /* Voucher row */
-        .voucher-row {
-            padding: 18px 32px;
-            border-bottom: 1px dashed var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-        }
-
-        .voucher-input-wrap {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex: 1;
-        }
-
-        .voucher-input {
-            flex: 1;
-            max-width: 260px;
-            padding: 10px 14px;
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            background: var(--bg);
-            color: var(--text-main);
-            font-family: 'Lato', sans-serif;
-            font-size: 13px;
-            outline: none;
-            transition: all 0.3s;
-            box-shadow: 2px 2px 0px var(--border-color);
-        }
-
-        .voucher-input:focus {
-            border-color: var(--accent);
-            box-shadow: 3px 3px 0px var(--accent);
-            transform: translate(-1px,-1px);
-        }
-
-        .voucher-input::placeholder { color: var(--border-color); }
-
-        .btn-apply-voucher {
-            padding: 10px 18px;
-            background: var(--accent);
-            color: #3b2a1a;
-            border: none;
-            border-bottom: 3px solid #b07a10;
-            border-radius: 3px;
-            font-weight: 700;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            font-family: 'Lato', sans-serif;
-            transition: all 0.3s;
-        }
-
-        .btn-apply-voucher:hover { background: var(--accent-warm); transform: translateY(-1px); }
-        .btn-apply-voucher:active { transform: translateY(1px); border-bottom-width: 1px; }
-
-        .voucher-feedback {
-            font-size: 12px;
-            margin-top: 4px;
-            display: none;
-        }
-
-        .voucher-feedback.success { color: var(--success); display: block; }
-        .voucher-feedback.error   { color: var(--primary);  display: block; }
-
-        /* Message + Shipping row */
-        .msg-ship-row {
-            padding: 18px 32px;
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            border-bottom: 1px dashed var(--border-color);
-            flex-wrap: wrap;
-        }
-
-        .msg-section {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-            min-width: 220px;
-        }
-
-        .msg-label {
-            font-weight: 700;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-light);
-            white-space: nowrap;
-        }
-
-        .msg-input {
-            flex: 1;
-            padding: 10px 14px;
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            background: var(--bg);
-            color: var(--text-main);
-            font-family: 'Lato', sans-serif;
-            font-size: 13px;
-            outline: none;
-            transition: all 0.3s;
-            box-shadow: 2px 2px 0px var(--border-color);
-        }
-
-        .msg-input:focus {
-            border-color: var(--primary);
-            box-shadow: 3px 3px 0px var(--primary);
-            transform: translate(-1px,-1px);
-        }
-
-        .msg-input::placeholder { color: var(--border-color); }
-
-        .shipping-section {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .shipping-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--success);
-        }
-
-        .shipping-select {
-            padding: 10px 14px;
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            background: var(--bg);
-            color: var(--text-main);
-            font-family: 'Lato', sans-serif;
-            font-size: 13px;
-            outline: none;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 2px 2px 0px var(--border-color);
-        }
-
-        .shipping-select:focus {
-            border-color: var(--success);
-            box-shadow: 3px 3px 0px var(--success);
-        }
-
-        .shipping-fee-display {
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            font-size: 15px;
-            color: var(--text-main);
-        }
-
-        /* Coins row */
-        .coins-row {
-            padding: 16px 32px;
-            border-bottom: 1px dashed var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .coins-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .coins-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            color: var(--text-light);
-        }
-
-        /* Toggle switch */
-        .toggle-switch {
-            position: relative;
-            width: 44px; height: 22px;
-        }
-
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--border-color);
-            border-radius: 22px;
-            transition: 0.3s;
-        }
-
-        .toggle-slider::before {
-            content: '';
-            position: absolute;
-            width: 16px; height: 16px;
-            left: 3px; bottom: 3px;
-            background: white;
-            border-radius: 50%;
-            transition: 0.3s;
-        }
-
-        .toggle-switch input:checked + .toggle-slider { background: var(--primary); }
-        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
-
-        /* Payment Methods */
-        .payment-method-section {
-            padding: 22px 32px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .payment-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: var(--text-main);
-        }
-
-        .payment-options {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .pay-btn {
-            padding: 12px 20px;
-            border: 2px solid var(--border-color);
-            cursor: pointer;
-            color: var(--text-secondary);
-            background: var(--bg);
-            border-radius: 3px;
-            font-size: 13px;
-            font-weight: 700;
-            font-family: 'Lato', sans-serif;
-            transition: all 0.3s;
-            box-shadow: 2px 2px 0px var(--border-color);
-        }
-
-        .pay-btn:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            transform: translate(-2px,-2px);
-            box-shadow: 4px 4px 0px var(--border-color);
-        }
-
-        .pay-btn.active {
-            border-color: var(--primary);
-            color: var(--primary);
-            background: rgba(192,57,43,0.06);
-            box-shadow: 3px 3px 0px var(--primary);
-            transform: translate(-1px,-1px);
-        }
-
-        /* Summary */
-        .summary-section {
-            padding: 28px 32px;
-            background: rgba(232,168,56,0.04);
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            margin-bottom: 14px;
-            font-size: 14px;
-        }
-
-        .summary-label {
-            width: 240px;
-            text-align: right;
-            padding-right: 24px;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 1px;
-            color: var(--text-light);
-        }
-
-        .summary-val {
-            width: 160px;
-            text-align: right;
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--text-main);
-        }
-
-        .summary-val.discount { color: var(--success); }
-
-        .total-payment-row {
-            margin-top: 24px;
-            padding-top: 20px;
-            border-top: 2px dashed var(--border-color);
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .total-label-big {
-            font-family: 'Playfair Display', serif;
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-secondary);
-        }
-
-        .total-price {
-            font-family: 'Playfair Display', serif;
-            font-size: 34px;
-            color: var(--primary);
-            font-weight: 900;
-        }
-
-        .place-order-section {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 20px;
-            margin-top: 24px;
-            flex-wrap: wrap;
-        }
-
-        .order-note {
-            font-size: 11px;
-            color: var(--text-light);
-            text-align: right;
-            line-height: 1.6;
-        }
-
-        .place-order-btn {
-            background: var(--primary);
-            color: white;
-            min-width: 240px;
-            height: 54px;
-            font-size: 13px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            font-weight: 700;
-            font-family: 'Lato', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-bottom: 4px solid var(--primary-dark);
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .place-order-btn:hover:not(:disabled) {
-            background: var(--primary-light);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(192,57,43,0.35);
-        }
-
-        .place-order-btn:active:not(:disabled) {
-            transform: translateY(2px);
-            border-bottom-width: 1px;
-        }
-
-        .place-order-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* Inline buttons */
-        .btn-sm {
-            padding: 8px 16px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: 700;
-            font-family: 'Lato', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-        }
-
-        .btn-sm-primary {
-            background: var(--primary);
-            color: white;
-            border-bottom: 2px solid var(--primary-dark);
-        }
-
-        .btn-sm-primary:hover { background: var(--primary-light); transform: translateY(-1px); }
-
-        .btn-sm-ghost {
-            background: transparent;
-            color: var(--text-light);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-sm-ghost:hover { border-color: var(--primary); color: var(--primary); }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 32px; right: 32px;
-            background: var(--card-bg);
-            padding: 16px 24px;
-            border-radius: 4px;
-            box-shadow: 4px 4px 0px var(--border-color);
-            display: none;
-            align-items: center;
-            gap: 12px;
-            z-index: 6000;
-            border: 1px solid var(--border-color);
-            border-left: 4px solid var(--success);
-            font-size: 14px;
-            color: var(--text-main);
-            animation: toastIn 0.4s ease;
-            max-width: 360px;
-        }
-
-        .toast.show { display: flex; }
-        .toast.error   { border-left-color: var(--primary); }
-        .toast.info    { border-left-color: var(--info); }
-        .toast.warning { border-left-color: var(--accent); }
-
-        @keyframes toastIn {
-            from { transform: translateX(300px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.55);
-            z-index: 5000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-overlay.active { display: flex; }
-
-        .modal-box {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            box-shadow: 8px 8px 0px var(--border-color);
-            padding: 36px;
-            max-width: 440px;
-            width: 90%;
-            position: relative;
-            animation: fadeInUp 0.3s ease;
-        }
-
-        .modal-box h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 20px;
-            margin-bottom: 10px;
-            color: var(--text-main);
-        }
-
-        .modal-box p { font-size: 14px; color: var(--text-light); margin-bottom: 6px; line-height: 1.6; }
-        .modal-summary { margin: 16px 0; padding: 14px; background: var(--bg); border: 1px solid var(--border-color); border-radius: 3px; font-size: 13px; }
-        .modal-summary .ms-row { display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--text-secondary); }
-        .modal-summary .ms-row:last-child { margin-bottom: 0; font-weight: 700; color: var(--primary); font-size: 15px; }
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-
-        .modal-close {
-            position: absolute; top: 12px; right: 16px;
-            background: none; border: none;
-            font-size: 20px; cursor: pointer;
-            color: var(--text-light); transition: color 0.2s;
-        }
-
-        .modal-close:hover { color: var(--primary); }
-
-        /* Animations */
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header-content { flex-direction: column; align-items: flex-start; gap: 12px; }
-            .page-title { border-left: none; border-top: 1px solid rgba(240,192,96,0.3); padding-left: 0; padding-top: 10px; }
-            .product-table-header { display: none; }
-            .product-item { flex-wrap: wrap; gap: 8px; }
-            .form-grid { grid-template-columns: 1fr; }
-            .msg-ship-row { flex-direction: column; align-items: flex-start; }
-            .payment-options { flex-direction: column; }
-            .pay-btn { width: 100%; }
-            .place-order-btn { width: 100%; }
-            .summary-label { width: 180px; }
-        }
-    </style>
+    
+    <link rel="stylesheet" href="{% static 'css/checkout_v2.css' %}">
 </head>
 <body data-theme="light">
 
@@ -971,8 +26,6 @@
     </div>
 
     <div class="container">
-
-        <!-- ── Address Card ── -->
         <div class="card">
             <div class="address-border"></div>
             <div class="address-content">
@@ -980,57 +33,55 @@
                     <span class="section-icon">📍</span>
                     Tirahan ng Delivery
                 </div>
-                <div class="address-details">
+                <div class="address-details" id="address-display-area">
                     {% if address %}
-                        <div class="user-info">{{ address.full_name }} (+63) {{ address.phone }}</div>
+                        <div class="user-info">{{ address.full_name }} (+63) {{ address.phone_number }}</div>
                         <div class="address-text">
                             {{ address.street }}, {{ address.city }}, {{ address.province }}, {{ address.zip_code }}
                         </div>
-                        <span class="default-badge">Default</span>
-                        <button class="btn-change" onclick="toggleAddressForm()">Palitan</button>
+                        <span class="default-badge">DEFAULT</span>
+                        <button class="btn-change" onclick="toggleAddressForm()">PALITAN</button>
                     {% else %}
                         <div style="color: var(--primary); font-weight: 700;">Walang address. Mag-lagay ng delivery address.</div>
-                        <button class="btn-change" onclick="toggleAddressForm()">Magdagdag</button>
+                        <button class="btn-change" onclick="toggleAddressForm()">MAGDAGDAG</button>
                     {% endif %}
                 </div>
 
-                <!-- Editable Address Form -->
-                <div class="address-form" id="address-form">
+                <div class="address-form" id="address-form" style="display: none; margin-top: 20px;">
                     <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label">Buong Pangalan</label>
-                            <input class="form-input" type="text" id="addr-name" placeholder="Juan dela Cruz" value="{% if address %}{{ address.full_name }}{% endif %}">
+                            <input class="form-input" type="text" id="addr-name" placeholder="Juan dela Cruz">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Numero ng Telepono</label>
-                            <input class="form-input" type="text" id="addr-phone" placeholder="09XXXXXXXXX" value="{% if address %}{{ address.phone }}{% endif %}">
+                            <input class="form-input" type="text" id="addr-phone" placeholder="09XXXXXXXXX">
                         </div>
                         <div class="form-group full">
                             <label class="form-label">Kalye / Blk / Lot / Bahay</label>
-                            <input class="form-input" type="text" id="addr-street" placeholder="Blk 1 Lot 2, Sampaguita St." value="{% if address %}{{ address.street }}{% endif %}">
+                            <input class="form-input" type="text" id="addr-street" placeholder="Blk 1 Lot 2, Sampaguita St.">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Lungsod / Munisipalidad</label>
-                            <input class="form-input" type="text" id="addr-city" placeholder="Cagayan de Oro" value="{% if address %}{{ address.city }}{% endif %}">
+                            <input class="form-input" type="text" id="addr-city" placeholder="Cagayan de Oro">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Lalawigan</label>
-                            <input class="form-input" type="text" id="addr-province" placeholder="Misamis Oriental" value="{% if address %}{{ address.province }}{% endif %}">
+                            <input class="form-input" type="text" id="addr-province" placeholder="Misamis Oriental">
                         </div>
                         <div class="form-group">
                             <label class="form-label">ZIP Code</label>
-                            <input class="form-input" type="text" id="addr-zip" placeholder="9000" value="{% if address %}{{ address.zip_code }}{% endif %}">
+                            <input class="form-input" type="text" id="addr-zip" placeholder="9000">
                         </div>
                     </div>
-                    <div class="form-actions">
+                    <div class="form-actions" style="margin-top: 15px;">
                         <button class="btn-sm btn-sm-ghost" onclick="toggleAddressForm()">I-cancel</button>
-                        <button class="btn-sm btn-sm-primary" onclick="saveAddress()">I-save ang Address</button>
+                        <button class="btn-sm btn-sm-primary" id="btn-save-addr" onclick="forceSaveAddress()">I-save ang Address</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ── Products Card ── -->
         <div class="card">
             <div class="product-table-header">
                 <div class="col-prod">Mga Produkto</div>
@@ -1039,388 +90,147 @@
                 <div class="col-total">Subtotal</div>
             </div>
 
-           {% for item in items %}
-<div class="product-item">
-    <div class="col-prod" style="display:flex; align-items:center;">
-        <div class="prod-img">
-            {% if item.product.image %}
-                <img src="{{ item.product.image.url }}">
-            {% else %}
-                📦
-            {% endif %}
-        </div>
-        <div>
-            <div class="prod-name">{{ item.product.name }}</div>
-            <div class="prod-meta">Uri: Default</div>
-        </div>
-    </div>
-    
-    {# FIX: Gumamit ng fallback kung OrderItem ang gamit (item.price) o Product (item.product.price) #}
-    <div class="col-price-val">₱{{ item.price|default:item.product.price|floatformat:2 }}</div>
-    <div class="col-qty-val">{{ item.quantity }}</div>
-    <div class="col-total-val">
-        ₱{% if item.price %}{{ item.price }}{% else %}{% widthratio item.product.price 1 item.quantity %}{% endif %}
-    </div>
-</div>
-{% endfor %}
-            <!-- Merchandise Protection -->
+            {% for item in items %}
+            <div class="product-item">
+                <div class="col-prod" style="display:flex; align-items:center;">
+                    <div class="prod-img">
+                        {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}">
+                        {% else %}
+                            📦
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="prod-name">{{ item.product.name }}</div>
+                        <div class="prod-meta">Uri: Default</div>
+                    </div>
+                </div>
+                <div class="col-price-val">₱{{ item.product.price|floatformat:2 }}</div>
+                <div class="col-qty-val">{{ item.quantity }}</div>
+                <div class="col-total-val">₱{{ item.item_total|floatformat:2 }}</div>
+            </div>
+            {% endfor %}
+
             <div class="extra-row" style="justify-content:space-between;">
                 <div style="display:flex; align-items:center; gap:10px; font-weight:700;">
                     <label class="toggle-switch">
-                        <input type="checkbox" id="protection-toggle" checked onchange="updateProtection()">
+                        <input type="checkbox" id="protection-toggle" checked>
                         <span class="toggle-slider"></span>
                     </label>
-                    Proteksyon ng Produkto
-                    <span class="protection-badge">Bago</span>
-                    <span style="color:var(--text-light); font-size:12px; font-weight:400;">Protektahan ang iyong order mula sa pagkasira...</span>
+                    Proteksyon ng Produkto <span class="protection-badge">BAGO</span>
                 </div>
-                <div style="font-family:'Playfair Display',serif; font-weight:700; color:var(--text-main);" id="protection-display">₱{{ protection|floatformat:2 }}</div>
+                <div style="font-family:'Playfair Display',serif; font-weight:700; color:var(--text-main);">₱4.00</div>
             </div>
         </div>
 
-        <!-- ── Voucher + Message + Shipping Card ── -->
         <div class="card">
-
-            <!-- Voucher -->
-            <div class="voucher-row">
-                <div style="display:flex; align-items:center; gap:10px; font-weight:700; white-space:nowrap;">
-                    🎟️ Voucher
-                </div>
-                <div style="flex:1; margin-left:20px;">
-                    <div class="voucher-input-wrap">
-                        <input class="voucher-input" type="text" id="voucher-code" placeholder="Ilagay ang voucher code...">
-                        <button class="btn-apply-voucher" onclick="applyVoucher()">I-apply</button>
-                    </div>
-                    <div class="voucher-feedback" id="voucher-feedback"></div>
-                </div>
-            </div>
-
-            <!-- Message + Shipping -->
-            <div class="msg-ship-row">
-                <div class="msg-section">
-                    <span class="msg-label">Mensahe:</span>
-                    <input type="text" class="msg-input" id="order-message" placeholder="Mag-iwan ng mensahe sa tindahan...">
-                </div>
-                <div class="shipping-section">
-                    <span class="shipping-label">Paraan ng Pagpapadala:</span>
-                    <select class="shipping-select" id="shipping-select" onchange="updateShipping()">
-                        <option value="standard" data-fee="60" data-label="Standard Local · Tatanggapin sa 3–5 araw">📦 Standard Local</option>
-                        <option value="express" data-fee="120" data-label="Express · Tatanggapin bukas">⚡ Express</option>
-                        <option value="economy" data-fee="30" data-label="Economy · Tatanggapin sa 7–10 araw">🐢 Economy</option>
-                    </select>
-                    <div>
-                        <div class="shipping-fee-display" id="shipping-fee-display">₱{{ shipping_fee|floatformat:2 }}</div>
-                        <div style="font-size:11px; color:var(--text-light);" id="shipping-eta">Standard Local · 3–5 araw</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── Payment Card ── -->
-        <div class="card">
-
-            <!-- Coins -->
-            <div class="coins-row">
-                <div class="coins-label">🪙 Tindahan Coins <span style="color:var(--text-light); font-size:13px; font-weight:400;">— Mayroon kang 0 coins</span></div>
-                <div class="coins-toggle">
-                    <span id="coins-amount-label">-₱0.00</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="coins-toggle" disabled onchange="updateTotal()">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Payment Method -->
             <div class="payment-method-section">
                 <div class="payment-title">Paraan ng Pagbabayad</div>
                 <div class="payment-options">
-                    <button class="pay-btn active" onclick="selectPayment(this, 'cod')">💵 Cash on Delivery</button>
-                    <button class="pay-btn" onclick="selectPayment(this, 'ewallet')">📱 e-Wallet / GCash</button>
-                    <button class="pay-btn" onclick="selectPayment(this, 'bank')">🏦 Online Banking</button>
-                    <button class="pay-btn" onclick="selectPayment(this, 'card')">💳 Credit / Debit Card</button>
+                    <button class="pay-btn active" onclick="selectPayment(this, 'COD')">💵 Cash on Delivery</button>
+                    <button class="pay-btn" onclick="selectPayment(this, 'EWALLET')">📱 e-Wallet / GCash</button>
                 </div>
             </div>
 
-            <!-- Summary -->
             <div class="summary-section">
                 <div class="summary-row">
-                    <div class="summary-label">Subtotal ng Produkto:</div>
-                    <div class="summary-val" id="summary-subtotal">₱{{ subtotal|floatformat:2 }}</div>
-                </div>
-                <div class="summary-row">
-                    <div class="summary-label">Bayad sa Pagpapadala:</div>
-                    <div class="summary-val" id="summary-shipping">₱{{ shipping_fee|floatformat:2 }}</div>
-                </div>
-                <div class="summary-row">
-                    <div class="summary-label">Proteksyon ng Produkto:</div>
-                    <div class="summary-val" id="summary-protection">₱{{ protection|floatformat:2 }}</div>
-                </div>
-                <div class="summary-row" id="summary-discount-row" style="display:none;">
-                    <div class="summary-label">Diskwento (Voucher):</div>
-                    <div class="summary-val discount" id="summary-discount">-₱0.00</div>
+                    <div class="summary-label">SUBTOTAL:</div>
+                    <div class="summary-val">₱{{ subtotal|floatformat:2 }}</div>
                 </div>
                 <div class="total-payment-row">
                     <div class="total-label-big">Kabuuang Bayad:</div>
                     <div class="total-price" id="total-price">₱{{ total_payment|floatformat:2 }}</div>
                 </div>
-
                 <div class="place-order-section">
-                    <div class="order-note">
-                        Sa pag-click ng "Mag-order Na", sumasang-ayon ka sa<br>
-                        <strong>Mga Tuntunin at Kondisyon</strong> ng Tindahan.
-                    </div>
-                    <button class="place-order-btn" id="place-order-btn" onclick="openOrderModal()">
-                        ✔ Mag-order Na
-                    </button>
+                    <button class="place-order-btn" onclick="placeOrder()">✔ MAG-ORDER NA</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Confirm Order Modal -->
-    <div class="modal-overlay" id="order-modal">
-        <div class="modal-box">
-            <button class="modal-close" onclick="closeOrderModal()">✕</button>
-            <h3>Kumpirmahin ang Order</h3>
-            <p>Suriin ang iyong order bago ipagpatuloy.</p>
-            <div class="modal-summary">
-                <div class="ms-row"><span>Subtotal:</span><span id="ms-subtotal">—</span></div>
-                <div class="ms-row"><span>Pagpapadala:</span><span id="ms-shipping">—</span></div>
-                <div class="ms-row"><span>Proteksyon:</span><span id="ms-protection">—</span></div>
-                <div class="ms-row" id="ms-discount-row" style="display:none;"><span>Diskwento:</span><span id="ms-discount">—</span></div>
-                <div class="ms-row"><span>Paraan ng Bayad:</span><span id="ms-payment">—</span></div>
-                <div class="ms-row"><span>Kabuuang Bayad:</span><span id="ms-total">—</span></div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-sm btn-sm-ghost" onclick="closeOrderModal()">Bumalik</button>
-                <button class="btn-sm btn-sm-primary" id="confirm-order-btn" onclick="placeOrder()">✔ Oo, Mag-order Na</button>
-            </div>
-        </div>
-    </div>
+    <script>
+        let selectedPayment = 'COD';
 
-    <!-- Toast -->
-    <div id="toast" class="toast">
-        <span id="toast-icon">✅</span>
-        <span id="toast-msg">Tagumpay!</span>
-    </div>
-
-   <script>
-    // ─── State & Initial Data ───────────────────────────────────────────
-    // Ginamit ang .replace(/,/g, '') para sa mga numerong may comma (e.g. 1,500.00)
-    const BASE_SUBTOTAL    = parseFloat("{{ subtotal|floatformat:2 }}".replace(/,/g, '')) || 0;
-    const BASE_PROTECTION  = parseFloat("{{ protection|floatformat:2 }}".replace(/,/g, '')) || 0;
-    
-    let currentShippingFee = parseFloat("{{ shipping_fee|floatformat:2 }}".replace(/,/g, '')) || 60;
-    let currentProtection  = BASE_PROTECTION;
-    let voucherDiscount    = 0;
-    let selectedPayment    = 'cod';
-    const paymentLabels    = { 
-        cod: 'Cash on Delivery', 
-        ewallet: 'e-Wallet / GCash', 
-        bank: 'Online Banking', 
-        card: 'Credit / Debit Card' 
-    };
-
-    // ─── Toast System ──────────────────────────────────────────────────
-    function showToast(msg, type = 'success') {
-        const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
-        const t = document.getElementById('toast');
-        document.getElementById('toast-icon').textContent = icons[type] || '✅';
-        document.getElementById('toast-msg').textContent  = msg;
-        t.className = `toast show ${type}`;
-        setTimeout(() => t.classList.remove('show'), 3500);
-    }
-
-    // ─── Total Calculation Logic (FIXED) ───────────────────────────────
-    function updateTotal() {
-        const total = BASE_SUBTOTAL + currentShippingFee + currentProtection - voucherDiscount;
-        
-        // I-update ang main displays gamit ang localized formatting (may commas)
-        const formatOptions = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
-        
-        document.getElementById('total-price').textContent = '₱' + total.toLocaleString(undefined, formatOptions);
-        document.getElementById('summary-subtotal').textContent = '₱' + BASE_SUBTOTAL.toLocaleString(undefined, formatOptions);
-        document.getElementById('summary-shipping').textContent = '₱' + currentShippingFee.toLocaleString(undefined, formatOptions);
-        document.getElementById('summary-protection').textContent = '₱' + currentProtection.toLocaleString(undefined, formatOptions);
-        
-        if (voucherDiscount > 0) {
-            document.getElementById('summary-discount').textContent = '-₱' + voucherDiscount.toLocaleString(undefined, formatOptions);
-        }
-    }
-
-    // ─── Protection Toggle ─────────────────────────────────────────────
-    function updateProtection() {
-        const isChecked = document.getElementById('protection-toggle').checked;
-        currentProtection = isChecked ? BASE_PROTECTION : 0;
-        
-        const display = document.getElementById('protection-display');
-        if (display) {
-            display.textContent = '₱' + currentProtection.toFixed(2);
-        }
-        
-        updateTotal();
-        showToast(isChecked ? 'Proteksyon naka-on.' : 'Proteksyon naka-off.', isChecked ? 'success' : 'warning');
-    }
-
-    // ─── Shipping Select ───────────────────────────────────────────────
-    function updateShipping() {
-        const sel = document.getElementById('shipping-select');
-        const opt = sel.options[sel.selectedIndex];
-        currentShippingFee = parseFloat(opt.dataset.fee);
-        
-        document.getElementById('shipping-fee-display').textContent = '₱' + currentShippingFee.toFixed(2);
-        document.getElementById('shipping-eta').textContent = opt.dataset.label;
-        
-        updateTotal();
-        showToast('Paraan ng pagpapadala ay binago.', 'info');
-    }
-
-    // ─── Payment Selection ─────────────────────────────────────────────
-    function selectPayment(btn, method) {
-        document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedPayment = method;
-        showToast('Paraan ng bayad: ' + paymentLabels[method], 'info');
-    }
-
-    // ─── Voucher Logic ─────────────────────────────────────────────────
-    const VALID_VOUCHERS = {
-        'TINDAHAN10': { discount: 10,  label: '₱10 off' },
-        'SUKI20':     { discount: 20,  label: '₱20 off' },
-        'MABUHAY50':  { discount: 50,  label: '₱50 off' },
-    };
-
-    function applyVoucher() {
-        const code = document.getElementById('voucher-code').value.trim().toUpperCase();
-        const feedback = document.getElementById('voucher-feedback');
-        const discountRow = document.getElementById('summary-discount-row');
-
-        if (!code) {
-            feedback.textContent = 'Ilagay ang voucher code.';
-            feedback.className = 'voucher-feedback error';
-            return;
+        function toggleAddressForm() {
+            const form = document.getElementById('address-form');
+            form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
         }
 
-        if (VALID_VOUCHERS[code]) {
-            voucherDiscount = VALID_VOUCHERS[code].discount;
-            feedback.textContent = `✅ Na-apply! ${VALID_VOUCHERS[code].label} diskwento.`;
-            feedback.className = 'voucher-feedback success';
-            
-            if (discountRow) discountRow.style.display = '';
-            showToast('Voucher na-apply!', 'success');
-        } else {
-            voucherDiscount = 0;
-            feedback.textContent = '❌ Hindi valid ang voucher code.';
-            feedback.className = 'voucher-feedback error';
-            if (discountRow) discountRow.style.display = 'none';
+        function selectPayment(btn, method) {
+            document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedPayment = method;
         }
-        updateTotal();
-    }
 
-    // ─── Address Handling ──────────────────────────────────────────────
-    function toggleAddressForm() {
-        document.getElementById('address-form').classList.toggle('open');
-    }
-
-    function saveAddress() {
-        const fields = ['addr-name', 'addr-phone', 'addr-street', 'addr-city', 'addr-province', 'addr-zip'];
-        const isComplete = fields.every(id => document.getElementById(id).value.trim() !== '');
-
-        if (!isComplete) {
-            showToast('Punan ang lahat ng field.', 'warning');
-            return;
-        }
-        showToast('Na-save ang address!', 'success');
-        toggleAddressForm();
-    }
-
-    // ─── Order Confirmation Modal ──────────────────────────────────────
-    function openOrderModal() {
-        const total = BASE_SUBTOTAL + currentShippingFee + currentProtection - voucherDiscount;
-        const format = { minimumFractionDigits: 2 };
-
-        document.getElementById('ms-subtotal').textContent   = '₱' + BASE_SUBTOTAL.toLocaleString(undefined, format);
-        document.getElementById('ms-shipping').textContent   = '₱' + currentShippingFee.toLocaleString(undefined, format);
-        document.getElementById('ms-protection').textContent = '₱' + currentProtection.toLocaleString(undefined, format);
-        document.getElementById('ms-payment').textContent    = paymentLabels[selectedPayment];
-        document.getElementById('ms-total').textContent      = '₱' + total.toLocaleString(undefined, format);
-        
-        const discRow = document.getElementById('ms-discount-row');
-        if (voucherDiscount > 0) {
-            document.getElementById('ms-discount').textContent = '-₱' + voucherDiscount.toLocaleString(undefined, format);
-            discRow.style.display = '';
-        } else {
-            discRow.style.display = 'none';
-        }
-        
-        document.getElementById('order-modal').classList.add('active');
-    }
-
-    function closeOrderModal() {
-        document.getElementById('order-modal').classList.remove('active');
-    }
-
-    // ─── Final Place Order API Call ────────────────────────────────────
-    async function placeOrder() {
-        const btn = document.getElementById('confirm-order-btn');
-        btn.textContent = '⏳ Nagpo-proseso...';
-        btn.disabled = true;
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const street = document.getElementById('addr-street').value;
-        const city = document.getElementById('addr-city').value;
-        const shippingAddr = street && city ? `${street}, ${city}` : 'Default Address';
-
-        const payload = {
-            payment_method: selectedPayment.toUpperCase(),
-            shipping_address: shippingAddr,
-            product_id: urlParams.get('product_id'),
-            quantity: urlParams.get('quantity') || 1
-        };
-
-        try {
-            const response = await fetch('/api/orders/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (response.ok) {
-                showToast('🎉 Matagumpay na na-order!', 'success');
-                setTimeout(() => {
-                    window.location.href = "{% url 'purchase_history' %}";
-                }, 1500);
-            } else {
-                const err = await response.json();
-                showToast('Error: ' + (err.error || 'Hindi ma-proseso.'), 'error');
-                btn.textContent = '✔ Oo, Mag-order Na';
-                btn.disabled = false;
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
             }
-        } catch (error) {
-            showToast('May error sa network.', 'error');
-            btn.disabled = false;
+            return cookieValue;
         }
-    }
 
-    function getCookie(name) {
-        let val = null;
-        if (document.cookie) {
-            document.cookie.split(';').forEach(c => {
-                c = c.trim();
-                if (c.startsWith(name + '=')) val = decodeURIComponent(c.substring(name.length + 1));
-            });
+        async function forceSaveAddress() {
+            const btn = document.getElementById('btn-save-addr');
+            btn.innerHTML = "NAGSE-SAVE...";
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('save_address', 'save_address');
+            formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+            formData.append('full_name', document.getElementById('addr-name').value);
+            formData.append('phone', document.getElementById('addr-phone').value);
+            formData.append('street', document.getElementById('addr-street').value);
+            formData.append('city', document.getElementById('addr-city').value);
+            formData.append('province', document.getElementById('addr-province').value);
+            formData.append('zip_code', document.getElementById('addr-zip').value);
+
+            try {
+                const response = await fetch(window.location.href, { method: 'POST', body: formData });
+                if (response.ok) { window.location.reload(); }
+                else { alert("Error saving address."); btn.disabled = false; btn.innerHTML = "I-save ang Address"; }
+            } catch (error) { btn.disabled = false; btn.innerHTML = "I-save ang Address"; }
         }
-        return val;
-    }
 
-    // Initial Run
-    updateTotal();
-</script>
+        async function placeOrder() {
+            if (!document.getElementById('address-display-area').innerText.includes('(+63)')) {
+                alert("Mangyaring mag-save ng address bago mag-order.");
+                return;
+            }
 
-    {% csrf_token %}
+            const urlParams = new URLSearchParams(window.location.search);
+            const payload = {
+                payment_method: selectedPayment,
+                product_id: urlParams.get('product_id'),
+                quantity: urlParams.get('quantity') || 1
+            };
+
+            try {
+                const response = await fetch('/api/orders/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    window.location.href = "{% url 'purchase_history' %}";
+                } else {
+                    alert("Hindi ma-proseso ang order.");
+                }
+            } catch (error) {
+                alert("Network error.");
+            }
+        }
+    </script>
 </body>
 </html>

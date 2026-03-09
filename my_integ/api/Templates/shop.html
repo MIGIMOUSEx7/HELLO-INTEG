@@ -21,6 +21,7 @@
             <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
             {% if user.is_authenticated %}
                 <span class="user-chip">👤 {{ user.username }}</span>
+                <a href="{% url 'user_profile' %}">Aking Profile</a>
                 <a href="{% url 'logout' %}">Mag-Logout</a>
             {% else %}
                 <a href="{% url 'login' %}">Login / Sign Up</a>

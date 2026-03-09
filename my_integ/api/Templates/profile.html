@@ -1,0 +1,150 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aking Profile | Tindahan</title>
+    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
+    <link rel="stylesheet" href="{% static 'css/user_profile.css' %}">
+</head>
+<body>
+
+    <div class="profile-wrapper">
+        <div class="p-card profile-header-container">
+            <div class="avatar-col">
+                {% if profile.profile_picture %}
+                    <img src="{{ profile.profile_picture.url }}" class="main-avatar-img">
+                {% else %}
+                    <div class="avatar-circle">👤</div>
+                {% endif %}
+            </div>
+            
+            <div class="status-col" style="flex:1;">
+                <h1 style="margin:0 0 5px;">
+                    {% if user.first_name %}
+                        {{ user.first_name }}
+                    {% else %}
+                        {{ user.username }}
+                    {% endif %}
+                </h1>
+                <p style="margin:0; color:#888; font-size:14px;">Aktibong miyembro mula noong {{ user.date_joined|date:"F Y" }}</p>
+                <div style="margin-top:10px;">
+                    <a href="{% url 'logout' %}" class="logout-link">Mag-Logout</a>
+                </div>
+            </div>
+            <a href="{% url 'home' %}" class="btn-profile-action" style="background:#4a3427;">Bumalik sa Tindahan</a>
+        </div>
+
+        <div class="group-row">
+            <div class="p-card" style="flex: 2;">
+                <h3 class="section-title">Seller Hub</h3>
+                <div class="action-grid">
+                    {% for store in stores %}
+                    <div class="action-item">
+                        <div>
+                            <strong style="display:block">{{ store.store_name }}</strong>
+                            <small style="color:#888;">Manage Orders & Chats</small>
+                        </div>
+                        <a href="{% url 'seller_messages' %}" class="btn-profile-action">Open Seller Center</a>
+                    </div>
+                    {% empty %}
+                    <p style="color:#888;">You don't own any stores yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="p-card" style="flex: 1;">
+                <h3 class="section-title">Aking Transaksyon</h3>
+                <div class="buyer-grid">
+                    <div class="action-item">
+                        <span>📋 Aking Kasaysayan</span>
+                        <a href="{% url 'purchase_history' %}" class="btn-profile-action" style="background:#4a3427;">View</a>
+                    </div>
+                    <div class="action-item">
+                        <span>🛒 Aking Cart</span>
+                        <a href="{% url 'cart' %}" class="btn-profile-action" style="background:#4a3427;">Open</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-card">
+            <h3 class="section-title">📍 Tirahan ng Delivery</h3>
+            <div class="address-container">
+                {% for addr in addresses %}
+                    <div class="action-item" style="margin-bottom: 10px;">
+                        <div>
+                            <strong>{{ addr.full_name }}</strong> | {{ addr.phone_number }}<br>
+                            <small>{{ addr.street }}, {{ addr.city }}, {{ addr.province }}, {{ addr.zip_code }}</small>
+                        </div>
+                        {% if addr.is_default %}
+                            <span class="badge" style="color: #ee4d2d; border: 1px solid #ee4d2d; padding: 2px 5px; font-size: 10px;">DEFAULT</span>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div style="padding: 20px; text-align: center; background: #fafafa; border: 1px dashed #ddd;">
+                        <p style="color: #ee4d2d;">Walang address. Mag-lagay ng delivery address.</p>
+                        <a href="#" class="btn-profile-action" style="background: white; color: #4a3427; border: 1px solid #4a3427;">MAGDAGDAG</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="p-card">
+            <h3 class="section-title">Aking Account Settings</h3>
+            
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="settings-grid">
+                    <div class="settings-form">
+                        <div class="form-row">
+                            <label>Unang Pangalan</label>
+                            <input type="text" name="first_name" value="{{ user.first_name }}" placeholder="Juan">
+                        </div>
+                        <div class="form-row">
+                            <label>Huling Pangalan</label>
+                            <input type="text" name="last_name" value="{{ user.last_name }}" placeholder="dela Cruz">
+                        </div>
+                        <div class="form-row">
+                            <label>Email Address</label>
+                            <input type="email" name="email" value="{{ user.email }}" placeholder="juan@email.com">
+                        </div>
+                        <button type="submit" name="update_info" class="btn-profile-action" style="margin-top:20px;">I-SAVE ANG MGA PAGBABAGO</button>
+                    </div>
+
+                    <div class="settings-pic-config">
+                        <h3><span class="h4-accent"></span>Litrato (Profile Picture)</h3>
+                        <input type="file" name="profile_picture" id="pic_input" style="display:none;" onchange="submitPic()">
+                        
+                        <div class="pic-uploader" onclick="document.getElementById('pic_input').click();">
+                            {% if profile.profile_picture %}
+                                <img src="{{ profile.profile_picture.url }}" class="pic-uploader-preview">
+                                <div class="uploader-overlay">Change Picture</div>
+                            {% else %}
+                                <div class="empty-pic-preview">➕</div>
+                                <div class="uploader-label">Mag-upload ng Litrato</div>
+                            {% endif %}
+                        </div>
+
+                        <div style="margin-top:30px;">
+                            <h3><span class="h4-accent"></span>Seguridad (Security)</h3>
+                            <div class="action-item">
+                                <span>I-reset ang aking Password</span>
+                                <a href="{% url 'password_reset' %}" class="btn-profile-action" style="background:#cc0000;">Change Password</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function submitPic() {
+            if(document.getElementById('pic_input').files.length > 0) {
+                document.getElementById('pic_input').closest('form').submit();
+            }
+        }
+    </script>
+</body>
+</html>

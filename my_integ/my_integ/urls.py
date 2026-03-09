@@ -3,6 +3,8 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from api import views
+# Import Django's built-in auth views to handle password reset
+from django.contrib.auth import views as auth_views
 
 from rest_framework.authtoken.views import obtain_auth_token
 
@@ -16,6 +18,7 @@ urlpatterns = [
     # Frontend Pages
     path('', views.home, name='home'),
     path('shop/', views.home, name='shop'),
+    path('profile/', views.profile_view, name='user_profile'), 
     path('store/<int:store_id>/', views.store_profile, name='store_profile'),
     path('cart/', views.view_cart, name='cart'),
     path('history/', views.purchase_history, name='purchase_history'),
@@ -29,6 +32,10 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
     path('signup/', views.register_view, name='signup'),
+    
+    # This line fixes the 'password_reset' error in your profile template
+    path('password-reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
+    
 ]
 
 if settings.DEBUG:

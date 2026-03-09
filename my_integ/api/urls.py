@@ -22,4 +22,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('checkout/pay/<int:pk>/', views.checkout_pay, name='checkout_pay'),
     path('seller/messages/', views.seller_message_center, name='seller_messages'),
+    path('profile/', views.profile_view, name='user_profile'),
+    path('profile/add-address/', views.add_address, name='add_address'),
 ]
