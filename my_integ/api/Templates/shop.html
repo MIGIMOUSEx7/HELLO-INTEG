@@ -97,7 +97,7 @@
 <div class="cat-bar" id="cat-bar">
     <span class="cat-bar-label">Filter:</span>
     <button class="cat-pill active" onclick="initShop(''); setCatActive(this)">✦ Lahat</button>
-    </div>
+</div>
 
 <div class="layout-3col">
 
@@ -243,7 +243,7 @@
 
             const trending = [...products].sort((a, b) => b.price - a.price).slice(0, 5);
             document.getElementById('trending-list').innerHTML = trending.map((p, i) => {
-                const clickAction = (!isSeller && !isAdmin) ? `onclick="buyNow(${p.id})"` : '';
+                const clickAction = (!isSeller && !isAdmin) ? `onclick="window.location.href='/reserve-checkout/${p.id}/'"` : '';
                 return `
                 <div class="trending-item" ${clickAction} style="${(!isSeller && !isAdmin) ? 'cursor:pointer;' : 'cursor:default; opacity:0.8;'}">
                     <div class="trending-rank">${i + 1}</div>
@@ -280,16 +280,21 @@
             let actionHtml = '';
             if (!isSeller && !isAdmin) {
                 actionHtml = `
-                    <div class="btn-group">
-                        <button class="cart-btn" onclick="addToCart(${p.id})" ${isSoldOut ? 'disabled' : ''}>🛒 Cart</button>
-                        <button class="order-btn" onclick="buyNow(${p.id})" ${isSoldOut ? 'disabled' : ''}>Bilhin</button>
+                    <div class="btn-group" style="display: flex; gap: 5px;">
+                        <button class="cart-btn" onclick="addToCart(${p.id})" ${isSoldOut ? 'disabled' : ''} style="flex: 1; font-size: 11px; padding: 8px 4px;">🛒 Cart</button>
+                        
+                        <button onclick="window.location.href='/reserve-checkout/${p.id}/'" ${isSoldOut ? 'disabled' : ''} style="flex: 1; font-size: 11px; padding: 8px 4px; background: #ffcc00; color: #120a05; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; text-align: center;">
+                            ⏳ Reserve
+                        </button>
+
+                        <button class="order-btn" onclick="buyNow(${p.id})" ${isSoldOut ? 'disabled' : ''} style="flex: 1; font-size: 11px; padding: 8px 4px;">Bilhin</button>
                     </div>`;
             }
 
             return `
                 <div class="card animate-entrance" style="animation-delay: ${index * 0.05}s">
                     ${isSoldOut ? '<div class="sold-out-overlay">UBOS NA</div>' : ''}
-                    <div class="card-image">
+                    <div class="card-image" style="cursor:pointer;" onclick="if(!isSeller && !isAdmin) window.location.href='/reserve-checkout/${p.id}/'">
                         <img src="${p.image || ''}" onerror="this.parentNode.innerHTML='<div style=font-size:52px>📦</div>'">
                     </div>
                     <div class="card-body">

@@ -30,7 +30,7 @@ urlpatterns = [
     path('inventory/download/', views.download_inventory_pdf, name='download_inventory_pdf'),
     path('product/<int:product_id>/reserve/', views.reserve_product, name='reserve_product'),
     path('reservation/<int:res_id>/complete/', views.complete_reservation, name='complete_reservation'),
-    
+    path('reserve-checkout/<int:pk>/', views.reserve_checkout, name='reserve_checkout'),
 
     
 ]
