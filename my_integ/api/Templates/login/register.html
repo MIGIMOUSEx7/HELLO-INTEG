@@ -4,464 +4,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | Tindahan</title>
-    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
-    <style>
-        /* ══════════════════════════════════════
-           REGISTER PAGE — tindahan.css extension
-           (mirrors login.html structure exactly)
-        ══════════════════════════════════════ */
-
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
-
-        /* ── Minimal auth navbar (same as login) ── */
-        .auth-nav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 48px;
-            height: 64px;
-            background: var(--nav-bg);
-            border-bottom: 1px solid var(--border);
-            position: relative;
-            z-index: 100;
-            flex-shrink: 0;
-        }
-        .auth-nav::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 4px;
-            background: repeating-linear-gradient(
-                90deg,
-                var(--red) 0px, var(--red) 14px,
-                var(--gold) 14px, var(--gold) 22px,
-                var(--red-lite) 22px, var(--red-lite) 30px,
-                var(--gold-lite) 30px, var(--gold-lite) 38px
-            );
-        }
-
-        /* ── Full-height split layout ── */
-        .login-wrap {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* ── LEFT PANEL: Brand side ── */
-        .login-brand {
-            background: linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 60%, rgba(200,132,26,0.1) 100%);
-            border-right: 1px solid var(--border);
-            padding: 64px 56px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-        /* Gold-tinted orbs (different from login's red orbs — signals "new/welcome") */
-        .login-brand::before {
-            content: '';
-            position: absolute;
-            width: 420px; height: 420px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(200,132,26,0.13) 0%, transparent 70%);
-            top: -80px; right: -100px;
-            pointer-events: none;
-        }
-        .login-brand::after {
-            content: '';
-            position: absolute;
-            width: 300px; height: 300px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(184,48,32,0.09) 0%, transparent 70%);
-            bottom: 40px; left: -60px;
-            pointer-events: none;
-        }
-
-        .brand-watermark {
-            position: absolute;
-            bottom: -24px; right: -20px;
-            font-family: var(--font-display);
-            font-size: 140px;
-            font-weight: 800;
-            color: rgba(200,132,26,0.05);
-            line-height: 1;
-            pointer-events: none;
-            user-select: none;
-            white-space: nowrap;
-        }
-
-        .brand-eyebrow {
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--gold);
-            margin-bottom: 20px;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .brand-eyebrow::before {
-            content: '';
-            display: block;
-            width: 28px; height: 2px;
-            background: var(--gold);
-            border-radius: 2px;
-        }
-
-        .brand-headline {
-            font-family: var(--font-display);
-            font-size: 52px;
-            font-weight: 800;
-            color: var(--text);
-            line-height: 1.1;
-            margin-bottom: 20px;
-        }
-        .brand-headline span {
-            color: var(--gold-lite);
-            text-shadow: 0 0 30px var(--gold-glow);
-        }
-
-        .brand-sub {
-            font-size: 15px;
-            color: var(--text-soft);
-            line-height: 1.7;
-            margin-bottom: 44px;
-            max-width: 380px;
-        }
-
-        .brand-divider {
-            display: flex; align-items: center; gap: 16px;
-            margin-bottom: 36px;
-        }
-        .brand-divider::before,
-        .brand-divider::after {
-            content: '';
-            flex: 1; height: 1px;
-            background: var(--border-lit);
-        }
-        .brand-divider-sym {
-            color: var(--gold);
-            font-size: 14px;
-            font-family: var(--font-display);
-        }
-
-        .brand-features { display: flex; flex-direction: column; gap: 20px; }
-        .brand-feature {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            padding: 16px 20px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            transition: border-color .2s, background .2s;
-            position: relative; z-index: 1;
-        }
-        .brand-feature:hover {
-            border-color: var(--border-lit);
-            background: rgba(200,132,26,0.04);
-        }
-        .brand-feature-icon {
-            font-size: 24px;
-            flex-shrink: 0;
-            width: 44px; height: 44px;
-            background: var(--surface-3);
-            border: 1px solid var(--border-lit);
-            border-radius: var(--radius-sm);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .brand-feature-title {
-            font-family: var(--font-display);
-            font-size: 16px; font-weight: 700;
-            color: var(--text); margin-bottom: 3px;
-        }
-        .brand-feature-sub { font-size: 13px; color: var(--text-muted); }
-
-        /* ── RIGHT PANEL: Form side ── */
-        .login-form-side {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 48px 56px;
-            background: var(--bg);
-            overflow-y: auto;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 420px;
-            /* allow card to grow for the longer register form */
-            padding: 8px 0;
-        }
-
-        .login-card-header { margin-bottom: 32px; }
-        .login-card-title {
-            font-family: var(--font-display);
-            font-size: 38px; font-weight: 800;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        .login-card-sub { font-size: 14px; color: var(--text-muted); }
-
-        .login-card-accent {
-            width: 48px; height: 4px;
-            background: linear-gradient(90deg, var(--gold), var(--red));
-            border-radius: 2px;
-            margin-bottom: 24px;
-        }
-
-        /* ── Django form fields ── */
-        /* Django renders <p> wrappers with label + input — we style them to match */
-        .login-form { display: flex; flex-direction: column; gap: 4px; }
-
-        .login-form p {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin: 0 0 14px 0;
-        }
-
-        /* Label — matches .form-label */
-        .login-form p label,
-        .login-form p > label {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-        }
-
-        /* Input — inherits tindahan.css .form-input styles via tag selector override */
-        .login-form p input[type="text"],
-        .login-form p input[type="email"],
-        .login-form p input[type="password"] {
-            width: 100%;
-            padding: 11px 14px;
-            background: var(--surface-2);
-            border: 1.5px solid var(--border-lit);
-            border-radius: var(--radius-sm);
-            color: var(--text);
-            font-family: var(--font-body);
-            font-size: 14px;
-            transition: border-color .2s, box-shadow .2s;
-            outline: none;
-            box-sizing: border-box;
-        }
-        .login-form p input:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 0 3px var(--gold-glow);
-            background: var(--surface-3);
-        }
-
-        /* Help text */
-        .login-form .helptext {
-            font-size: 11px;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
-
-        /* Field errors */
-        .login-form .err,
-        .login-form .errorlist li {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 12px;
-            background: rgba(184,48,32,0.1);
-            border: 1px solid rgba(184,48,32,0.3);
-            border-radius: var(--radius-sm);
-            color: var(--red-lite);
-            font-size: 12px;
-            font-weight: 600;
-            list-style: none;
-        }
-        .login-form .errorlist { padding: 0; margin: 0; }
-
-        /* ── Submit button ── */
-        .login-submit-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, var(--gold), var(--gold-lite));
-            color: var(--bg);
-            border: none;
-            border-radius: var(--radius);
-            font-family: var(--font-body);
-            font-size: 16px; font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 6px 24px var(--gold-glow);
-            transition: all .25s;
-            letter-spacing: 0.3px;
-            margin-top: 8px;
-        }
-        .login-submit-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 36px var(--gold-glow);
-        }
-        .login-submit-btn:active { transform: translateY(0); }
-
-        /* Divider + login link */
-        .login-divider {
-            display: flex; align-items: center; gap: 14px;
-            font-size: 13px; color: var(--text-muted);
-            margin: 16px 0 8px;
-        }
-        .login-divider::before, .login-divider::after {
-            content: ''; flex: 1; height: 1px;
-            background: var(--border-lit);
-        }
-
-        .login-signup-row {
-            text-align: center;
-            font-size: 14px; color: var(--text-muted);
-        }
-        .login-signup-row a {
-            color: var(--red-lite);
-            font-weight: 700;
-            text-decoration: none;
-            transition: color .2s;
-        }
-        .login-signup-row a:hover { color: var(--red); text-decoration: underline; }
-
-        /* ── Responsive ── */
-        @media (max-width: 860px) {
-            .login-wrap { grid-template-columns: 1fr; }
-            .login-brand { display: none; }
-            .login-form-side { padding: 40px 24px; }
-            .auth-nav { padding: 0 24px; }
-        }
-        @media (max-width: 480px) {
-            .login-card-title { font-size: 30px; }
-            .login-form-side { padding: 32px 16px; }
-        }
-    </style>
+    <title>Register | AgriResQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/agriresq.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
 </head>
-<body data-theme="dark">
+<body>
 
-    <div class="bg-texture"></div>
+<!-- ══ NAV ══════════════════════════════════════════════════════ -->
+<header class="auth-nav">
+    <a href="/" class="nav-brand">
+        <span class="nav-brand-name">AgriResQ</span>
+        <span class="nav-brand-sub">Fresh Market</span>
+    </a>
+</header>
 
-    <!-- ── Minimal auth navbar ── -->
-    <header class="auth-nav">
-        <a href="/" style="text-decoration:none;">
-            <div class="logo-wrap">
-                <div class="logo">Tindahan</div>
-                <div class="logo-tagline">Ang iyong merkado</div>
-            </div>
-        </a>
-        <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
-    </header>
+<!-- ══ SPLIT LAYOUT ══════════════════════════════════════════════ -->
+<div class="auth-wrap">
 
-    <div class="login-wrap">
+    <!-- ── LEFT: Brand panel ── -->
+    <div class="auth-brand">
+        <div class="auth-watermark">Sumali</div>
 
-        <!-- ════ LEFT: Brand Panel ════ -->
-        <div class="login-brand">
-            <div class="brand-watermark">Sumali</div>
+        <div class="auth-eyebrow">Bulua Terminal · CDO</div>
 
-            <div class="brand-eyebrow">🇵🇭 Sumali na!</div>
+        <h1 class="auth-headline">
+            Maging <em>suki</em><br>ngayon!
+        </h1>
 
-            <div class="brand-headline">
-                Maging <span>suki</span><br>ngayon!
-            </div>
+        <p class="auth-sub">
+            Gumawa ng account at i-unlock ang buong access sa AgriResQ marketplace — direktang koneksyon sa mga vendor ng Bukidnon at CDO.
+        </p>
 
-            <p class="brand-sub">
-                Gumawa ng account at i-unlock ang mga eksklusibong benepisyo para sa mga bagong miyembro ng Tindahan.
-            </p>
+        <div class="auth-divider">
+            <span class="auth-divider-sym">✦</span>
+        </div>
 
-            <div class="brand-divider">
-                <span class="brand-divider-sym">✦</span>
-            </div>
-
-            <div class="brand-features">
-                <div class="brand-feature">
-                    <div class="brand-feature-icon">🎁</div>
-                    <div>
-                        <div class="brand-feature-title">Welcome Bonus</div>
-                        <div class="brand-feature-sub">₱100 off sa iyong unang pagbili</div>
-                    </div>
+        <div class="auth-features">
+            <div class="auth-feature">
+                <div class="auth-feature-icon">🏪</div>
+                <div>
+                    <div class="auth-feature-title">Mag-Vend Rin</div>
+                    <div class="auth-feature-sub">Buksan ang sariling tindahan at i-list ang surplus</div>
                 </div>
-                <div class="brand-feature">
-                    <div class="brand-feature-icon">⚡</div>
-                    <div>
-                        <div class="brand-feature-title">Lightning Deals</div>
-                        <div class="brand-feature-sub">Eksklusibong flash sales araw-araw</div>
-                    </div>
+            </div>
+            <div class="auth-feature">
+                <div class="auth-feature-icon">⏱</div>
+                <div>
+                    <div class="auth-feature-title">Priority Reservations</div>
+                    <div class="auth-feature-sub">Maging una sa pagkuha ng mga mababang presyo</div>
                 </div>
-                <div class="brand-feature">
-                    <div class="brand-feature-icon">🚚</div>
-                    <div>
-                        <div class="brand-feature-title">Free Shipping</div>
-                        <div class="brand-feature-sub">Sa orders na higit ₱399 nationwide</div>
-                    </div>
+            </div>
+            <div class="auth-feature">
+                <div class="auth-feature-icon">📦</div>
+                <div>
+                    <div class="auth-feature-title">Order History</div>
+                    <div class="auth-feature-sub">I-track ang lahat ng iyong reservations at orders</div>
                 </div>
             </div>
         </div>
-
-        <!-- ════ RIGHT: Form Panel ════ -->
-        <div class="login-form-side">
-            <div class="login-card">
-
-                <!-- Gold accent (flipped from login's red→gold, signals "new/positive") -->
-                <div class="login-card-accent"></div>
-
-                <div class="login-card-header">
-                    <div class="login-card-title">Mag-Sign Up</div>
-                    <div class="login-card-sub">Simulan ang iyong shopping journey sa Tindahan</div>
-                </div>
-
-                <form method="POST" novalidate class="login-form">
-                    {% csrf_token %}
-
-                    {% for field in form %}
-                        <p>
-                            {{ field.label_tag }}
-                            {{ field }}
-                            {% if field.help_text %}
-                                <span class="helptext">{{ field.help_text }}</span>
-                            {% endif %}
-                            {% if field.errors %}
-                                <ul class="errorlist">
-                                    {% for error in field.errors %}
-                                        <li>⚠ {{ error }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% endif %}
-                        </p>
-                    {% endfor %}
-
-                    <button type="submit" class="login-submit-btn">
-                        Kumpletuhin ang Pagpaparehistro →
-                    </button>
-
-                    <div class="login-divider">o kaya</div>
-
-                    <div class="login-signup-row">
-                        Mayroon nang account?
-                        <a href="{% url 'login' %}">Mag-Login dito</a>
-                    </div>
-
-                </form>
-            </div>
-        </div>
-
     </div>
 
-    <div class="footer-strip"></div>
+    <!-- ── RIGHT: Form panel ── -->
+    <div class="auth-form-side">
+        <div class="auth-card">
 
-    <script>
-        function toggleTheme() {
-            const body = document.body;
-            const isDark = body.getAttribute('data-theme') === 'dark';
-            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            document.querySelectorAll('.theme-toggle-nav').forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
-        }
-    </script>
+            <div class="auth-card-accent flipped"></div>
+            <h2 class="auth-card-title">Mag-<em>Sign Up</em></h2>
+            <p class="auth-card-sub">Simulan ang iyong AgriResQ journey</p>
+
+            <form method="POST" novalidate class="auth-form">
+                {% csrf_token %}
+
+                {# Django UserCreationForm renders each field as a <p> with label + input #}
+                {% for field in form %}
+                    <p>
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% if field.help_text %}
+                            <span class="helptext">{{ field.help_text }}</span>
+                        {% endif %}
+                        {% if field.errors %}
+                            <ul class="errorlist">
+                                {% for error in field.errors %}
+                                    <li>⚠ {{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </p>
+                {% endfor %}
+
+                <!-- Non-field errors -->
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <div class="auth-error">⚠ {{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <button type="submit" class="auth-submit">
+                    Kumpletuhin ang Pagpaparehistro →
+                </button>
+
+                <div class="auth-or">o kaya</div>
+
+                <div class="auth-alt">
+                    Mayroon nang account?
+                    <a href="{% url 'login' %}">Mag-Login dito</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<footer class="footer">
+    AgriResQ © 2025 · USTP · IT323 Applications Development · Bulua West Bound Integrated Terminal, CDO
+</footer>
 
 </body>
 </html>

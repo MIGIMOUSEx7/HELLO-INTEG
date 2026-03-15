@@ -4,139 +4,520 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reserve - {{ product.name }}</title>
-    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
-    <style>
-        .reserve-container {
-            max-width: 900px;
-            margin: 60px auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            background: #1e120a;
-            padding: 40px;
-            border-radius: 12px;
-            border: 1px solid #3d2b1f;
-        }
-        .product-img-box {
-            background: #2a1a10;
-            border-radius: 8px;
-            height: 400px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border: 1px solid #3d2b1f;
-        }
-        .product-img-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .product-info h1 { margin: 0 0 10px 0; color: #f5e6d3; font-size: 32px; }
-        .store-badge { display: inline-block; background: #3d2b1f; color: #ffcc00; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-bottom: 20px; }
-        .price { font-size: 36px; color: #00ff88; font-weight: 900; font-family: monospace; margin-bottom: 20px; }
-        .desc { color: #a89078; line-height: 1.6; margin-bottom: 30px; }
-        
-        .reserve-box {
-            background: #2a1a10;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #ffcc00;
-        }
-        .qty-input {
-            width: 80px;
-            background: #120a05;
-            border: 1px solid #3d2b1f;
-            color: #f5e6d3;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 16px;
-            text-align: center;
-        }
-        .btn-reserve {
-            background: #ffcc00;
-            color: #120a05;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: 900;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
-            transition: 0.2s;
-        }
-        .btn-reserve:hover { background: #e6b800; }
-        
-        /* Mobile Responsiveness */
-        @media (max-width: 768px) {
-            .reserve-container { grid-template-columns: 1fr; margin: 20px; padding: 20px; }
-            .product-img-box { height: 300px; }
-        }
-    </style>
+    <title>Reserve — {{ product.name }} | AgriResQ</title>
+    <script>
+        (function(){
+            var t = localStorage.getItem('agriresq_theme');
+            if (t === 'light') document.documentElement.dataset.theme = 'light';
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/agriresq.css' %}">
+    <link rel="stylesheet" href="{% static 'css/reserve.css' %}">
 </head>
-<body data-theme="dark">
+<body>
 
-<nav class="navbar">
-    <div class="woven"></div>
-    <div class="navbar-top" style="padding: 15px 20px;">
-        <a href="{% url 'home' %}" style="font-size: 20px; font-weight: bold; color: #ffcc00; text-decoration: none;">← Bumalik sa Merkado</a>
+<!-- ══ NAV ══════════════════════════════════════════════════════ -->
+<nav class="nav">
+    <div class="nav-inner">
+        <div class="nav-brand">
+            <span class="nav-brand-name">AgriResQ</span>
+            <span class="nav-brand-sub">Fresh Market</span>
+        </div>
+        <span class="nav-crumb">Reserve</span>
+        <div class="nav-links">
+            <button class="theme-toggle" id="theme-toggle" title="Toggle theme">🌙</button>
+            <a href="{% url 'home' %}" class="nav-back">← Bumalik sa Merkado</a>
+        </div>
     </div>
 </nav>
 
-<div class="reserve-container">
-    
-    <div class="product-img-box">
-        {% if product.image %}
-            <img src="{{ product.image.url }}" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\\'font-size:80px;\\'>📦</div>'">
-        {% else %}
-            <div style="font-size:80px; text-align: center;">📦</div>
-        {% endif %}
-    </div>
-
-    <div class="product-info">
-        <h1>{{ product.name }}</h1>
-        <div class="store-badge">🏢 Tindahan: {{ product.store.store_name }}</div>
-        <div class="price">₱{{ product.price }}</div>
-        <p class="desc">{{ product.description|default:"Walang idinagdag na deskripsyon para sa produktong ito." }}</p>
-
-        {% if product.stock_quantity > 0 %}
-            <div class="reserve-box">
-                <h3 style="margin-top: 0; color: #f5e6d3; font-size: 16px;">⏳ Reserve this Item</h3>
-                <p style="font-size: 12px; color: #a89078; margin-bottom: 15px;">
-                    Reserving will hold this stock for you. You must pick it up from the seller within 12 hours.
-                </p>
-                
-                <form action="{% url 'reserve_product' product.id %}" method="POST">
-                    {% csrf_token %}
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                        <span style="color: #a89078; font-weight: bold;">Available Stock: <span style="color: #00ff88;">{{ product.stock_quantity }}</span></span>
-                        <div>
-                            <label style="color: #a89078; font-size: 12px; margin-right: 10px;">Quantity:</label>
-                            <input type="number" name="quantity" class="qty-input" value="1" min="1" max="{{ product.stock_quantity }}" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-reserve">KUMPIRMAHIN ANG RESERVATION</button>
-                </form>
-            </div>
-        {% else %}
-            <div style="background: #3d1a1a; padding: 20px; border-radius: 8px; border-left: 4px solid #ff4d4d; color: #ff4d4d; font-weight: bold;">
-                ❌ PAUMANHIN, UBOS NA ANG STOCK.
-            </div>
-        {% endif %}
+<!-- ══ STEPS ═════════════════════════════════════════════════════ -->
+<div class="steps">
+    <div class="steps-inner">
+        <div class="step done"><div class="step-num">✓</div> Piliin</div>
+        <span class="step-sep">›</span>
+        <div class="step active"><div class="step-num">2</div> I-Reserve</div>
+        <span class="step-sep">›</span>
+        <div class="step"><div class="step-num">3</div> Resibo</div>
+        <span class="step-sep">›</span>
+        <div class="step"><div class="step-num">4</div> Kunin</div>
     </div>
 </div>
 
-{% if messages %}
-    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-        {% for message in messages %}
-            <div style="background: #00ff88; color: #120a05; padding: 15px 25px; border-radius: 4px; font-weight: bold; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-                ✅ {{ message }}
+<!-- ══ MAIN PAGE ═════════════════════════════════════════════════ -->
+<div class="reserve-page">
+
+    <!-- ── LEFT: Product Details ── -->
+    <div class="product-card">
+        <div class="product-image">
+            {% if product.image %}
+                <img src="{{ product.image.url }}"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="fallback" style="display:none;">🥬</div>
+            {% else %}
+                <div class="fallback">🥬</div>
+            {% endif %}
+            <div class="stock-ribbon {% if product.stock_quantity <= 0 %}out{% elif product.stock_quantity <= 20 %}low{% endif %}">
+                {% if product.stock_quantity <= 0 %}✗ Ubos na
+                {% elif product.stock_quantity <= 20 %}⚠ {{ product.stock_quantity }} kg natitira
+                {% else %}✓ {{ product.stock_quantity }} kg available{% endif %}
             </div>
-        {% endfor %}
+        </div>
+
+        <div class="product-body">
+            <div class="vendor-chip">🏪 {{ product.store.store_name }}</div>
+            <h1 class="product-name">{{ product.name }}</h1>
+            <p class="product-desc">{{ product.description|default:"Sariwang gulay direkta mula sa Bukidnon farms. Mataas na kalidad, bago pang narating ang terminal." }}</p>
+
+            <div class="price-block">
+                <div class="price-amount">₱{{ product.price }}</div>
+                <div class="price-unit">/ kilo</div>
+            </div>
+            <div class="price-note">Presyo bawat kilogram · Cash on Pickup lang ang tinatanggap</div>
+
+            <div class="pickup-address">
+                <div class="pickup-label">📍 Pickup Location</div>
+                <div class="pickup-name">Bulua West Bound Integrated Terminal (WBIT)</div>
+                <div class="pickup-detail">
+                    Bulua, <strong>Cagayan de Oro City</strong>, Misamis Oriental 9000<br>
+                    Vendor Stall: <strong>{{ product.store.store_name }}</strong>
+                </div>
+                <div class="pickup-hours">Bukas: Araw-araw · 4:00 AM – 12:00 NN</div>
+            </div>
+
+            <div class="info-row">
+                <span class="info-key">Kategorya</span>
+                <span class="info-val">{{ product.category.category_name|default:"Gulay" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-key">Available Stock</span>
+                <span class="info-val green">{{ product.stock_quantity }} kg</span>
+            </div>
+            <div class="info-row">
+                <span class="info-key">Minimum Order</span>
+                <span class="info-val">1 kg</span>
+            </div>
+            <div class="info-row">
+                <span class="info-key">Paraan ng Bayad</span>
+                <span class="info-val straw">💵 Cash on Pickup</span>
+            </div>
+            <div class="info-row">
+                <span class="info-key">Deadline ng Pickup</span>
+                <span class="info-val">Loob ng 12 oras mula sa reservation</span>
+            </div>
+        </div>
     </div>
-{% endif %}
+
+    <!-- ── RIGHT: Reservation Panel ── -->
+    <div class="reserve-panel">
+        {% if product.stock_quantity > 0 %}
+
+        <div class="reserve-card">
+            <div class="reserve-card-head">
+                <div class="reserve-card-title">I-Reserve Ngayon</div>
+                <div class="reserve-card-sub">Piliin ang dami at kumpirmahin</div>
+            </div>
+
+            <div class="reserve-card-body">
+
+                <!-- KG Stepper -->
+                <div>
+                    <label class="field-label" for="kg-input">Dami (Kilogram)</label>
+                    <div class="kg-stepper">
+                        <button class="kg-btn" id="btn-minus" onclick="changeKg(-1)" type="button">−</button>
+                        <input class="kg-input" type="number" id="kg-input"
+                               value="1" min="1" max="{{ product.stock_quantity }}"
+                               oninput="onKgInput()">
+                        <span class="kg-unit">kg</span>
+                        <button class="kg-btn" id="btn-plus" onclick="changeKg(1)" type="button">+</button>
+                    </div>
+                    <div style="font-size:11px;color:var(--cream-dim);margin-top:6px;">
+                        Max: {{ product.stock_quantity }} kg available
+                    </div>
+                </div>
+
+                <!-- Cost Preview -->
+                <div class="cost-preview">
+                    <div class="cost-row">
+                        <span id="cost-line">1 kg × ₱{{ product.price }}</span>
+                        <span id="cost-subtotal">₱{{ product.price }}</span>
+                    </div>
+                    <div class="cost-total-row">
+                        <span class="cost-total-label">Kabuuan (Cash)</span>
+                        <span class="cost-total-val" id="cost-total">₱{{ product.price }}</span>
+                    </div>
+                </div>
+
+                <!-- Payment -->
+                <div class="payment-method">
+                    <div class="payment-icon">💵</div>
+                    <div>
+                        <div class="payment-title">Cash on Pickup</div>
+                        <div class="payment-sub">Bayad sa pagkuha sa terminal</div>
+                    </div>
+                    <div class="cash-badge">Cash Only</div>
+                </div>
+
+                <!-- Notice -->
+                <div class="notice">
+                    <span class="notice-icon">⏱</span>
+                    Ang reservation ay may bisa lamang sa loob ng
+                    <strong style="color:var(--straw)">&nbsp;12 oras</strong>.
+                    Pumunta sa terminal bago mag-expire para matanggap ang iyong order.
+                </div>
+
+            </div>
+
+            <!-- Form -->
+            <form id="reserve-form"
+                  action="{% url 'reserve_product' product.id %}"
+                  method="POST"
+                  data-history-url="{% url 'purchase_history' %}"
+                  onsubmit="handleReserve(event)">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" id="form-qty" value="1">
+                <div style="padding:0 24px 24px;">
+                    <button type="submit" class="btn-reserve" id="btn-reserve"
+                            style="width:100%;padding:16px;font-size:14px;font-weight:700;letter-spacing:.5px;justify-content:center;">
+                        📋 Kumpirmahin ang Reservation
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% else %}
+
+        <div class="sold-out-block">
+            <div class="sold-out-icon">😔</div>
+            <div class="sold-out-title">Paumanhin, Ubos Na</div>
+            <div class="sold-out-sub">Wala nang natitira. Subukan ang ibang produkto sa marketplace.</div>
+            <a href="{% url 'home' %}" class="btn-shop-now" style="margin-top:20px;display:inline-flex;">
+                ← Bumalik sa Merkado
+            </a>
+        </div>
+
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- ══ RECEIPT MODAL ════════════════════════════════════════════ -->
+<div class="modal-overlay" id="receipt-modal">
+    <div class="modal-box">
+        <div class="receipt">
+            <div class="receipt-top-bar"></div>
+            <div class="receipt-inner">
+
+                <div class="receipt-header">
+                    <div class="receipt-logo">AgriResQ</div>
+                    <div class="receipt-tagline">Fresh Market · Bulua Terminal, CDO</div>
+                    <span class="receipt-title-badge">✓ Reservation Confirmed</span>
+                </div>
+
+                <div class="receipt-ref">
+                    <div>
+                        <div class="receipt-ref-label">Reference No.</div>
+                        <div class="receipt-ref-val" id="r-ref">—</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="receipt-ref-label">Date & Time</div>
+                        <div style="font-size:12px;font-weight:600;" id="r-datetime">—</div>
+                    </div>
+                </div>
+
+                <div class="receipt-section-label">Produkto</div>
+                <div class="receipt-row"><span class="receipt-key">Pangalan</span><span class="receipt-val" id="r-name">—</span></div>
+                <div class="receipt-row"><span class="receipt-key">Kategorya</span><span class="receipt-val" id="r-category">—</span></div>
+                <div class="receipt-row"><span class="receipt-key">Dami</span><span class="receipt-val" id="r-qty">—</span></div>
+                <div class="receipt-row"><span class="receipt-key">Presyo / kg</span><span class="receipt-val straw" id="r-price">—</span></div>
+
+                <div class="receipt-section-label">Vendor</div>
+                <div class="receipt-row"><span class="receipt-key">Vendor ID</span><span class="receipt-val mono" id="r-vendor-id">—</span></div>
+                <div class="receipt-row"><span class="receipt-key">Pangalan ng Tindahan</span><span class="receipt-val" id="r-vendor">—</span></div>
+                <div class="receipt-row" id="r-vendor-contact-row"><span class="receipt-key">Kontak</span><span class="receipt-val" id="r-vendor-contact">—</span></div>
+
+                <div class="receipt-total-block">
+                    <div>
+                        <div style="font-size:10px;color:var(--cream-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;">Kabuuang Babayaran</div>
+                        <div class="receipt-total-val" id="r-total">₱0.00</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:10px;color:var(--sprout);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">💵 Cash on Pickup</div>
+                    </div>
+                </div>
+
+                <div class="receipt-section-label">Pickup Location</div>
+                <div class="receipt-address-box">
+                    <div class="receipt-address-name">Bulua West Bound Integrated Terminal (WBIT)</div>
+                    <div class="receipt-address-line">
+                        Bulua, Cagayan de Oro City, Misamis Oriental 9000<br>
+                        Vendor Stall: <strong id="r-stall">—</strong><br>
+                        Bukas: 4:00 AM – 12:00 NN, Araw-araw
+                    </div>
+                </div>
+
+                <div class="receipt-deadline">
+                    <span class="receipt-deadline-icon">⏱</span>
+                    <span>Mangyaring pumunta sa terminal sa loob ng <strong>12 oras</strong> mula sa oras ng reservation.
+                    Ang hindi na-claim ay awtomatikong ika-cancel. Deadline: <strong id="r-deadline">—</strong></span>
+                </div>
+
+                <div class="receipt-section-label">Recipient / Buyer</div>
+                <div class="receipt-row" id="r-fullname-row"><span class="receipt-key">Buong Pangalan</span><span class="receipt-val" id="r-fullname">—</span></div>
+                <div class="receipt-row"><span class="receipt-key">Username</span><span class="receipt-val mono" id="r-buyer">—</span></div>
+                <div class="receipt-row" id="r-email-row"><span class="receipt-key">Email</span><span class="receipt-val" id="r-email">—</span></div>
+                <div class="receipt-row"><span class="receipt-key">Status</span><span class="receipt-val green">RESERVED · Pending Pickup</span></div>
+
+                <div class="receipt-barcode" id="receipt-barcode"></div>
+                <div style="text-align:center;font-size:10px;color:rgba(245,239,226,0.2);font-family:var(--font-mono);margin-bottom:8px;" id="r-barcode-text">—</div>
+
+            </div>
+        </div>
+
+        <div class="receipt-actions">
+            <button class="btn-print" onclick="printReceipt()">🖨 I-Print ang Resibo</button>
+            <button class="btn-close-receipt" onclick="closeReceipt()">Isara</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ TOAST ═════════════════════════════════════════════════════ -->
+<div id="toast" class="toast">
+    <span id="toast-icon">✅</span>
+    <span id="toast-message">Tagumpay!</span>
+</div>
+
+<!-- ══ DATA BRIDGE (Django → JS) ════════════════════════════════ -->
+<div id="reserve-data" hidden
+     data-price="{{ product.price }}"
+     data-max-kg="{{ product.stock_quantity }}"
+     data-product-name="{{ product.name|escapejs }}"
+     data-product-cat="{{ product.category.category_name|default:'Gulay'|escapejs }}"
+     data-vendor-name="{{ product.store.store_name|escapejs }}"
+     data-vendor-id="VND-{{ product.store.id }}"
+     data-vendor-contact="{{ product.store.contact_number|default:''|escapejs }}"
+     data-buyer-username="{{ user.username|escapejs }}"
+     data-buyer-fullname="{{ user.get_full_name|default:''|escapejs }}"
+     data-buyer-email="{{ user.email|default:''|escapejs }}">
+</div>
+
+<!-- ══ SCRIPTS ═══════════════════════════════════════════════════ -->
+<script>
+/* ── Read Django data from DOM ───────────────────────────────── */
+const _d             = document.getElementById('reserve-data').dataset;
+const PRICE_PER_KG   = parseFloat(_d.price)   || 0;
+const MAX_KG         = parseInt(_d.maxKg)      || 0;
+const PRODUCT_NAME   = _d.productName;
+const PRODUCT_CAT    = _d.productCat;
+const VENDOR_NAME    = _d.vendorName;
+const VENDOR_ID      = _d.vendorId;
+const VENDOR_CONTACT = _d.vendorContact;
+const BUYER_USERNAME = _d.buyerUsername;
+const BUYER_FULLNAME = _d.buyerFullname;
+const BUYER_EMAIL    = _d.buyerEmail;
+
+/* ── Helpers ─────────────────────────────────────────────────── */
+const fmt = n => '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function el(id) { return document.getElementById(id); }
+
+/* ── KG Stepper ──────────────────────────────────────────────── */
+function getKg() {
+    const v = parseFloat(el('kg-input').value);
+    return isNaN(v) ? 1 : Math.max(1, Math.min(v, MAX_KG));
+}
+
+function changeKg(delta) {
+    el('kg-input').value = Math.max(1, Math.min(getKg() + delta, MAX_KG));
+    refreshCost();
+}
+
+function onKgInput() { refreshCost(); }
+
+function refreshCost() {
+    const kg    = getKg();
+    const total = kg * PRICE_PER_KG;
+    el('cost-line').textContent     = `${kg} kg × ${fmt(PRICE_PER_KG)}`;
+    el('cost-subtotal').textContent = fmt(total);
+    el('cost-total').textContent    = fmt(total);
+    el('form-qty').value            = kg;
+    el('btn-minus').disabled        = kg <= 1;
+    el('btn-plus').disabled         = kg >= MAX_KG;
+}
+
+/* ── Handle Reservation Submit ───────────────────────────────── */
+async function handleReserve(event) {
+    event.preventDefault();
+    const btn = el('btn-reserve');
+    btn.disabled  = true;
+    btn.innerHTML = '<span>Nagpo-proseso...</span>';
+
+    try {
+        const form = el('reserve-form');
+        const res  = await fetch(form.action, {
+            method:  'POST',
+            body:    new FormData(form),
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Accept':      'application/json'
+            }
+        });
+
+        if (res.ok) {
+            let claimId = null;
+            if ((res.headers.get('content-type') || '').includes('application/json')) {
+                const data = await res.json();
+                claimId = data.claim_id ?? data.id ?? null;
+            }
+            showReceipt(claimId);
+
+        } else if (res.redirected) {
+            const url   = res.url;
+            const match = url.match(/\/(\d+)\/?(?:\?|$)/) || url.match(/[?&]claim_id=(\d+)/);
+            showReceipt(match ? parseInt(match[1]) : null);
+
+        } else {
+            const errData = await res.json().catch(() => ({}));
+            showToast(errData.detail || 'May error. Subukan muli.', 'error');
+            btn.disabled  = false;
+            btn.innerHTML = '📋 Kumpirmahin ang Reservation <span class="btn-arrow">→</span>';
+        }
+
+    } catch (e) {
+        showReceipt(null);
+    }
+}
+
+/* ── Build & Show Receipt ────────────────────────────────────── */
+function showReceipt(claimId) {
+    const kg    = getKg();
+    const total = kg * PRICE_PER_KG;
+    const ref   = claimId != null ? `RES-${claimId}` : '— (tingnan ang Purchase History)';
+
+    const now   = new Date();
+    const dtStr = now.toLocaleString('en-PH', { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true });
+    const dlStr = new Date(now.getTime() + 12 * 60 * 60 * 1000).toLocaleString('en-PH', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:true });
+
+    /* Reference number styling */
+    const refEl = el('r-ref');
+    refEl.textContent  = ref;
+    refEl.style.cssText = claimId != null
+        ? 'font-size:20px;letter-spacing:3px;color:var(--straw);font-weight:700;'
+        : 'font-size:12px;color:rgba(245,239,226,0.4);font-style:italic;';
+
+    /* Fill all receipt fields */
+    el('r-datetime').textContent  = dtStr;
+    el('r-name').textContent      = PRODUCT_NAME;
+    el('r-category').textContent  = PRODUCT_CAT;
+    el('r-qty').textContent       = `${kg} kg`;
+    el('r-price').textContent     = fmt(PRICE_PER_KG);
+    el('r-vendor-id').textContent = VENDOR_ID;
+    el('r-vendor').textContent    = VENDOR_NAME;
+    el('r-total').textContent     = fmt(total);
+    el('r-stall').textContent     = VENDOR_NAME;
+    el('r-deadline').textContent  = dlStr;
+    el('r-buyer').textContent     = BUYER_USERNAME;
+    el('r-barcode-text').textContent = ref;
+
+    /* Optional fields */
+    if (VENDOR_CONTACT) {
+        el('r-vendor-contact').textContent = VENDOR_CONTACT;
+    } else {
+        el('r-vendor-contact-row').style.display = 'none';
+    }
+    if (BUYER_FULLNAME) {
+        el('r-fullname').textContent = BUYER_FULLNAME;
+    } else {
+        el('r-fullname-row').style.display = 'none';
+    }
+    if (BUYER_EMAIL) {
+        el('r-email').textContent = BUYER_EMAIL;
+    } else {
+        el('r-email-row').style.display = 'none';
+    }
+
+    /* Decorative barcode bars */
+    const bc = el('receipt-barcode');
+    bc.innerHTML = '';
+    for (let i = 0; i < 42; i++) {
+        const bar = document.createElement('span');
+        bar.style.cssText = [
+            `height:${10 + Math.random() * 26}px`,
+            `width:${Math.random() > 0.6 ? 5 : 3}px`,
+            `background:rgba(200,168,75,${(0.2 + Math.random() * 0.35).toFixed(2)})`,
+            'border-radius:2px',
+            'display:inline-block'
+        ].join(';');
+        bc.appendChild(bar);
+    }
+
+    el('receipt-modal').classList.add('show');
+    showToast('Reservation confirmed! 🎉');
+}
+
+/* ── Receipt Controls ────────────────────────────────────────── */
+function closeReceipt() {
+    el('receipt-modal').classList.remove('show');
+    setTimeout(() => {
+        window.location.href = el('reserve-form').dataset.historyUrl;
+    }, 300);
+}
+
+function printReceipt() { window.print(); }
+
+/* ── Toast ───────────────────────────────────────────────────── */
+function showToast(msg, type = 'success') {
+    const t = el('toast');
+    el('toast-message').textContent = msg;
+    el('toast-icon').textContent    = type === 'success' ? '✅' : '❌';
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* ── CSRF ────────────────────────────────────────────────────── */
+function getCookie(name) {
+    for (const c of document.cookie.split(';')) {
+        const t = c.trim();
+        if (t.startsWith(name + '=')) return decodeURIComponent(t.slice(name.length + 1));
+    }
+    return null;
+}
+
+/* ── Theme Toggle ────────────────────────────────────────────── */
+(function () {
+    const ROOT   = document.documentElement;
+    const KEY    = 'agriresq_theme';
+    const btn    = el('theme-toggle');
+    if (!btn) return;
+
+    function current() { return ROOT.dataset.theme === 'light' ? 'light' : 'dark'; }
+
+    function apply(theme) {
+        ROOT.style.transition = 'background 0.3s, color 0.3s';
+        setTimeout(() => ROOT.style.transition = '', 350);
+        if (theme === 'light') {
+            ROOT.dataset.theme = 'light';
+        } else {
+            delete ROOT.dataset.theme;
+        }
+        btn.textContent = theme === 'dark' ? '🌙' : '☀️';
+        btn.title       = theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+        localStorage.setItem(KEY, theme);
+    }
+
+    /* Set initial icon based on saved theme */
+    btn.textContent = current() === 'dark' ? '🌙' : '☀️';
+    btn.title       = current() === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+
+    btn.addEventListener('click', () => apply(current() === 'dark' ? 'light' : 'dark'));
+})();
+
+/* ── Init ────────────────────────────────────────────────────── */
+refreshCost();
+</script>
 
 </body>
 </html>
