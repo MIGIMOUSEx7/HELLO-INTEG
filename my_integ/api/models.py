@@ -193,3 +193,23 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'{self.user.username} Profile'
+    
+
+class Reservation(models.Model):
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('Completed', 'Completed'),
+        ('Expired', 'Expired'),
+        ('Cancelled', 'Cancelled'),
+    ]
+    
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservations')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    # Claims typically last 24 hours for fresh produce
+    expires_at = models.DateTimeField()
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at and self.status == 'Active'

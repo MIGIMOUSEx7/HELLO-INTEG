@@ -26,6 +26,12 @@ urlpatterns = [
     path('seller/messages/', views.seller_message_center, name='seller_messages'),
     path('profile/', views.profile_view, name='user_profile'),
     path('profile/add-address/', views.add_address, name='add_address'),
+    path('store/orders/', views.seller_orders, name='seller_orders'),
+    path('inventory/download/', views.download_inventory_pdf, name='download_inventory_pdf'),
+    path('product/<int:product_id>/reserve/', views.reserve_product, name='reserve_product'),
+    path('reservation/<int:res_id>/complete/', views.complete_reservation, name='complete_reservation'),
+    
+
     
 ]
 

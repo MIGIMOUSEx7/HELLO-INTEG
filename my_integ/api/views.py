@@ -2,14 +2,25 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db import transaction
-from django.db.models import Q
+from django.db import transaction, models
+from django.db.models import Q, Sum, Count
+from django.db.models.functions import TruncMonth
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+from django.template.loader import get_template
+from django.utils import timezone
+
+# PDF Generation Imports
+from xhtml2pdf import pisa
+import io
+from decimal import Decimal
+import datetime
 
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.messages import get_messages
@@ -18,7 +29,7 @@ from .forms import RegisterForm
 from .models import (
     Product, Order, OrderItem, User, Category, Store, 
     Voucher, Shipment, Payment, Address, Cart, CartItem, Review, ChatMessage,
-    Profile
+    Profile, Reservation
 )
 from .serializers import (
     ProductSerializer, OrderSerializer, UserSerializer, 
@@ -27,7 +38,44 @@ from .serializers import (
     CartSerializer, CartItemSerializer, ReviewSerializer, ChatMessageSerializer
 )
 
-# --- AUTHENTICATION ---
+# ─────────────────────────────────────────
+#   AUTHENTICATION & ROUTING
+# ─────────────────────────────────────────
+
+def download_inventory_pdf(request):
+    """Generates an official Company Inventory Report PDF for the Seller."""
+    user_store = Store.objects.filter(user=request.user).first()
+    if not user_store:
+        return HttpResponse("Wala kang tindahan!", status=404)
+
+    products = Product.objects.filter(store=user_store)
+    
+    # Calculate the total asset value (Unit Price * Qty on Hand) safely using Decimal
+    total_value = sum((p.price * p.stock_quantity for p in products), Decimal('0.00'))
+    
+    context = {
+        'products': products,
+        'store': user_store,
+        'total_count': products.count(),
+        'out_of_stock': products.filter(stock_quantity=0).count(),
+        'total_value': total_value,
+    }
+    
+    # 1. Get Template
+    template = get_template('seller/inventory_pdf.html')
+    html = template.render(context)
+    
+    # 2. Create the PDF using a more robust encoding setting
+    result = io.BytesIO()
+    # Changed to "utf-8" lowercase for better pisa compatibility
+    pdf = pisa.pisaDocument(io.BytesIO(html.encode("utf-8")), result)
+    
+    if not pdf.err:
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="AgriResQ_Report_{user_store.store_name}.pdf"'
+        return response
+        
+    return HttpResponse("Nagkaroon ng error sa pag-generate ng PDF.", status=400)
 
 def register_view(request):
     if request.method == "POST":
@@ -50,6 +98,11 @@ def login_view(request):
             user = authenticate(request, username=user_val, password=pass_val)
             if user is not None:
                 login(request, user)
+                if user.is_superuser:
+                    return redirect('admin_terminal')
+                profile, _ = Profile.objects.get_or_create(user=user)
+                if profile.is_seller:
+                    return redirect('manage_products')
                 return redirect('home')
             else:
                 messages.error(request, "Maling username o password.")
@@ -64,25 +117,39 @@ def logout_view(request):
     messages.info(request, "Naka-logout ka na.")
     return redirect('login')
 
-# --- USER INTERFACE ---
+# ─────────────────────────────────────────
+#   USER INTERFACE & DASHBOARD
+# ─────────────────────────────────────────
 
 @login_required(login_url='login')
 def home(request):
-    return render(request, 'shop.html')
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    return render(request, 'shop.html', {
+        'is_seller': profile.is_seller,
+        'is_admin': request.user.is_superuser
+    })
 
 def store_profile(request, store_id):
     store = get_object_or_404(Store, id=store_id)
     products = Product.objects.filter(store=store)
-    return render(request, 'store_profile.html', {'store': store, 'products': products})
+    is_seller = False
+    is_admin = False
+    if request.user.is_authenticated:
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        is_seller = profile.is_seller
+        is_admin = request.user.is_superuser
+    return render(request, 'store_profile.html', {
+        'store': store, 'products': products, 'is_seller': is_seller, 'is_admin': is_admin
+    })
 
 @login_required(login_url='login')
 def profile_view(request):
     profile, created = Profile.objects.get_or_create(user=request.user)
+    user_store = Store.objects.filter(user=request.user).first()
+    user_address = Address.objects.filter(user=request.user, is_default=True).first()
     
     if request.method == 'POST':
         form_type = request.POST.get('form_type')
-        
-        # 1. Personal Info & Delivery Address
         if form_type == 'profile':
             full_name = request.POST.get('full_name', '')
             names = full_name.split(' ', 1)
@@ -90,14 +157,9 @@ def profile_view(request):
             request.user.last_name = names[1] if len(names) > 1 else ''
             request.user.email = request.POST.get('email', '')
             request.user.save()
-            
             profile.phone_number = request.POST.get('phone', '')
             profile.save()
-            
-            address = Address.objects.filter(user=request.user, is_default=True).first()
-            if not address:
-                address = Address(user=request.user, is_default=True)
-            
+            address = Address.objects.filter(user=request.user, is_default=True).first() or Address(user=request.user, is_default=True)
             address.full_name = full_name
             address.phone = request.POST.get('phone', '')
             address.street = request.POST.get('street', '')
@@ -107,197 +169,257 @@ def profile_view(request):
             address.country = "Philippines"
             address.save()
             messages.success(request, "Ang iyong impormasyon ay na-save na!")
-            
-        # 2. Profile Picture Upload
         elif form_type == 'picture':
             if 'profile_picture' in request.FILES:
                 profile.profile_picture = request.FILES['profile_picture']
                 profile.save()
                 messages.success(request, "Ang profile picture ay na-update!")
-                
-        # 3. Change Password
         elif form_type == 'password':
-            old_password = request.POST.get('old_password')
-            new_password1 = request.POST.get('new_password1')
-            new_password2 = request.POST.get('new_password2')
-            
-            if request.user.check_password(old_password):
-                if new_password1 == new_password2:
-                    request.user.set_password(new_password1)
+            old_p = request.POST.get('old_password')
+            n1 = request.POST.get('new_password1')
+            n2 = request.POST.get('new_password2')
+            if request.user.check_password(old_p):
+                if n1 == n2:
+                    request.user.set_password(n1)
                     request.user.save()
                     update_session_auth_hash(request, request.user)
                     messages.success(request, "Password matagumpay na napalitan!")
-                else:
-                    messages.error(request, "Hindi magkapareho ang bagong password.")
-            else:
-                messages.error(request, "Mali ang kasalukuyang password.")
-
+                else: messages.error(request, "Hindi magkapareho ang bagong password.")
+            else: messages.error(request, "Mali ang kasalukuyang password.")
         return redirect('user_profile')
 
-    # Logic to identify the Store and toggle UI buttons
-    user_store = Store.objects.filter(user=request.user).first()
-    user_address = Address.objects.filter(user=request.user, is_default=True).first()
-    
-    # Pass combined name for HTML
     profile.full_name = f"{request.user.first_name} {request.user.last_name}".strip()
+    return render(request, 'profile.html', {
+        'profile': profile, 'address': user_address, 'is_approved_seller': profile.is_seller,
+        'has_store': user_store is not None, 'store': user_store
+    })
+
+# ─────────────────────────────────────────
+#   SELLER & ADMIN MANAGEMENT
+# ─────────────────────────────────────────
+
+@login_required
+def admin_terminal(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Access Denied.")
+        return redirect('home')
     
-    context = {
-        'profile': profile,
-        'address': user_address,
-        'is_approved_seller': profile.is_seller,  # Checks Admin Checkbox
-        'has_store': user_store is not None,      # Checks if Store exists
-        'store': user_store                       # Sends store object to get store.id
-    }
-    return render(request, 'profile.html', context)
+    total_users = User.objects.count()
+    total_products = Product.objects.count()
+    total_sales = Order.objects.filter(status='Completed').aggregate(models.Sum('total_amount'))['total_amount__sum'] or 0
+    completed_orders_count = Order.objects.filter(status='Completed').count()
+    category_trends = Category.objects.annotate(p_count=models.Count('product')).order_by('-p_count')
+    system_users = User.objects.all().order_by('-date_joined')[:10]
+    
+    # Sales Graph Data for Last 6 Months
+    six_months_ago = timezone.now() - datetime.timedelta(days=180)
+    monthly_sales = Order.objects.filter(
+        status='Completed', order_date__gte=six_months_ago
+    ).annotate(month=TruncMonth('order_date')).values('month').annotate(total=Sum('total_amount')).order_by('month')
 
-# --- SELLER LOGIC ---
+    sales_labels = [d['month'].strftime("%b %Y") for d in monthly_sales]
+    sales_values = [float(d['total']) for d in monthly_sales]
 
-@login_required(login_url='login')
-def create_store(request):
-    if not hasattr(request.user, 'profile') or not request.user.profile.is_seller:
-        messages.error(request, "Tanging mga aprubadong Shop Owners lamang ang maaaring gumawa ng tindahan.")
-        return redirect('user_profile')
-
-    if request.method == 'POST':
-        store_name = request.POST.get('store_name')
-        store_description = request.POST.get('store_description', 'Welcome to my new store!')
-        if store_name:
-            Store.objects.create(
-                user=request.user,
-                store_name=store_name,
-                store_description=store_description
-            )
-            messages.success(request, "🎉 Tindahan matagumpay na nagawa!")
-            return redirect('user_profile')
-    return render(request, 'seller/create_store.html')
-
-# api/views.py
+    return render(request, 'admin/terminal.html', {
+        'total_users': total_users, 
+        'total_products': total_products, 
+        'total_sales': total_sales,
+        'completed_orders_count': completed_orders_count, 
+        'category_trends': category_trends, 
+        'system_users': system_users,
+        'sales_labels': sales_labels,
+        'sales_values': sales_values,
+    })
 
 @login_required(login_url='login')
-def create_product(request):
-    user_store = Store.objects.filter(user=request.user).first()
-    if not user_store:
-        messages.error(request, "Kailangan mo muna mag-open ng tindahan!")
-        return redirect('user_profile')
-
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        description = request.POST.get('description', '')
-        price = request.POST.get('price')
-        stock_quantity = request.POST.get('stock_quantity', 1)
-        image = request.FILES.get('image')
-        
-        # CATEGORY LOGIC
-        category_id = request.POST.get('category')
-        new_category_name = request.POST.get('new_category_name')
-
-        if name and price:
-            # If "New Category" was typed, create it
-            if new_category_name:
-                category, created = Category.objects.get_or_create(category_name=new_category_name)
-            else:
-                category = get_object_or_404(Category, id=category_id)
-
-            Product.objects.create(
-                store=user_store,
-                category=category,
-                name=name,
-                description=description,
-                price=price,
-                stock_quantity=stock_quantity,
-                image=image,
-                status='Active'
-            )
-            messages.success(request, f"🛒 {name} matagumpay na naidagdag!")
-            return redirect('user_profile') 
-
-    categories = Category.objects.all()
-    return render(request, 'seller/create_product.html', {'categories': categories})
-
-@login_required(login_url='login')
-def seller_orders(request):
+def manage_products(request):
     user_store = Store.objects.filter(user=request.user).first()
     if not user_store:
         messages.error(request, "Wala kang tindahan!")
         return redirect('user_profile')
+    
+    products = Product.objects.filter(store=user_store).order_by('-created_at')
+    out_of_stock_count = products.filter(stock_quantity=0).count()
+    
+    # Store Earnings & Order Count
+    store_orders = OrderItem.objects.filter(product__store=user_store, order__status='Completed')
+    total_earnings = sum((item.price * item.quantity for item in store_orders), Decimal('0.00'))
+    total_items_sold = sum((item.quantity for item in store_orders), 0)
+    completed_orders = store_orders.values('order').distinct().count()
+    
+    # Live Monitor Active Reservations
+    active_claims = Reservation.objects.filter(product__store=user_store, status='Active')
 
+    return render(request, 'seller/manage_products.html', {
+        'products': products, 
+        'store': user_store,
+        'out_of_stock_count': out_of_stock_count, 
+        'total_earnings': total_earnings,
+        'total_items_sold': total_items_sold, 
+        'completed_orders': completed_orders,
+        'reservations': active_claims,
+    })
+
+@login_required(login_url='login')
+def create_store(request):
+    if not hasattr(request.user, 'profile') or not request.user.profile.is_seller:
+        messages.error(request, "Denied.")
+        return redirect('user_profile')
+    if request.method == 'POST':
+        store_name = request.POST.get('store_name')
+        if store_name:
+            Store.objects.create(user=request.user, store_name=store_name)
+            messages.success(request, "🎉 Tindahan naidagdag!")
+            return redirect('user_profile')
+    return render(request, 'seller/create_store.html')
+
+@login_required(login_url='login')
+def create_product(request):
+    user_store = Store.objects.filter(user=request.user).first()
+    if not user_store: return redirect('user_profile')
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        price = request.POST.get('price')
+        cat_id = request.POST.get('category')
+        new_cat = request.POST.get('new_category_name')
+        if name and price:
+            category = Category.objects.get_or_create(category_name=new_cat)[0] if new_cat else get_object_or_404(Category, id=cat_id)
+            Product.objects.create(
+                store=user_store, category=category, name=name, price=price,
+                description=request.POST.get('description', ''),
+                stock_quantity=request.POST.get('stock_quantity', 1),
+                image=request.FILES.get('image'), status='Active'
+            )
+            messages.success(request, f"🛒 {name} naidagdag!")
+            return redirect('manage_products') 
+    return render(request, 'seller/create_product.html', {'categories': Category.objects.all()})
+
+@login_required(login_url='login')
+def edit_product(request, pk):
+    product = get_object_or_404(Product, pk=pk, store__user=request.user)
+    if request.method == 'POST':
+        product.name = request.POST.get('name')
+        product.price = request.POST.get('price')
+        product.stock_quantity = request.POST.get('stock_quantity')
+        product.description = request.POST.get('description')
+        cat_id = request.POST.get('category')
+        new_cat = request.POST.get('new_category_name')
+        product.category = Category.objects.get_or_create(category_name=new_cat)[0] if new_cat else Category.objects.get(id=cat_id)
+        if 'image' in request.FILES: product.image = request.FILES['image']
+        product.save()
+        messages.success(request, "Na-update!")
+        return redirect('manage_products')
+    return render(request, 'seller/edit_product.html', {'product': product, 'categories': Category.objects.all()})
+
+@login_required(login_url='login')
+def delete_product(request, pk):
+    product = get_object_or_404(Product, pk=pk, store__user=request.user)
+    if request.method == 'POST':
+        product.delete()
+        messages.success(request, "Nabura!")
+    return redirect('manage_products')
+
+@login_required(login_url='login')
+def seller_orders(request):
+    user_store = Store.objects.filter(user=request.user).first()
+    if not user_store: return redirect('user_profile')
     orders = Order.objects.filter(items__product__store=user_store).distinct().order_by('-order_date')
     return render(request, 'seller/store_orders.html', {'orders': orders, 'store': user_store})
 
 @login_required(login_url='login')
 def seller_message_center(request):
     user_stores = Store.objects.filter(user=request.user)
-    messages_list = ChatMessage.objects.filter(store__in=user_stores).order_by('-timestamp')
-    unique_customers = messages_list.values('sender', 'sender__username', 'store__store_name').distinct()
+    unique_customers = ChatMessage.objects.filter(store__in=user_stores).values('sender', 'sender__username', 'store__store_name').distinct()
     return render(request, 'seller/message_center.html', {'customers': unique_customers, 'stores': user_stores})
 
-# --- BUYER LOGIC ---
+# ─────────────────────────────────────────
+#   RESERVATION / CLAIM SYSTEM LOGIC
+# ─────────────────────────────────────────
+
+@login_required(login_url='login')
+def reserve_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    qty = int(request.POST.get('quantity', 1))
+    
+    if product.stock_quantity >= qty:
+        with transaction.atomic():
+            Reservation.objects.create(buyer=request.user, product=product, quantity=qty)
+            product.stock_quantity -= qty
+            product.save()
+            messages.success(request, "Surplus Claimed! Check your pickup timer.")
+    else:
+        messages.error(request, "Not enough stock available for reservation.")
+    return redirect('manage_products')
+
+@login_required(login_url='login')
+def complete_reservation(request, res_id):
+    res = get_object_or_404(Reservation, id=res_id, product__store__user=request.user)
+    res.status = 'Completed'
+    res.save()
+    messages.success(request, "Claim marked as picked up.")
+    return redirect('manage_products')
+
+# ─────────────────────────────────────────
+#   BUYER LOGIC & RESTRICTIONS
+# ─────────────────────────────────────────
+
+@login_required(login_url='login')
+def checkout_view(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    if request.user.is_superuser or profile.is_seller:
+        messages.error(request, "Denied. Sellers and Admins cannot purchase.")
+        return redirect('home')
+        
+    product_id = request.GET.get('product_id')
+    qty = int(request.GET.get('quantity', 1)) if request.GET.get('quantity') else 1
+    address = Address.objects.filter(user=request.user, is_default=True).first()
+    
+    if product_id:
+        product = get_object_or_404(Product, id=product_id)
+        items = [{'product': product, 'quantity': qty, 'item_total': product.price * qty}]
+        subtotal = product.price * qty
+    else:
+        cart_items = CartItem.objects.filter(cart__user=request.user)
+        items = cart_items
+        subtotal = sum((item.quantity * item.product.price for item in items), Decimal('0.00'))
+        
+    shipping, protect = Decimal('115.00'), Decimal('4.00')
+    return render(request, 'orders/checkout.html', {
+        'items': items, 'address': address, 'subtotal': subtotal,
+        'protection': protect, 'shipping_fee': shipping, 'total_payment': subtotal + shipping + protect
+    })
+
+@login_required(login_url='login')
+def view_cart(request):
+    items = CartItem.objects.filter(cart__user=request.user).order_by('product__store__store_name')
+    cart_total = sum((i.product.price * i.quantity for i in items), Decimal('0.00'))
+    return render(request, 'cart.html', {'cart_items': items, 'cart_total': cart_total})
 
 @login_required(login_url='login')
 def add_address(request):
     if request.method == 'POST':
-        addr_data = {
-            'user': request.user,
-            'full_name': request.POST.get('full_name'),
-            'street': request.POST.get('street'),
-            'city': request.POST.get('city'),
-            'province': request.POST.get('province'),
-            'zip_code': request.POST.get('zip_code'),
-            'is_default': request.POST.get('is_default') == 'on' or request.POST.get('force_default') == 'true'
-        }
-        
-        fields = [f.name for f in Address._meta.get_fields()]
-        if 'phone' in fields:
-            addr_data['phone'] = request.POST.get('phone')
-        elif 'phone_number' in fields:
-            addr_data['phone_number'] = request.POST.get('phone')
-
-        if addr_data['is_default']:
-            Address.objects.filter(user=request.user).update(is_default=False)
-
-        Address.objects.create(**addr_data)
-        messages.success(request, "Ang bagong address ay matagumpay na naidagdag!")
-        previous_url = request.META.get('HTTP_REFERER')
-        return redirect(previous_url) if previous_url else redirect('user_profile')
+        Address.objects.filter(user=request.user).update(is_default=False)
+        Address.objects.create(
+            user=request.user, full_name=request.POST.get('full_name'), street=request.POST.get('street'),
+            city=request.POST.get('city'), province=request.POST.get('province'),
+            zip_code=request.POST.get('zip_code'), is_default=True
+        )
+        return redirect(request.META.get('HTTP_REFERER', 'user_profile'))
     return redirect('user_profile')
-
-@login_required(login_url='login')
-def view_cart(request):
-    user_cart, _ = Cart.objects.get_or_create(user=request.user)
-    cart_items = CartItem.objects.filter(cart=user_cart).order_by('product__store__store_name')
-    cart_total = sum(item.product.price * item.quantity for item in cart_items)
-    return render(request, 'cart.html', {'cart_items': cart_items, 'cart_total': cart_total})
-
-@login_required(login_url='login')
-def checkout_view(request):
-    product_id = request.GET.get('product_id')
-    quantity = int(request.GET.get('quantity', 1)) if request.GET.get('quantity') else 1
-    address = Address.objects.filter(user=request.user, is_default=True).first() or Address.objects.filter(user=request.user).first()
-    
-    if product_id:
-        product = get_object_or_404(Product, id=product_id)
-        items = [{'product': product, 'quantity': quantity, 'item_total': product.price * quantity}]
-        merchandise_subtotal = product.price * quantity
-    else:
-        user_cart, _ = Cart.objects.get_or_create(user=request.user)
-        items = CartItem.objects.filter(cart=user_cart)
-        merchandise_subtotal = sum(item.quantity * item.product.price for item in items)
-        
-    shipping_fee, protection = 115, 4
-    total_payment = merchandise_subtotal + shipping_fee + protection
-    
-    return render(request, 'orders/checkout.html', {
-        'items': items, 'address': address, 'subtotal': merchandise_subtotal,
-        'protection': protection, 'shipping_fee': shipping_fee, 'total_payment': total_payment
-    })
 
 @login_required(login_url='login')
 def purchase_history(request, pk=None):
     if pk:
         order = get_object_or_404(Order.objects.prefetch_related('items__product'), pk=pk, user=request.user)
         return render(request, 'orders/OrderDetail.html', {'order': order})
-    orders = Order.objects.filter(user=request.user).prefetch_related('items__product').order_by('-order_date')
-    return render(request, 'orders/PurchaseHistory.html', {'orders': orders})
+        
+    orders = Order.objects.filter(user=request.user).order_by('-order_date')
+    active_claims = Reservation.objects.filter(buyer=request.user, status='Active')
+    
+    return render(request, 'orders/PurchaseHistory.html', {
+        'orders': orders,
+        'active_claims': active_claims
+    })
 
 @login_required(login_url='login')
 def product_detail(request, pk):
@@ -307,41 +429,42 @@ def product_detail(request, pk):
 @login_required(login_url='login')
 def checkout_pay(request, pk):
     order = get_object_or_404(Order, pk=pk, user=request.user)
-    items = order.items.all()
-    merchandise_subtotal = order.total_amount - 119
     return render(request, 'orders/checkout.html', {
-        'order': order, 'items': items, 'address': order.address,
-        'subtotal': merchandise_subtotal, 'shipping_fee': 115,
-        'protection': 4, 'total_payment': order.total_amount
+        'order': order, 'items': order.items.all(), 'address': order.address,
+        'subtotal': order.total_amount - Decimal('119.00'), 
+        'shipping_fee': Decimal('115.00'), 
+        'protection': Decimal('4.00'), 
+        'total_payment': order.total_amount
     })
 
-# --- REST FRAMEWORK VIEWSETS ---
+# ─────────────────────────────────────────
+#   REST FRAMEWORK VIEWSETS
+# ─────────────────────────────────────────
 
-class ChatMessageViewSet(viewsets.ModelViewSet):
-    serializer_class = ChatMessageSerializer
-    permission_classes = [IsAuthenticated]
-    def get_queryset(self):
-        user = self.request.user
-        store_id = self.request.query_params.get('store')
-        sender_id = self.request.query_params.get('sender')
-        queryset = ChatMessage.objects.filter(Q(sender=user) | Q(receiver=user))
-        if store_id: queryset = queryset.filter(store_id=store_id)
-        if sender_id: queryset = queryset.filter(Q(sender_id=sender_id) | Q(receiver_id=sender_id))
-        return queryset.order_by('timestamp')
-    def perform_create(self, serializer):
-        serializer.save(sender=self.request.user)
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['category', 'store']
 
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
-    def get_queryset(self): return Order.objects.filter(user=self.request.user).order_by('-order_date')
-
+    
+    def get_queryset(self): 
+        return Order.objects.filter(user=self.request.user)
+        
     def create(self, request, *args, **kwargs):
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        if request.user.is_superuser or profile.is_seller:
+            return Response({"error": "Sellers and Admins are restricted from ordering."}, status=status.HTTP_403_FORBIDDEN)
+            
         user = request.user
         data = request.data
         product_id = data.get('product_id') or data.get('product')
         items_to_process = []
-        calculated_total = 0
+        calculated_total = Decimal('0.00')
+        
         user_address = Address.objects.filter(user=user, is_default=True).first()
         formatted_address = f"{user_address.street}, {user_address.city}" if user_address else data.get('shipping_address', 'Default Address')
         
@@ -352,126 +475,65 @@ class OrderViewSet(viewsets.ModelViewSet):
             calculated_total = prod.price * qty
         else:
             cart_items = CartItem.objects.filter(cart__user=user)
-            if not cart_items.exists(): return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+            if not cart_items.exists(): 
+                return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
             for item in cart_items:
                 items_to_process.append({'product': item.product, 'quantity': item.quantity, 'price': item.product.price})
                 calculated_total += item.product.price * item.quantity
-        
+                
         try:
             with transaction.atomic():
                 order = Order.objects.create(
-                    user=user, total_amount=calculated_total + 119, status='Pending',
-                    payment_method=data.get('payment_method', 'COD'), address=user_address, shipping_address=formatted_address
+                    user=user, 
+                    total_amount=calculated_total + Decimal('119.00'), 
+                    status='Pending',
+                    payment_method=data.get('payment_method', 'COD'), 
+                    address=user_address, 
+                    shipping_address=formatted_address
                 )
                 for item in items_to_process:
-                    if item['product'].stock_quantity < item['quantity']: raise ValueError(f"Not enough stock for {item['product'].name}")
-                    OrderItem.objects.create(order=order, product=item['product'], quantity=item['quantity'], price=item['price'])
+                    if item['product'].stock_quantity < item['quantity']: 
+                        raise ValueError(f"Not enough stock for {item['product'].name}")
+                        
+                    OrderItem.objects.create(
+                        order=order, 
+                        product=item['product'], 
+                        quantity=item['quantity'], 
+                        price=item['price']
+                    )
                     item['product'].stock_quantity -= item['quantity']
                     item['product'].save()
-                if not product_id: CartItem.objects.filter(cart__user=user).delete()
+                    
+                if not product_id: 
+                    CartItem.objects.filter(cart__user=user).delete()
+                    
             return Response(self.get_serializer(order).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post'], url_path='submit-review')
-    def submit_review(self, request, pk=None):
-        order = self.get_object()
-        first_item = order.items.first()
-        if not first_item: return Response({"error": "No products in order"}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = ReviewSerializer(data={
-            'order': order.id, 'product': first_item.product.id,
-            'rating': request.data.get('rating'), 'comment': request.data.get('text')
-        }, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def partial_update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        new_status = request.data.get('status')
-        if new_status == 'Cancelled' and instance.status != 'Cancelled':
-            with transaction.atomic():
-                for item in instance.items.all():
-                    item.product.stock_quantity += item.quantity
-                    item.product.save()
-                instance.status = 'Cancelled'
-                instance.save()
-            return Response({'status': 'Cancelled, stock returned.'})
-        return super().partial_update(request, *args, **kwargs)
-
-class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['category', 'store']
+class ChatMessageViewSet(viewsets.ModelViewSet):
+    serializer_class = ChatMessageSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self): 
+        return ChatMessage.objects.filter(Q(sender=self.request.user) | Q(receiver=self.request.user)).order_by('timestamp')
+        
+    def perform_create(self, serializer): 
+        serializer.save(sender=self.request.user)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CartItemViewSet(viewsets.ModelViewSet):
     serializer_class = CartItemSerializer
     permission_classes = [IsAuthenticated]
-    def get_queryset(self):
-        user_cart, _ = Cart.objects.get_or_create(user=self.request.user)
-        return CartItem.objects.filter(cart=user_cart)
-    def perform_create(self, serializer):
-        user_cart, _ = Cart.objects.get_or_create(user=self.request.user)
-        serializer.save(cart=user_cart)
-
-
-@login_required(login_url='login')
-def manage_products(request):
-    user_store = Store.objects.filter(user=request.user).first()
-    if not user_store:
-        messages.error(request, "Wala kang tindahan!")
-        return redirect('user_profile')
     
-    products = Product.objects.filter(store=user_store).order_by('-created_at')
-    
-    # Calculate the out of stock count here in Python
-    out_of_stock_count = products.filter(stock_quantity=0).count()
-    
-    context = {
-        'products': products,
-        'out_of_stock_count': out_of_stock_count  # Send this to the template
-    }
-    return render(request, 'seller/manage_products.html', context)
-
-@login_required(login_url='login')
-def edit_product(request, pk):
-    product = get_object_or_404(Product, pk=pk, store__user=request.user)
-    categories = Category.objects.all()
-
-    if request.method == 'POST':
-        product.name = request.POST.get('name')
-        product.price = request.POST.get('price')
-        product.stock_quantity = request.POST.get('stock_quantity')
-        product.description = request.POST.get('description')
+    def get_queryset(self): 
+        return CartItem.objects.filter(cart__user=self.request.user)
         
-        # Handle Category Change
-        category_id = request.POST.get('category')
-        new_cat = request.POST.get('new_category_name')
-        if new_cat:
-            category, _ = Category.objects.get_or_create(category_name=new_cat)
-            product.category = category
-        else:
-            product.category = Category.objects.get(id=category_id)
-
-        if 'image' in request.FILES:
-            product.image = request.FILES['image']
-            
-        product.save()
-        messages.success(request, f"Na-update na ang {product.name}!")
-        return redirect('manage_products')
-
-    return render(request, 'seller/edit_product.html', {'product': product, 'categories': categories})
-
-@login_required(login_url='login')
-def delete_product(request, pk):
-    product = get_object_or_404(Product, pk=pk, store__user=request.user)
-    if request.method == 'POST':
-        product.delete()
-        messages.success(request, "Nabura na ang produkto.")
-    return redirect('manage_products')
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        if self.request.user.is_superuser or profile.is_seller:
+            raise ValidationError("Restricted. Sellers cannot add items to cart.")
+        serializer.save(cart=Cart.objects.get_or_create(user=self.request.user)[0])
 
 class UserViewSet(viewsets.ModelViewSet): queryset = User.objects.all(); serializer_class = UserSerializer
 class CategoryViewSet(viewsets.ModelViewSet): queryset = Category.objects.all(); serializer_class = CategorySerializer

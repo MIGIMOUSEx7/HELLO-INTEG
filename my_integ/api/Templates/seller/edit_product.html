@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product | AgriResQ</title>
+    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}?v=4">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-top">
+        <a href="{% url 'manage_products' %}">← Bumalik sa Imbentaryo</a>
+    </div>
+    <div class="navbar-main">
+        <div class="logo">AgriResQ</div>
+        <div class="navbar-page-title">✏️ Edit Produkto</div>
+    </div>
+</nav>
+
+<div class="profile-wrapper">
+    <div class="p-card animate-entrance">
+        <div class="p-card-header">
+            <div class="p-card-title">I-update ang Detalye: {{ product.name }}</div>
+        </div>
+        <div class="p-card-body">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="settings-grid">
+                    <div>
+                        <div class="form-group mb-16">
+                            <label class="form-label">Pangalan ng Produkto</label>
+                            <input type="text" name="name" class="form-input" value="{{ product.name }}" required>
+                        </div>
+
+                        <div class="form-group mb-16">
+                            <label class="form-label">Kategorya</label>
+                            <select name="category" class="form-input">
+                                {% for cat in categories %}
+                                    <option value="{{ cat.id }}" {% if cat.id == product.category.id %}selected{% endif %}>
+                                        {{ cat.category_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-row mb-16">
+                            <div class="form-group">
+                                <label class="form-label">Presyo (₱)</label>
+                                <input type="number" name="price" class="form-input" value="{{ product.price }}" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Stock Quantity</label>
+                                <input type="number" name="stock_quantity" class="form-input" value="{{ product.stock_quantity }}" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Deskripsyon</label>
+                            <textarea name="description" class="form-input" rows="4">{{ product.description }}</textarea>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <div class="section-title">Larawan ng Produkto</div>
+                        <div class="pic-uploader" style="width: 200px; height: 200px; margin: 0 auto 20px;">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" class="pic-uploader-preview" id="preview-img">
+                            {% else %}
+                                <div class="empty-pic-preview">📦</div>
+                            {% endif %}
+                            <input type="file" name="image" accept="image/*" onchange="previewFile(this)">
+                            <div class="uploader-overlay">Palitan</div>
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-muted);">I-click ang box para mag-upload ng bagong image</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 32px; display: flex; gap: 12px;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">💾 I-save ang Pagbabago</button>
+                    <a href="{% url 'manage_products' %}" class="btn-ghost" style="flex: 1; text-align: center; line-height: 40px;">Kanselahin</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function previewFile(input) {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('preview-img');
+                if (img) {
+                    img.src = e.target.result;
+                } else {
+                    location.reload(); // Quick refresh if no img tag exists
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+</script>
+
+</body>
+</html>

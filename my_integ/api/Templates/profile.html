@@ -15,7 +15,14 @@
     <nav class="navbar">
         <div class="woven"></div>
         <div class="navbar-top">
-            <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
+            {% if user.is_superuser %}
+                <a href="{% url 'admin_terminal' %}" style="color: var(--red-lite);">💻 Admin Terminal</a>
+            {% elif is_approved_seller %}
+                <a href="{% url 'manage_products' %}" style="color: var(--gold-lite);">📦 Seller Dashboard</a>
+            {% else %}
+                <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
+            {% endif %}
+
             {% if user.is_authenticated %}
                 <div class="user-dropdown-wrap">
                     <a class="user-chip" tabindex="0">👤 {{ user.first_name|default:user.username }} ▾</a>
@@ -36,9 +43,11 @@
             </div>
             <div class="navbar-page-title">👤 Aking Profile</div>
             <div class="navbar-actions">
+                {% if not is_approved_seller and not user.is_superuser %}
                 <a href="{% url 'cart' %}" class="cart-link">
                     🛒 <span id="cart-count" class="cart-badge">0</span>
                 </a>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -64,9 +73,12 @@
                         <div class="profile-username">{{ profile.full_name|default:user.username }}</div>
                         <div class="profile-email">{{ user.email }}</div>
                         <div class="profile-badges">
-                            <span class="badge badge-gold">Bumibili</span>
-                            {% if is_approved_seller %}
-                                <span class="badge badge-success">Nagbebenta</span>
+                            {% if user.is_superuser %}
+                                <span class="badge badge-error">System Admin</span>
+                            {% elif is_approved_seller %}
+                                <span class="badge badge-success">Shop Owner</span>
+                            {% else %}
+                                <span class="badge badge-gold">Buyer</span>
                             {% endif %}
                         </div>
                     </div>
@@ -78,86 +90,49 @@
         </div>
 
         <div class="group-row">
-            {% if is_approved_seller %}
-            <div class="p-card" style="margin-bottom:0;">
-                <div class="p-card-header">
-                    <div class="p-card-title">🏪 Nagbebenta</div>
-                </div>
-                <div class="p-card-body">
-                    <div class="section-title">Mga Aksyon</div>
-                    <div class="action-grid">
-                        {% if has_store %}
-                            <div class="action-item">
-                                <div class="action-item-info">
-                                    <div class="action-item-label">Aking Imbentaryo</div>
-                                    <div class="action-item-sub">I-edit o burahin ang mga produkto</div>
-                                </div>
-                                <a href="{% url 'manage_products' %}" class="btn-profile-action">Pamahalaan →</a>
-                            </div>
-                            <div class="action-item">
-                                <div class="action-item-info">
-                                    <div class="action-item-label">Mag-dagdag ng Produkto</div>
-                                    <div class="action-item-sub">I-list ang bagong item</div>
-                                </div>
-                                <a href="/products/create/" class="btn-profile-action">Gumawa →</a>
-                            </div>
-                            <div class="action-item">
-                                <div class="action-item-info">
-                                    <div class="action-item-label">Mga Natatanggap na Orders</div>
-                                    <div class="action-item-sub">Tingnan ang mga bibilhin</div>
-                                </div>
-                                <a href="/store/orders/" class="btn-profile-action">Tingnan →</a>
-                            </div>
-                        {% else %}
-                            <div class="action-item" style="grid-column:1/-1;">
-                                <div class="action-item-info">
-                                    <div class="action-item-label">Mag-Open ng Tindahan</div>
-                                    <div class="action-item-sub">Simulan ang iyong negosyo dito</div>
-                                </div>
-                                <a href="/store/create/" class="btn-profile-action">Magsimula →</a>
-                            </div>
-                        {% endif %}
+            
+            {% if is_approved_seller or user.is_superuser %}
+                <div class="p-card" style="margin-bottom:0; width: 100%;">
+                    <div class="p-card-header">
+                        <div class="p-card-title">🚀 Dashboard Access</div>
+                    </div>
+                    <div class="p-card-body" style="text-align: center; padding: 40px;">
+                        <p style="margin-bottom: 20px; color: var(--text-muted);">
+                            You are logged in as a <strong>{% if user.is_superuser %}Admin{% else %}Shop Owner{% endif %}</strong>. 
+                            Use your dedicated terminal to manage products and monitor trends.
+                        </p>
+                        <a href="{% if user.is_superuser %}{% url 'admin_terminal' %}{% else %}{% url 'manage_products' %}{% endif %}" 
+                           class="btn-profile-action" style="display: inline-block;">
+                           Open Management Terminal →
+                        </a>
                     </div>
                 </div>
-            </div>
+            {% else %}
+                <div class="p-card" style="margin-bottom:0; width: 100%;">
+                    <div class="p-card-header">
+                        <div class="p-card-title">🛍 Bumibili</div>
+                    </div>
+                    <div class="p-card-body">
+                        <div class="section-title">Mga Aksyon</div>
+                        <div class="buyer-grid">
+                            <div class="action-item">
+                                <div class="action-item-info">
+                                    <div class="action-item-label">Kasaysayan ng Purchases</div>
+                                    <div class="action-item-sub">Lahat ng iyong biniling items</div>
+                                </div>
+                                <a href="{% url 'purchase_history' %}" class="btn-profile-action">Tingnan →</a>
+                            </div>
+                            <div class="action-item">
+                                <div class="action-item-info">
+                                    <div class="action-item-label">Aking Cart</div>
+                                    <div class="action-item-sub">Mga item na naghihintay</div>
+                                </div>
+                                <a href="{% url 'cart' %}" class="btn-profile-action">Buksan →</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             {% endif %}
-
-            <div class="p-card" style="margin-bottom:0;">
-                <div class="p-card-header">
-                    <div class="p-card-title">🛍 Bumibili</div>
-                </div>
-                <div class="p-card-body">
-                    <div class="section-title">Mga Aksyon</div>
-                    <div class="buyer-grid">
-                        <div class="action-item">
-                            <div class="action-item-info">
-                                <div class="action-item-label">Kasaysayan ng Purchases</div>
-                                <div class="action-item-sub">Lahat ng iyong biniling items</div>
-                            </div>
-                            <a href="{% url 'purchase_history' %}" class="btn-profile-action">Tingnan →</a>
-                        </div>
-                        <div class="action-item">
-                            <div class="action-item-info">
-                                <div class="action-item-label">Aking Cart</div>
-                                <div class="action-item-sub">Mga item na naghihintay</div>
-                            </div>
-                            <a href="{% url 'cart' %}" class="btn-profile-action">Buksan →</a>
-                        </div>
-                        <div class="action-item">
-                            <div class="action-item-info">
-                                <div class="action-item-label">Delivery Address</div>
-                                <div class="action-item-sub">
-                                    {% if address %}{{ address.city }}, {{ address.province }}
-                                    {% else %}Walang address pa{% endif %}
-                                </div>
-                            </div>
-                            <button class="btn-profile-ghost" onclick="document.getElementById('settings-card').scrollIntoView({behavior:'smooth'})">
-                                ✏ Palitan
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div class="p-card" id="settings-card">
@@ -171,49 +146,17 @@
                         <form method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
                             <input type="hidden" name="form_type" value="profile">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Buong Pangalan</label>
-                                    <input type="text" name="full_name" class="form-input" value="{{ profile.full_name|default:'' }}">
-                                </div>
+                            <div class="form-group mb-12">
+                                <label class="form-label">Buong Pangalan</label>
+                                <input type="text" name="full_name" class="form-input" value="{{ profile.full_name|default:'' }}">
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" name="email" class="form-input" value="{{ user.email }}">
-                                </div>
+                            <div class="form-group mb-12">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-input" value="{{ user.email }}">
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Telepono</label>
-                                    <input type="text" name="phone" class="form-input" value="{{ address.phone|default:'' }}">
-                                </div>
-                            </div>
-
-                            <div class="section-title mt-24">Delivery Address</div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Kalye / Blk / Lot</label>
-                                    <input type="text" name="street" class="form-input" value="{{ address.street|default:'' }}">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group mb-0" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                                    <div>
-                                        <label class="form-label">Lungsod</label>
-                                        <input type="text" name="city" class="form-input" value="{{ address.city|default:'' }}">
-                                    </div>
-                                    <div>
-                                        <label class="form-label">ZIP</label>
-                                        <input type="text" name="zip_code" class="form-input" value="{{ address.zip_code|default:'' }}">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Lalawigan</label>
-                                    <input type="text" name="province" class="form-input" value="{{ address.province|default:'' }}">
-                                </div>
+                            <div class="form-group mb-12">
+                                <label class="form-label">Telepono</label>
+                                <input type="text" name="phone" class="form-input" value="{{ address.phone|default:'' }}">
                             </div>
                             <button type="submit" class="btn-profile-action mt-8">💾 I-save ang Pagbabago</button>
                         </form>
@@ -238,16 +181,6 @@
                             </label>
                             <button type="submit" class="btn-profile-ghost mt-8">⬆ I-upload</button>
                         </form>
-
-                        <div class="section-title mt-28">Palitan ang Password</div>
-                        <form method="POST">
-                            {% csrf_token %}
-                            <input type="hidden" name="form_type" value="password">
-                            <div class="form-group mb-12"><label class="form-label">Password Ngayon</label><input type="password" name="old_password" class="form-input"></div>
-                            <div class="form-group mb-12"><label class="form-label">Bagong Password</label><input type="password" name="new_password1" class="form-input"></div>
-                            <div class="form-group mb-16"><label class="form-label">Kumpirmahin</label><input type="password" name="new_password2" class="form-input"></div>
-                            <button type="submit" class="btn-profile-ghost">🔒 Palitan Password</button>
-                        </form>
                     </div>
                 </div>
             </div>
@@ -260,20 +193,9 @@
                     <div><div class="danger-row-label">Mag-Logout</div></div>
                     <a href="{% url 'logout' %}" class="logout-link">🚪 Mag-Logout</a>
                 </div>
-                <div class="danger-row">
-                    <div><div class="danger-row-label">I-delete ang Account</div></div>
-                    <button class="btn btn-danger btn-sm" onclick="confirmDelete()">Burahin</button>
-                </div>
             </div>
         </div>
 
-    </div>
-
-    <div class="footer-strip"></div>
-
-    <div id="toast" class="toast">
-        <span id="toast-icon">✅</span>
-        <span id="toast-message">Tagumpay!</span>
     </div>
 
     <script>
@@ -303,12 +225,6 @@
             reader.readAsDataURL(input.files[0]);
         }
 
-        function confirmDelete() {
-            if (confirm('Sigurado ka bang gusto mong i-delete ang iyong account?')) {
-                window.location.href = '/accounts/delete/';
-            }
-        }
-
         function showToast(msg, type = 'success') {
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').textContent = msg;
@@ -316,12 +232,6 @@
             toast.className = `toast ${type} show`;
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
-        
-        {% if messages %}
-            {% for message in messages %}
-                showToast("{{ message }}", "{% if message.tags == 'error' %}error{% else %}success{% endif %}");
-            {% endfor %}
-        {% endif %}
     </script>
 </body>
 </html>

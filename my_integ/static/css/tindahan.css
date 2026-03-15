@@ -3027,6 +3027,42 @@ select:focus {
 .t-table .t-price { font-family: var(--font-display); font-size: 17px; color: var(--gold-lite); font-weight: 700; }
 
 
+/* Ensure the wrapper is a vertical column */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column; /* This prevents the horizontal overlap */
+    gap: 30px;
+}
+
+/* Fix the Stats Cards */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+/* Fix the Catalog Table Card */
+.terminal-card {
+    width: 100%;
+    background: #2a1a10; /* Original Dark Brown */
+    border: 1px solid #3d2b1f;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* Prevent image stretching */
+.product-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+
 /* ─────────────────────────────────────────
   17. BADGES & TAGS
 ───────────────────────────────────────── */
