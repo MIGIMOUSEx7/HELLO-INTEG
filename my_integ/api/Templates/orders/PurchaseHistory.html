@@ -4,11 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purchase History | AgriResQ</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Purchase History | Tindahan</title>
+    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
     <link rel="stylesheet" href="{% static 'css/history.css' %}">
-<<<<<<< HEAD
     <style>
         body { display: flex; flex-direction: column; min-height: 100vh; }
         .history-body { flex: 1; }
@@ -29,44 +27,42 @@
         .timer-countdown { font-size: 20px; font-family: monospace; color: #00ff88; font-weight: bold; }
         .timer-countdown.expired { color: #ff4d4d; }
     </style>
-=======
-    <link rel="stylesheet" href="{% static 'css/agriresq.css' %}">
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
 </head>
-<body>
+<body data-theme="dark">
 
-<!-- ══ NAV ══════════════════════════════════════════════════════ -->
-<nav class="nav">
-    <div class="nav-inner">
-        <a href="/" class="nav-brand">
-            <span class="nav-brand-name">AgriResQ</span>
-            <span class="nav-brand-sub">Fresh Market</span>
-        </a>
-        <span class="nav-crumb">History</span>
-        <div class="nav-links">
-             {% if user.is_authenticated %}
-                <div class="user-wrap">
-                    <div class="user-chip" onclick="toggleUserMenu(this, event)">
-                        <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
-                        {{ user.username }}
-                        <span style="opacity:.5;font-size:11px;margin-left:4px;">▾</span>
-                    </div>
-                    <div class="user-dropdown">
-                        <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
-                        <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
-                    </div>
+<div class="bg-texture"></div>
+
+<nav class="navbar">
+    <div class="woven"></div>
+    <div class="navbar-top">
+        <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
+        {% if user.is_authenticated %}
+            <div class="user-dropdown-wrap">
+                <a class="user-chip" tabindex="0">👤 {{ user.username }} ▾</a>
+                <div class="user-dropdown">
+                    <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
+                    <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
                 </div>
-            {% else %}
-                <a href="{% url 'login' %}" class="nav-link">Login / Sign Up</a>
-            {% endif %}
-            <a href="{% url 'cart' %}" class="cart-chip">
-                🛒 <span class="cart-count" id="cart-count">0</span>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}">Login / Sign Up</a>
+        {% endif %}
+        <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
+    </div>
+    <div class="navbar-main">
+        <div class="logo-wrap" onclick="window.location.href='/'">
+            <div class="logo">Tindahan</div>
+            <div class="logo-tagline">Ang iyong merkado</div>
+        </div>
+        <div class="navbar-page-title">📋 Purchase History</div>
+        <div class="navbar-actions">
+            <a href="{% url 'cart' %}" class="cart-link">
+                🛒 <span id="cart-count" class="cart-badge">0</span>
             </a>
         </div>
     </div>
 </nav>
 
-<<<<<<< HEAD
 <div class="status-tabs">
     <button class="status-tab active" onclick="filterOrders('All', this)">✦ Lahat</button>
     
@@ -119,101 +115,10 @@
             <span class="history-count" id="order-count">
                 {{ orders|length }} order{{ orders|length|pluralize }}
             </span>
-=======
-<!-- ══ PAGE HEADER ════════════════════════════════════════════════ -->
-<div class="page-header">
-    <div class="page-header-inner">
-        <div>
-            <h1>Purchase <em>History</em></h1>
-            <p class="page-header-sub">Lahat ng iyong orders at reservations</p>
-        </div>
-        <a href="/" class="btn-shop-now">🌿 Mamili Pa →</a>
-    </div>
-</div>
-
-<!-- ══ STATUS TABS ════════════════════════════════════════════════ -->
-<div class="status-tabs">
-    <button class="status-tab active" onclick="filterOrders('All',this)">✦ Lahat</button>
-    <button class="status-tab" onclick="filterOrders('Pickup',this)">⏳ To Pickup</button>
-    <button class="status-tab" onclick="filterOrders('Pending',this)">🕒 Pending</button>
-    <button class="status-tab" onclick="filterOrders('To Pay',this)">💳 Babayaran</button>
-    <button class="status-tab" onclick="filterOrders('Paid',this)">💸 Bayad Na</button>
-    <button class="status-tab" onclick="filterOrders('Shipping',this)">🚚 Naka-ship</button>
-    <button class="status-tab" onclick="filterOrders('To Receive',this)">📦 Darating</button>
-    <button class="status-tab" onclick="filterOrders('Completed',this)">✅ Natapos</button>
-    <button class="status-tab" onclick="filterOrders('Cancelled',this)">❌ Nakansela</button>
-</div>
-
-<!-- ══ BODY ═══════════════════════════════════════════════════════ -->
-<div class="history-wrap">
-
-    <!-- ── MAIN ── -->
-    <main class="history-main">
-
-        <!-- Active Reservations -->
-        {% if active_claims %}
-        <div id="reservations-group">
-            <div class="section-label">
-                ⏳ Aktibong Reservations
-                <span class="section-count">{{ active_claims|length }}</span>
-            </div>
-
-            {% for claim in active_claims %}
-            <div class="claim-card" data-status="Pickup"
-                 data-id="RES-{{ claim.id }}"
-                 data-name="{{ claim.product.name }}"
-                 data-vendor="{{ claim.product.store.store_name }}"
-                 data-qty="{{ claim.quantity }}"
-                 data-price="{{ claim.product.price }}"
-                 data-expires="{{ claim.expires_at|date:'c' }}"
-                 data-pickup-date="{{ claim.pickup_date|default:'' }}"
-                 data-pickup-slot="{{ claim.pickup_slot|default:'' }}"
-                 data-pickup-loc="{{ claim.pickup_location|default:'Bulua West Bound Terminal' }}"
-                 data-payment="{{ claim.payment_method|default:'Cash on Pickup' }}">
-
-                <div class="claim-img">
-                    {% if claim.product.image %}
-                        <img src="{{ claim.product.image.url }}" alt="{{ claim.product.name }}">
-                    {% else %}🥬{% endif %}
-                </div>
-
-                <div class="claim-info">
-                    <div class="claim-name">{{ claim.product.name }}</div>
-                    <div class="claim-vendor">🏪 {{ claim.product.store.store_name }}</div>
-                    <div class="claim-meta">
-                        <span class="claim-total">₱{% widthratio claim.quantity 1 claim.product.price %}</span>
-                        <span class="receipt-chip">
-                            🔖 RES-{{ claim.id }}
-                            <button class="copy-btn" onclick="copyText('RES-{{ claim.id }}',event)" title="Copy">⧉</button>
-                        </span>
-                        <span class="status-badge s-pickup">TO PICKUP</span>
-                    </div>
-                </div>
-
-                <div class="timer-box">
-                    <div class="timer-lbl">Pickup Countdown</div>
-                    <div class="timer-val" data-expires="{{ claim.expires_at|date:'c' }}">--:--:--</div>
-                </div>
-
-                <div class="claim-actions">
-                    <button class="btn-details" onclick="openDrawer(this.closest('.claim-card'))">
-                        📄 Full Details
-                    </button>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- Orders -->
-        <div class="section-label {% if active_claims %}has-claims{% else %}no-claims{% endif %}">
-            <span class="section-count" id="order-count">{{ orders|length }}</span>
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
         </div>
 
         {% if orders %}
             {% for order in orders %}
-<<<<<<< HEAD
             {% with first_item=order.items.first %}
             {% with store=first_item.product.store %}
             <div class="order-card" data-status="{{ order.status }}" id="order-{{ order.id }}">
@@ -225,105 +130,54 @@
                         {% if store.id %}
                             <button class="btn-view-shop" onclick="window.location.href='/store/{{ store.id }}/'">👁️ View Shop</button>
                         {% endif %}
-=======
-            {% with fi=order.items.first %}
-            {% with store=fi.product.store %}
-
-            <div class="order-card"
-                 data-status="{{ order.status }}"
-                 id="order-{{ order.id }}"
-                 data-order-id="ORD-{{ order.id }}"
-                 data-store="{{ store.store_name|default:'SariSariStore' }}"
-                 data-total="{{ order.total_amount }}"
-                 data-date="{{ order.created_at|date:'N j, Y'|default:'' }}"
-                 data-payment="{{ order.payment_method|default:'Cash on Pickup' }}"
-                 data-pickup-date="{{ order.pickup_date|default:'' }}"
-                 data-pickup-slot="{{ order.pickup_slot|default:'' }}"
-                 data-pickup-loc="{{ order.pickup_location|default:'Bulua West Bound Terminal' }}">
-
-                <!-- Head -->
-                <div class="order-head">
-                    <div class="order-head-left">
-                        <span class="order-store-name">🏪 {{ store.store_name|default:"SariSariStore" }}</span>
-                        <span class="order-id-tag">ORD-{{ order.id }}</span>
-                        <span class="receipt-chip">
-                            🔖 ORD-{{ order.id }}
-                            <button class="copy-btn" onclick="copyText('ORD-{{ order.id }}',event)" title="Copy ID">⧉</button>
-                        </span>
                     </div>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <span class="status-badge s-{{ order.status|lower|slugify }}">{{ order.status|upper }}</span>
-                        <button class="btn-details" onclick="openDrawer(document.getElementById('order-{{ order.id }}'))">
-                            📄 Full Details
-                        </button>
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
-                    </div>
+                    <span class="order-status-badge status-{{ order.status|lower|slugify }}">
+                        {{ order.status|upper }}
+                    </span>
                 </div>
 
-                <!-- Items (show first 2, rest collapsed) -->
-                <div class="order-items" id="items-{{ order.id }}">
+                <div class="order-items-list">
                     {% for item in order.items.all %}
-<<<<<<< HEAD
                     <div class="order-item-row">
                         <div class="order-item-img">
                             {% if item.product.image %}<img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">{% else %}📦{% endif %}
-=======
-                    <div class="order-item-row" {% if forloop.counter > 2 %}style="display:none;" class="order-item-row extra-item"{% endif %}>
-                        <div class="o-img">
-                            {% if item.product.image %}<img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
-                            {% else %}🥬{% endif %}
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
                         </div>
-                        <div class="o-info">
-                            <div class="o-name">{{ item.product.name }}</div>
-                            <div class="o-qty">×{{ item.quantity }}</div>
+                        <div class="order-item-info">
+                            <div class="order-item-name">{{ item.product.name }}</div>
+                            <span class="order-item-qty">x{{ item.quantity }}</span>
                         </div>
-                        <div class="o-price">₱{{ item.price }}</div>
+                        <div class="order-item-price">₱{{ item.price }}</div>
                     </div>
                     {% endfor %}
-                    {% if order.items.count > 2 %}
-                    <div style="padding:8px 0;font-size:12px;color:rgba(245,239,226,.4);cursor:pointer;" onclick="toggleExtra('{{ order.id }}',this)">
-                        + {{ order.items.count|add:"-2" }} pang item — i-click para makita lahat
-                    </div>
-                    {% endif %}
                 </div>
 
-                <!-- Foot -->
-                <div class="order-foot">
+                <div class="order-card-footer">
                     <div class="total-wrap">
-                        <span class="total-lbl">Order Total</span>
-                        <span class="total-price" data-raw="{{ order.total_amount }}">₱{{ order.total_amount }}</span>
+                        <span class="order-total-label">Order Total:</span>
+                        <span class="order-total-price">₱{{ order.total_amount }}</span>
                     </div>
-                    <div class="foot-actions">
+                    <div class="action-wrap">
                         {% if order.status == 'Pending' or order.status == 'To Pay' %}
-<<<<<<< HEAD
                             <button class="btn-cancel" onclick="cancelOrder('{{ order.id }}')">Kanselahin</button>
                         {% else %}
                             <button class="btn-buy-again" onclick="buyAgain('{{ first_item.product.id }}')">🔁 Bilhin Ulit</button>
-=======
-                            <button class="btn-cancel" onclick="cancelOrder('{{ order.id }}')">✕ Kanselahin</button>
-                        {% else %}
-                            <button class="btn-buy-again" onclick="buyAgain('{{ fi.product.id }}')">🔁 Bilhin Ulit</button>
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
                         {% endif %}
                     </div>
                 </div>
             </div>
-
             {% endwith %}
             {% endwith %}
             {% endfor %}
         {% else %}
             <div class="history-empty">
-                <span class="history-empty-icon">🛍️</span>
+                <div class="history-empty-icon">🛍️</div>
                 <div class="history-empty-title">Wala pang Orders</div>
-                <p class="history-empty-sub">Mag-browse ng mga surplus listing at gumawa ng iyong unang order!</p>
-                <a href="/" class="btn-shop-now">🌿 Pumunta sa Shop →</a>
+                <p class="history-empty-sub">Mag-shopping ka na at makita ang iyong mga orders dito.</p>
+                <button class="btn btn-primary" onclick="window.location.href='/'">Mamili Na →</button>
             </div>
         {% endif %}
     </main>
 
-<<<<<<< HEAD
     <aside class="history-sidebar">
         <div class="sidebar-heading">Kabuuang Gastos</div>
         <div class="spend-box">
@@ -349,40 +203,9 @@
             <div class="stat-card">
                 <div class="stat-num" id="count-done" style="color:var(--success)">0</div>
                 <div class="stat-label">Natapos</div>
-=======
-    <!-- ── SIDEBAR ── -->
-    <aside class="history-side">
-
-        <div class="spend-panel">
-            <div class="spend-lbl">Kabuuang Gastos</div>
-            <div class="spend-amt" id="total-spend">₱0.00</div>
-            <div class="spend-sub" id="spend-sub">Sa lahat ng orders</div>
-        </div>
-
-        <div style="background:var(--bark);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;">
-            <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--straw);margin-bottom:14px;">Buod</div>
-            <div class="stat-grid">
-                <div class="stat-tile">
-                    <div class="stat-num" id="count-all" style="color:var(--cream)">{{ orders|length }}</div>
-                    <div class="stat-lbl">Lahat</div>
-                </div>
-                <div class="stat-tile">
-                    <div class="stat-num" id="count-reserved" style="color:var(--straw)">{{ active_claims|length }}</div>
-                    <div class="stat-lbl">Reserved</div>
-                </div>
-                <div class="stat-tile">
-                    <div class="stat-num" id="count-pending" style="color:var(--warn)">0</div>
-                    <div class="stat-lbl">Pending</div>
-                </div>
-                <div class="stat-tile">
-                    <div class="stat-num" id="count-done" style="color:var(--sprout)">0</div>
-                    <div class="stat-lbl">Natapos</div>
-                </div>
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
             </div>
         </div>
     </aside>
-<<<<<<< HEAD
 </div>
 
 <div class="footer-strip"></div>
@@ -507,331 +330,7 @@
             if (t.startsWith(name + '=')) { v = decodeURIComponent(t.slice(name.length + 1)); break; }
         }
         return v;
-=======
-
-</div><!-- /history-wrap -->
-
-<footer class="footer">AgriResQ © 2025 · USTP · IT323 Applications Development · Bulua West Bound Integrated Terminal, CDO</footer>
-
-<!-- ══ TOAST ═══════════════════════════════════════════════════════ -->
-<div id="toast" class="toast">
-    <span id="toast-icon">✅</span>
-    <span id="toast-message">Tagumpay!</span>
-</div>
-
-<!-- ══ DRAWER OVERLAY ═════════════════════════════════════════════ -->
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
-
-<!-- ══ FULL DETAILS DRAWER ════════════════════════════════════════ -->
-<div class="drawer" id="detail-drawer">
-    <div class="drawer-head">
-        <div>
-            <div class="drawer-title">Full Details</div>
-            <div class="drawer-subtitle" id="drawer-ref">—</div>
-        </div>
-        <button class="drawer-close" onclick="closeDrawer()">✕</button>
-    </div>
-
-    <div class="drawer-body" id="drawer-body">
-        <!-- Populated by JS -->
-    </div>
-
-    <div class="drawer-footer">
-        <button class="btn-details" style="flex:1;justify-content:center;" onclick="printReceipt()">🖨 I-print ang Receipt</button>
-        <button class="btn-buy-again" style="flex:1;" onclick="closeDrawer()">✕ Isara</button>
-    </div>
-</div>
-
-<script>
-const API_URL = "http://127.0.0.1:8000/api/";
-/* ── User dropdown ─────────────────────────────────────────── */
-function toggleUserMenu(chip, e) {
-    e.stopPropagation();
-    chip.closest('.user-wrap').classList.toggle('open');
-}
-document.addEventListener('click', function () {
-    document.querySelectorAll('.user-wrap.open').forEach(w => w.classList.remove('open'));
-});
-
-/* ── INIT ─────────────────────────────────────────────────── */
-window.addEventListener('DOMContentLoaded', () => {
-    updateCartBadge();
-    buildStats();
-    initTimers();
-});
-
-/* ── CART BADGE ───────────────────────────────────────────── */
-async function updateCartBadge() {
-    try {
-        const res = await fetch(`${API_URL}cartitems/`);
-        if (res.ok) {
-            const items = await res.json();
-            document.querySelectorAll('.cart-count').forEach(el => el.textContent = items.length);
-        }
-    } catch(e){}
-}
-
-/* ── COUNTDOWN TIMERS ─────────────────────────────────────── */
-function initTimers() {
-    document.querySelectorAll('.timer-val').forEach(el => {
-        const exp = new Date(el.dataset.expires).getTime();
-        if (!exp || isNaN(exp)) { el.textContent = '—'; return; }
-        const tick = () => {
-            const diff = exp - Date.now();
-            if (diff <= 0) { el.textContent = 'EXPIRED'; el.classList.add('expired'); return; }
-            const h = Math.floor(diff / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            el.textContent = `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
-            if (diff < 3600000) el.classList.add('urgent');
-        };
-        tick(); setInterval(tick, 1000);
-    });
-}
-
-/* ── FILTER TABS ──────────────────────────────────────────── */
-function filterOrders(status, tab) {
-    document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    let count = 0;
-
-    document.querySelectorAll('.order-card').forEach(c => {
-        const show = status === 'All' || c.dataset.status === status;
-        c.style.display = show ? '' : 'none';
-        if (show) count++;
-    });
-
-    const resGroup = document.getElementById('reservations-group');
-    if (resGroup) {
-        let rc = 0;
-        document.querySelectorAll('.claim-card').forEach(c => {
-            const show = status === 'All' || status === 'Pickup';
-            c.style.display = show ? '' : 'none';
-            if (show) rc++;
-        });
-        resGroup.style.display = rc ? '' : 'none';
-        if (status === 'Pickup') count = rc;
     }
-
-    const el = document.getElementById('order-count');
-    if (el) el.textContent = count;
-}
-
-/* ── STATS ────────────────────────────────────────────────── */
-function buildStats() {
-    let total = 0, pending = 0, done = 0;
-    document.querySelectorAll('.order-card').forEach(c => {
-        const s = c.dataset.status || '';
-        if (s === 'Pending' || s === 'To Pay') pending++;
-        if (s === 'Completed') done++;
-        const p = c.querySelector('.total-price');
-        if (p) total += parseFloat(p.dataset.raw || p.textContent.replace(/[₱,\s]/g,'')) || 0;
-    });
-    document.getElementById('total-spend').textContent = '₱' + total.toLocaleString('en-PH', {minimumFractionDigits:2});
-    document.getElementById('count-pending').textContent = pending;
-    document.getElementById('count-done').textContent = done;
-}
-
-/* ── TOGGLE EXTRA ITEMS ───────────────────────────────────── */
-function toggleExtra(orderId, el) {
-    const extras = document.querySelectorAll(`#items-${orderId} .extra-item`);
-    const showing = extras[0]?.style.display !== 'none';
-    extras.forEach(e => e.style.display = showing ? 'none' : '');
-    el.textContent = showing
-        ? `+ ${extras.length} pang item — i-click para makita lahat`
-        : 'I-collapse ang mga items ▲';
-}
-
-/* ── COPY RECEIPT ID ──────────────────────────────────────── */
-function copyText(text, evt) {
-    evt?.stopPropagation();
-    navigator.clipboard.writeText(text).then(() => showToast(`Nakopya: ${text} 📋`));
-}
-
-/* ── OPEN DRAWER ──────────────────────────────────────────── */
-function openDrawer(card) {
-    const drawer  = document.getElementById('detail-drawer');
-    const overlay = document.getElementById('drawer-overlay');
-    const body    = document.getElementById('drawer-body');
-    const refEl   = document.getElementById('drawer-ref');
-
-    const isReserve = card.classList.contains('claim-card');
-    const refId     = card.dataset.id || card.dataset.orderId || '—';
-    const store     = card.dataset.store    || card.querySelector('.claim-vendor')?.textContent?.replace('🏪 ','') || '—';
-    const status    = card.dataset.status   || '—';
-    const date      = card.dataset.date     || '—';
-    const payment   = card.dataset.payment  || 'Cash on Pickup';
-    const pickupDate= card.dataset.pickupDate || '—';
-    const pickupSlot= card.dataset.pickupSlot || '—';
-    const pickupLoc = card.dataset.pickupLoc  || 'Bulua West Bound Terminal';
-
-    let itemsHtml = '';
-    if (isReserve) {
-        const name  = card.dataset.name  || '—';
-        const qty   = card.dataset.qty   || 1;
-        const price = parseFloat(card.dataset.price || 0);
-        const total = (qty * price).toFixed(2);
-        itemsHtml = `<div class="drawer-item">
-            <div class="d-img">${card.querySelector('.claim-img img') ? `<img src="${card.querySelector('.claim-img img').src}">` : '🥬'}</div>
-            <div class="d-info"><div class="d-name">${name}</div><div class="d-qty">×${qty}</div></div>
-            <div class="d-price">₱${parseFloat(total).toLocaleString()}</div>
-        </div>`;
-    } else {
-        card.querySelectorAll('.order-item-row').forEach(row => {
-            const name  = row.querySelector('.o-name')?.textContent  || '—';
-            const qty   = row.querySelector('.o-qty')?.textContent   || '';
-            const price = row.querySelector('.o-price')?.textContent || '';
-            const imgEl = row.querySelector('.o-img img');
-            itemsHtml += `<div class="drawer-item">
-                <div class="d-img">${imgEl ? `<img src="${imgEl.src}">` : '🥬'}</div>
-                <div class="d-info"><div class="d-name">${name}</div><div class="d-qty">${qty}</div></div>
-                <div class="d-price">${price}</div>
-            </div>`;
-        });
-    }
-
-    const totalPrice = isReserve
-        ? `₱${(parseFloat(card.dataset.qty||1) * parseFloat(card.dataset.price||0)).toLocaleString()}`
-        : card.querySelector('.total-price')?.textContent || '—';
-
-    const sCls = {
-        'Pending':'s-pending','To Pay':'s-to-pay','Paid':'s-paid',
-        'Shipping':'s-shipping','To Receive':'s-to-receive',
-        'Completed':'s-completed','Cancelled':'s-cancelled','Pickup':'s-pickup'
-    }[status] || 's-pending';
-
-    const hasPickup = pickupDate && pickupDate !== '—';
-    const pickupBlock = hasPickup ? `
-        <div class="pickup-schedule-block">
-            <div class="pickup-schedule-title">📍 Pickup Schedule</div>
-            <div class="pickup-row"><span class="pickup-row-icon">📅</span><span class="pickup-row-lbl">Petsa</span><span class="pickup-row-val">${pickupDate}</span></div>
-            <div class="pickup-row"><span class="pickup-row-icon">🕐</span><span class="pickup-row-lbl">Oras</span><span class="pickup-row-val">${pickupSlot}</span></div>
-            <div class="pickup-row"><span class="pickup-row-icon">📍</span><span class="pickup-row-lbl">Lugar</span><span class="pickup-row-val">${pickupLoc}</span></div>
-        </div>` : '';
-
-    refEl.textContent = refId;
-
-    body.innerHTML = `
-        <div class="receipt-block">
-            <div class="receipt-block-head">Detalye ng Transaksyon</div>
-            <div class="receipt-row"><span class="r-lbl">Reference No.</span>
-                <span class="r-val r-mono" style="display:flex;align-items:center;gap:6px;">
-                    ${refId}
-                    <button class="copy-btn" onclick="copyText('${refId}',event)" title="Copy" style="background:none;border:none;cursor:pointer;font-size:12px;opacity:.6;">⧉</button>
-                </span>
-            </div>
-            <div class="receipt-row"><span class="r-lbl">Vendor</span><span class="r-val">${store}</span></div>
-            <div class="receipt-row"><span class="r-lbl">Status</span><span class="r-val"><span class="status-badge ${sCls}">${status.toUpperCase()}</span></span></div>
-            <div class="receipt-row"><span class="r-lbl">Petsa ng Order</span><span class="r-val">${date}</span></div>
-            <div class="receipt-row"><span class="r-lbl">Paraan ng Bayad</span><span class="r-val r-green">${payment}</span></div>
-        </div>
-
-        <div class="receipt-block">
-            <div class="receipt-block-head">Mga Item</div>
-            <div style="padding:0 18px;">
-                ${itemsHtml}
-            </div>
-            <div class="receipt-row" style="border-top:1px solid var(--border-hi);margin-top:4px;">
-                <span class="r-lbl" style="font-weight:700;">Kabuuan</span>
-                <span class="r-val r-total">${totalPrice}</span>
-            </div>
-        </div>
-
-        ${pickupBlock}
-
-        <div style="display:flex;align-items:flex-start;gap:10px;background:rgba(200,168,75,.07);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font-size:12px;color:rgba(245,239,226,.6);line-height:1.5;">
-            <span style="flex-shrink:0;font-size:14px;">ℹ</span>
-            Para sa mga katanungan, makipag-ugnayan sa AgriResQ Support gamit ang iyong Reference No.
-        </div>`;
-
-    overlay.classList.add('open');
-    drawer.classList.add('open');
-    document.body.style.overflow = 'hidden';
-}
-
-/* ── CLOSE DRAWER ─────────────────────────────────────────── */
-function closeDrawer() {
-    document.getElementById('detail-drawer').classList.remove('open');
-    document.getElementById('drawer-overlay').classList.remove('open');
-    document.body.style.overflow = '';
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
-
-/* ── PRINT RECEIPT ────────────────────────────────────────── */
-function printReceipt() {
-    const ref  = document.getElementById('drawer-ref').textContent;
-    const body = document.getElementById('drawer-body').innerHTML;
-    const win  = window.open('', '_blank', 'width=480,height=680');
-    win.document.write(`<!DOCTYPE html><html><head><title>Receipt ${ref}</title>
-        <style>
-            body{font-family:'DM Sans',sans-serif;background:#fff;color:#1a1208;padding:24px;font-size:13px;}
-            .receipt-block{border:1px solid #ccc;border-radius:8px;overflow:hidden;margin-bottom:16px;}
-            .receipt-block-head{padding:10px 16px;background:#f5efe2;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
-            .receipt-row{display:flex;justify-content:space-between;gap:12px;padding:9px 16px;border-bottom:1px solid #eee;font-size:12px;}
-            .receipt-row:last-child{border-bottom:none;}
-            .r-total{font-size:18px;font-weight:700;color:#2e1f0d;}
-            .status-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:#eee;}
-            .drawer-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #eee;}
-            .drawer-item:last-child{border-bottom:none;}
-            .d-name{font-weight:600;font-size:12px;}
-            .d-qty{font-size:11px;color:#888;}
-            .d-info{flex:1;}
-            .d-price{font-weight:700;}
-            .d-img{width:36px;height:36px;background:#f0e8d8;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:16px;overflow:hidden;flex-shrink:0;}
-            .d-img img{width:100%;height:100%;object-fit:cover;}
-            .pickup-schedule-block{border:1px solid #ccc;border-radius:8px;padding:12px 16px;margin-bottom:16px;}
-            .pickup-schedule-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;}
-            .pickup-row{display:flex;gap:8px;font-size:12px;margin-bottom:6px;}
-            .pickup-row-lbl{color:#888;width:60px;flex-shrink:0;}
-            .copy-btn{display:none;}
-            @media print{button{display:none;}}
-        </style>
-        </head><body>
-        <h2 style="font-size:18px;margin-bottom:4px;">AgriResQ Receipt</h2>
-        <p style="font-size:12px;color:#888;margin-bottom:18px;">${ref}</p>
-        ${body}
-        <p style="font-size:11px;color:#aaa;margin-top:24px;text-align:center;">AgriResQ © 2025 · USTP · Bulua Terminal, CDO</p>
-        </body></html>`);
-    win.document.close();
-    setTimeout(() => win.print(), 400);
-}
-
-/* ── CANCEL ORDER ─────────────────────────────────────────── */
-async function cancelOrder(orderId) {
-    if (!confirm('Sigurado ka bang gusto mong kanselahin?')) return;
-    try {
-        const res = await fetch(`/api/orders/${orderId}/`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-            body: JSON.stringify({ status: 'Cancelled' })
-        });
-        if (res.ok) { showToast('Nakansela ang order.'); setTimeout(() => location.reload(), 900); }
-        else showToast('Hindi ma-cancel.', 'error');
-    } catch(e){}
-}
-
-function buyAgain(pId) { window.location.href = `/checkout/?product_id=${pId}&quantity=1`; }
-
-/* ── TOAST ────────────────────────────────────────────────── */
-function showToast(msg, type='success') {
-    const t = document.getElementById('toast');
-    document.getElementById('toast-message').textContent = msg;
-    document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
-    t.className = `toast ${type} show`;
-    setTimeout(() => t.classList.remove('show'), 3200);
-}
-
-/* ── CSRF ─────────────────────────────────────────────────── */
-function getCookie(name) {
-    for (const c of document.cookie.split(';')) {
-        const t = c.trim();
-        if (t.startsWith(name + '=')) return decodeURIComponent(t.slice(name.length + 1));
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
-    }
-    return null;
-}
 </script>
-
-
 </body>
 </html>

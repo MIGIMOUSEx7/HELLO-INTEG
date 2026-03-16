@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
     <title>AgriResQ - Ang Iyong Sakahan Marketplace</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,50 +14,37 @@
     </style>
 </head>
 <body data-theme="light">
-=======
-    <title>AgriResQ — Fresh Market</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/agriresq.css' %}">
-    <link rel="stylesheet" href="{% static 'css/cart.css' %}">
-</head>
-<body>
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
 
-<!-- ══ NAV ══════════════════════════════════════════════════════ -->
-<nav class="nav">
-    <div class="nav-inner">
-        <a href="/" class="nav-brand">
-            <span class="nav-brand-name">AgriResQ</span>
-            <span class="nav-brand-sub">Fresh Market</span>
-        </a>
-        <div class="nav-search">
-            <input type="text" id="search-input" placeholder="Hanapin ang produkto..." onkeyup="handleSearch(event)">
-            <button onclick="performSearch()">🔍</button>
-        </div>
-        <div class="nav-links">
-            {% if user.is_superuser %}
-                <a href="{% url 'admin_terminal' %}" class="nav-link red">⚙ Admin</a>
-            {% elif is_seller %}
-                <a href="{% url 'manage_products' %}" class="nav-link gold">📦 Dashboard</a>
-            {% elif user.is_authenticated %}
-                <a href="{% url 'purchase_history' %}" class="nav-link">📋 Reservations</a>
-            {% endif %}
+<div class="bg-texture"></div>
 
-            {% if user.is_authenticated %}
-                <div class="user-wrap">
-                    <div class="user-chip" onclick="toggleUserMenu(this, event)">
-                        <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
-                        {{ user.username }}<span style="opacity:.5;font-size:11px;margin-left:4px;">▾</span>
-                    </div>
-                    <div class="user-dropdown">
-                        <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
-                        {% if is_seller %}<a href="{% url 'manage_products' %}" class="gold">📦 Seller Dashboard</a>{% endif %}
-                        {% if user.is_superuser %}<a href="{% url 'admin_terminal' %}" class="red">⚙ Admin Terminal</a>{% endif %}
-                        <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
-                    </div>
+<nav class="navbar">
+    <div class="woven"></div>
+    <div class="navbar-top">
+        
+        {% if user.is_superuser %}
+            <a href="{% url 'admin_terminal' %}" style="color: var(--red-lite);">💻 Admin Terminal</a>
+        {% elif is_seller %}
+            <a href="{% url 'manage_products' %}" style="color: var(--gold-lite);">📦 Seller Dashboard</a>
+        {% elif user.is_authenticated %}
+            <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+            <div class="user-dropdown-wrap">
+                <a class="user-chip" tabindex="0">👤 {{ user.username }} ▾</a>
+                <div class="user-dropdown">
+                    <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
+                    
+                    {% if is_seller %}
+                        <a href="{% url 'manage_products' %}" style="color: var(--gold-lite) !important;">📦 Seller Dashboard</a>
+                    {% endif %}
+                    
+                    {% if user.is_superuser %}
+                        <a href="{% url 'admin_terminal' %}" style="color: var(--red-lite) !important;">💻 Admin Terminal</a>
+                    {% endif %}
+                    
+                    <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
                 </div>
-<<<<<<< HEAD
             </div>
         {% else %}
             <a href="{% url 'login' %}">Login / Sign Up</a>
@@ -76,22 +62,15 @@
             <button class="search-btn" onclick="performSearch()">🔍</button>
         </div>
         <div class="navbar-actions">
-=======
-            {% else %}
-                <a href="{% url 'login' %}" class="nav-link">Login / Sign Up</a>
-            {% endif %}
-
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
             {% if not is_seller and not is_admin %}
-                <a href="{% url 'cart' %}" class="cart-chip">
-                    🛒 <span class="cart-count" id="cart-count">0</span>
-                </a>
+            <a href="{% url 'cart' %}" class="cart-link">
+                🛒 <span id="cart-count" class="cart-badge">0</span>
+            </a>
             {% endif %}
         </div>
     </div>
 </nav>
 
-<<<<<<< HEAD
 <section class="hero z1">
     <div class="hero-orb hero-orb-1"></div>
     <div class="hero-orb hero-orb-2"></div>
@@ -117,187 +96,149 @@
         <div class="hero-badge">
             <div class="hero-badge-icon">🌾</div>
             <div><div class="hero-badge-title">Lokal na Magsasaka</div><div class="hero-badge-sub">Suportahan ang agrikultura</div></div>
-=======
-<!-- ══ HERO ══════════════════════════════════════════════════════ -->
-<section class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-inner">
-        <div>
-            <div class="hero-eyebrow">Live Surplus Marketplace</div>
-            <h1>Sariwang Gulay,<br><em>Direkta sa Iyo</em></h1>
-            <p class="hero-sub">Real-time surplus visibility from Bulua Terminal. Reserve before it spoils — reduce waste, support local farmers.</p>
-            <div class="hero-stats">
-                <div><div class="stat-num" id="stat-products">—</div><div class="stat-label">Listings</div></div>
-                <div><div class="stat-num" id="stat-stores">—</div><div class="stat-label">Vendors</div></div>
-                <div><div class="stat-num" id="stat-cats">—</div><div class="stat-label">Categories</div></div>
-            </div>
-        </div>
-        <div class="hero-badges">
-            <div class="hero-badge"><span class="hero-badge-icon">🌿</span><div><div class="hero-badge-title">Zero-Waste Goal</div><div class="hero-badge-sub">Redirect surplus, not landfill</div></div></div>
-            <div class="hero-badge"><span class="hero-badge-icon">⏱</span><div><div class="hero-badge-title">Reserve Instantly</div><div class="hero-badge-sub">Lock in before spoilage</div></div></div>
-            <div class="hero-badge"><span class="hero-badge-icon">🤝</span><div><div class="hero-badge-title">Bulk for NGOs</div><div class="hero-badge-sub">CSWD & relief buyers welcome</div></div></div>
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
         </div>
     </div>
 </section>
 
-<<<<<<< HEAD
 <div class="cat-bar" id="cat-bar">
     <span class="cat-bar-label">Filter:</span>
     <button class="cat-pill active" onclick="initShop(''); setCatActive(this)">✦ Lahat</button>
-=======
-<!-- ══ FILTER BAR ════════════════════════════════════════════════ -->
-<div class="filter-bar">
-    <div class="filter-bar-inner" id="filter-bar">
-        <span class="filter-label">Browse:</span>
-        <button class="pill active" onclick="initShop(''); setCatActive(this)">✦ Lahat</button>
-    </div>
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
 </div>
 
-<!-- ══ 3-COL LAYOUT ══════════════════════════════════════════════ -->
-<div class="z1" style="max-width:var(--max-w);margin:0 auto;padding:32px var(--pad-x);display:grid;grid-template-columns:220px 1fr 220px;gap:24px;">
+<div class="layout-3col">
 
-    <aside class="sidebar">
-        <div class="sidebar-card">
-            <div class="sidebar-head">Kategorya</div>
-            <div id="category-list"><div class="sidebar-item" style="opacity:.4">Naglo-load...</div></div>
+    <aside class="sidebar-left">
+        <div class="sidebar-section">
+            <div class="sidebar-heading">Kategorya</div>
+            <div id="category-list">
+                <div class="sidebar-item text-muted">Naglo-load...</div>
+            </div>
         </div>
-        <div class="sidebar-card">
-            <div class="sidebar-head">Mga Vendor</div>
-            <div id="store-list"><div class="sidebar-item" style="opacity:.4">Naglo-load...</div></div>
+        <div class="sidebar-section">
+            <div class="sidebar-heading">Mga Tindahan</div>
+            <div id="store-list">
+                <div class="sidebar-item text-muted">Naglo-load...</div>
+            </div>
         </div>
     </aside>
 
-    <main>
-        <div class="flex items-center justify-between" style="margin-bottom:20px;">
-            <div class="font-head" style="font-size:22px;">Mga Surplus Listing</div>
-            <div class="text-muted text-sm" id="product-count"></div>
+    <main class="product-area">
+        <div class="product-area-header">
+            <div class="product-area-title">Mga Produkto</div>
+            <div class="product-area-count" id="product-count"></div>
         </div>
-        <div id="product-grid" class="product-grid">
-            <div style="height:260px;" class="skeleton"></div>
-            <div style="height:260px;" class="skeleton"></div>
-            <div style="height:260px;" class="skeleton"></div>
-            <div style="height:260px;" class="skeleton"></div>
-        </div>
+        <div id="product-grid" class="product-grid"></div>
     </main>
 
-<<<<<<< HEAD
     <aside class="sidebar-right">
         <div class="sidebar-heading">Espesyal</div>
         <div class="promo-card">
             <span class="promo-card-emoji">🌿</span>
             <div class="promo-card-title">Bagong Arrivals</div>
             <div class="promo-card-text">Tingnan ang pinakabagong ani at produkto ngayon!</div>
-=======
-    <aside class="sidebar">
-        <div class="promo">
-            <div class="promo-icon">🥬</div>
-            <div class="promo-title">Bagong Arrivals</div>
-            <div class="promo-text">Pinakabagong surplus mula sa Bukidnon farms ngayon.</div>
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
             <button class="promo-btn" onclick="initShop('')">Tingnan Lahat →</button>
         </div>
+        
         {% if not is_seller and not is_admin %}
-<<<<<<< HEAD
         <div class="promo-card">
             <span class="promo-card-emoji">🏡</span>
             <div class="promo-card-title">Mag-Open ng Tindahan</div>
             <div class="promo-card-text">Gusto mong magbenta ng iyong ani? Subukan na ngayon!</div>
             <button class="promo-btn" onclick="window.location.href='/store/create/'">Magsimula →</button>
-=======
-        <div class="promo" style="background:linear-gradient(135deg,var(--bark-lt),var(--bark));border-color:var(--border);">
-            <div class="promo-icon">🏪</div>
-            <div class="promo-title">Mag-Vend</div>
-            <div class="promo-text">May surplus ka rin? I-list na ngayon.</div>
-            <button class="promo-btn" style="background:var(--straw);" onclick="window.location.href='/store/create/'">Magsimula →</button>
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
         </div>
         {% endif %}
-        <div class="sidebar-card">
-            <div class="sidebar-head">Trending</div>
-            <div id="trending-list"></div>
-        </div>
+
+        <div class="sidebar-heading mt-24">Trending</div>
+        <div class="trending-list" id="trending-list"></div>
     </aside>
 
 </div>
 
-<footer class="footer">AgriResQ © 2025 · USTP · IT323 Applications Development · Bulua West Bound Integrated Terminal, CDO</footer>
-<div id="toast" class="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-msg" id="toast-message"></span></div>
+<div class="footer-strip"></div>
 
-<!-- ══ ONE SINGLE SCRIPT BLOCK ══════════════════════════════════ -->
+<div id="toast" class="toast">
+    <span id="toast-icon">✅</span>
+    <span id="toast-message">Tagumpay!</span>
+</div>
+
 <script>
-    window.isSeller = {{ is_seller|yesno:"true,false" }};
-    window.isAdmin  = {{ is_admin|yesno:"true,false" }};
-    const API_URL   = '/api/';
-
+    const API_URL = "http://127.0.0.1:8000/api/";
     let allProducts = [];
 
-<<<<<<< HEAD
     window.isSeller = "{{ is_seller|yesno:'true,false' }}" === "true";
     window.isAdmin  = "{{ is_admin|yesno:'true,false' }}" === "true";   
 
     window.addEventListener('DOMContentLoaded', () => { 
         if(!isSeller && !isAdmin) updateCartBadge(); 
         initShop(); 
-=======
-    /* ── Init on load ──────────────────────────────────────────── */
-    window.addEventListener('DOMContentLoaded', function () {
-        initShop();
-        syncCartCount();
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
     });
 
-    /* ── Category pill active state ────────────────────────────── */
+    async function updateCartBadge() {
+        try {
+            const res = await fetch(`${API_URL}cartitems/`);
+            if (res.ok) {
+                const items = await res.json();
+                const badge = document.getElementById('cart-count');
+                if (badge) badge.innerText = items.length;
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.querySelectorAll('.theme-toggle-nav').forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
+    }
+
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        document.getElementById('toast-message').textContent = msg;
+        document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
+        toast.className = `toast ${type} show`;
+        setTimeout(() => { toast.classList.remove('show'); toast.style.display = ''; }, 3000);
+    }
+
     function setCatActive(el) {
-        document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
         el.classList.add('active');
     }
 
-    /* ── Main shop loader ──────────────────────────────────────── */
-    async function initShop(filterQuery = '') {
+    async function initShop(filterQuery = "") {
         try {
             const [catRes, storeRes, prodRes] = await Promise.all([
                 fetch(`${API_URL}categories/`),
                 fetch(`${API_URL}stores/`),
                 fetch(filterQuery ? `${API_URL}products/?${filterQuery}` : `${API_URL}products/`)
             ]);
+
             const categories = await catRes.json();
-            const stores     = await storeRes.json();
-            const products   = await prodRes.json();
-
-            allProducts          = products;
-            window._allProducts  = products;
-
-            document.getElementById('stat-products').textContent = products.length;
-            document.getElementById('stat-stores').textContent   = stores.length;
-            document.getElementById('stat-cats').textContent     = categories.length;
 
             document.getElementById('category-list').innerHTML = categories.map(c =>
                 `<div class="sidebar-item" onclick="initShop('category=${c.id}')">
-                    <span>${c.category_name}</span><span class="sidebar-arrow">›</span>
+                    <span>${c.category_name}</span><span class="text-muted">›</span>
                 </div>`
             ).join('');
 
-            const bar = document.getElementById('filter-bar');
-            bar.querySelectorAll('.pill.dynamic').forEach(e => e.remove());
+            const catBar = document.getElementById('cat-bar');
+            catBar.querySelectorAll('.cat-pill.dynamic').forEach(e => e.remove());
             categories.forEach(c => {
                 const btn = document.createElement('button');
-                btn.className = 'pill dynamic';
+                btn.className = 'cat-pill dynamic';
                 btn.textContent = c.category_name;
-                btn.onclick = function () { initShop(`category=${c.id}`); setCatActive(this); };
-                bar.appendChild(btn);
+                btn.onclick = function() { initShop(`category=${c.id}`); setCatActive(this); };
+                catBar.appendChild(btn);
             });
 
+            const stores = await storeRes.json();
             document.getElementById('store-list').innerHTML = stores.map(s =>
                 `<div class="store-item" onclick="window.location.href='/store/${s.id}/'">
                     <div class="store-avatar">${(s.store_name||s.name||'?')[0].toUpperCase()}</div>
-                    <span class="store-name">${s.store_name||s.name}</span>
-                    <span class="store-tag">Shop</span>
+                    <span class="store-name">${s.store_name || s.name}</span>
+                    <span class="store-badge">Shop</span>
                 </div>`
             ).join('');
 
-<<<<<<< HEAD
             const products = await prodRes.json();
             allProducts = products;
 
@@ -310,32 +251,23 @@
                 const clickAction = (!isSeller && !isAdmin) ? `onclick="window.location.href='/reserve-checkout/${p.id}/'"` : '';
                 return `
                 <div class="trending-item" ${clickAction} style="${(!isSeller && !isAdmin) ? 'cursor:pointer;' : 'cursor:default; opacity:0.8;'}">
-=======
-            const top5 = [...products].sort((a, b) => b.price - a.price).slice(0, 5);
-            document.getElementById('trending-list').innerHTML = top5.map((p, i) => {
-                const click = !window.isSeller && !window.isAdmin;
-                return `<div class="trending-item" ${click ? `onclick="goReserve(${p.id})"` : ''}
-                             style="cursor:${click ? 'pointer' : 'default'}">
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
                     <div class="trending-rank">${i + 1}</div>
-                    <div class="trending-name">${p.name}</div>
-                    <div class="trending-price">₱${parseFloat(p.price).toLocaleString()}</div>
+                    <div class="trending-info">
+                        <div class="trending-name">${p.name}</div>
+                        <div class="trending-price">₱${parseFloat(p.price).toLocaleString()}</div>
+                    </div>
                 </div>`;
             }).join('');
 
-            renderProducts(products);
-        } catch (err) {
-            console.error('initShop error:', err);
-        }
+            displayProducts(products);
+        } catch (err) { console.error("Init error:", err); }
     }
 
-    /* ── Render product cards ──────────────────────────────────── */
-    function renderProducts(products) {
+    function displayProducts(products) {
         const grid = document.getElementById('product-grid');
-        document.getElementById('product-count').textContent =
-            `${products.length} listing${products.length !== 1 ? 's' : ''}`;
+        const countEl = document.getElementById('product-count');
+        if (countEl) countEl.textContent = `${products.length} produkto`;
 
-<<<<<<< HEAD
         if (products.length === 0) {
             grid.innerHTML = `
                 <div class="empty-state animate-entrance">
@@ -380,46 +312,10 @@
                         </div>
                         ${actionHtml}
                     </div>
-=======
-        if (!products.length) {
-            grid.innerHTML = `<div class="empty-state">
-                <div class="empty-state-icon">🔍</div>
-                <div class="empty-state-title">Walang Nahanap</div>
-                <div class="empty-state-sub">Subukan ang ibang salita sa paghahanap</div>
-            </div>`;
-            return;
-        }
-
-        grid.innerHTML = products.map((p, i) => {
-            const soldOut = p.stock_quantity <= 0;
-            let actions = '';
-            if (!window.isSeller && !window.isAdmin) {
-                actions = `<div class="btn-row">
-                    <button class="btn-cart" id="cart-btn-${p.id}" onclick="addToCart(${p.id})" ${soldOut ? 'disabled' : ''}>🛒 Cart</button>
-                    <button class="btn-reserve" onclick="goReserve(${p.id})" ${soldOut ? 'disabled' : ''}>📋 Reserve</button>
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
                 </div>`;
-            }
-            return `<div class="card" style="animation-delay:${i * .04}s">
-                ${soldOut ? '<div class="sold-out-badge">UBOS NA</div>' : ''}
-                <div class="card-img" onclick="${(!window.isSeller && !window.isAdmin) ? `goReserve(${p.id})` : ''}">
-                    <img src="${p.image || ''}" onerror="this.parentNode.innerHTML='<div class=no-img>🥬</div>'">
-                </div>
-                <div class="card-body">
-                    <div class="card-name">${p.name}</div>
-                    <div class="card-desc">${p.description || 'Sariwa at direkta mula sa palengke.'}</div>
-                    <div class="card-meta">
-                        <span class="card-price">₱${parseFloat(p.price).toLocaleString()}</span>
-                        <span class="stock-badge ${soldOut ? 'out' : ''}">${soldOut ? 'Ubos' : p.stock_quantity + ' natitira'}</span>
-                    </div>
-                    ${actions}
-                </div>
-            </div>`;
         }).join('');
     }
-    window._renderProducts = renderProducts;
 
-<<<<<<< HEAD
     async function addToCart(productId) {
         if(isSeller || isAdmin) return;
         try {
@@ -432,81 +328,27 @@
             else showToast("Hindi naidagdag", "error");
         } catch (e) { console.error(e); }
     }
-=======
-    /* ── Add to Cart ───────────────────────────────────────────── */
-    function addToCart(productId) {
-        const product = window._allProducts.find(p => p.id === productId);
-        if (!product) return;
->>>>>>> 0284b5941270f04d1ac1b911dcb674ab926c1ebb
 
-        let cart = JSON.parse(localStorage.getItem('agriresq_cart') || '[]');
-        const existing = cart.find(i => i.id === productId);
-        if (existing) {
-            existing.qty += 1;
-        } else {
-            cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
-        }
-        localStorage.setItem('agriresq_cart', JSON.stringify(cart));
-
-        syncCartCount();
-        showToast(`${product.name} na-add sa cart!`, '🛒');
-
-        const btn = document.getElementById(`cart-btn-${productId}`);
-        if (btn) {
-            btn.textContent = '✅ Added';
-            setTimeout(() => btn.textContent = '🛒 Cart', 1200);
-        }
+    function buyNow(productId) { 
+        if(isSeller || isAdmin) return;
+        window.location.href = `/checkout/?product_id=${productId}&quantity=1`; 
     }
-
-    /* ── Go to Reserve Page ────────────────────────────────────── */
-  function goReserve(productId) {
-    window.location.href = `/reserve-checkout/${productId}/`;
-}
-
-    /* ── Search ────────────────────────────────────────────────── */
-    function handleSearch(event) {
-        if (event.key === 'Enter') { performSearch(); return; }
-        const query = event.target.value.trim().toLowerCase();
-        if (!query) { renderProducts(window._allProducts || []); return; }
-        const filtered = (window._allProducts || []).filter(p =>
-            p.name.toLowerCase().includes(query) ||
-            (p.description || '').toLowerCase().includes(query)
-        );
-        renderProducts(filtered);
-    }
-
+    
+    function handleSearch(e) { if (e.key === 'Enter') performSearch(); }
+    
     function performSearch() {
-        const query = document.getElementById('search-input').value.trim();
-        if (!query) { initShop(''); return; }
-        initShop(`search=${encodeURIComponent(query)}`);
+        const q = document.getElementById('search-input').value.toLowerCase();
+        displayProducts(allProducts.filter(p => p.name.toLowerCase().includes(q)));
     }
 
-    /* ── Toast ─────────────────────────────────────────────────── */
-    function showToast(msg, icon = '✅') {
-        document.getElementById('toast-message').textContent = msg;
-        document.getElementById('toast-icon').textContent = icon;
-        const toast = document.getElementById('toast');
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2800);
+    function getCookie(name) {
+        let v = null;
+        if (document.cookie) for (const c of document.cookie.split(';')) {
+            const t = c.trim();
+            if (t.startsWith(name + '=')) { v = decodeURIComponent(t.slice(name.length + 1)); break; }
+        }
+        return v;
     }
-
-    /* ── Sync cart badge ───────────────────────────────────────── */
-    function syncCartCount() {
-        const cart  = JSON.parse(localStorage.getItem('agriresq_cart') || '[]');
-        const total = cart.reduce((sum, i) => sum + i.qty, 0);
-        const el    = document.getElementById('cart-count');
-        if (el) el.textContent = total;
-    }
-
-    /* ── User dropdown ─────────────────────────────────────────── */
-    function toggleUserMenu(chip, e) {
-        e.stopPropagation();
-        chip.closest('.user-wrap').classList.toggle('open');
-    }
-    document.addEventListener('click', function () {
-        document.querySelectorAll('.user-wrap.open').forEach(w => w.classList.remove('open'));
-    });
 </script>
-
 </body>
 </html>
