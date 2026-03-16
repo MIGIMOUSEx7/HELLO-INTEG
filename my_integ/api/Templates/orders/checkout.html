@@ -695,10 +695,6 @@
                             <span class="summary-line-label">Subtotal ng mga Produkto</span>
                             <span class="summary-line-val" id="sb-subtotal">₱{{ subtotal|floatformat:2 }}</span>
                         </div>
-                        <div class="summary-line-item">
-                            <span class="summary-line-label">Shipping Fee</span>
-                            <span class="summary-line-val" id="sb-shipping">₱60.00</span>
-                        </div>
                         <div class="summary-line-item" id="sb-protection-row">
                             <span class="summary-line-label">Proteksyon ng Produkto</span>
                             <span class="summary-line-val protection-val" id="sb-protection">₱{{ protection|floatformat:2 }}</span>
@@ -812,7 +808,6 @@
 
             document.getElementById('sb-total').textContent       = fmt(total);
             document.getElementById('sb-subtotal').textContent    = fmt(BASE_SUBTOTAL);
-            document.getElementById('sb-shipping').textContent    = currentShipping > 0 ? fmt(currentShipping) : 'Libre';
             document.getElementById('sb-protection').textContent  = fmt(currentProtection);
             document.getElementById('protection-display').textContent = fmt(currentProtection);
 

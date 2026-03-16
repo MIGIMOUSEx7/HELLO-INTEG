@@ -4,460 +4,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Tindahan</title>
-    <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
-
-    <style>
-        /* ══════════════════════════════════════
-           LOGIN PAGE — tindahan.css extension
-        ══════════════════════════════════════ */
-
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
-
-        /* ── Minimal navbar for auth pages ── */
-        .auth-nav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 48px;
-            height: 100px;
-            background: var(--nav-bg);
-            border-bottom: 1px solid var(--border);
-            position: relative;
-            z-index: 100;
-            flex-shrink: 0;
-        }
-        .auth-nav::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 4px;
-            background: repeating-linear-gradient(
-                90deg,
-                var(--red) 0px, var(--red) 14px,
-                var(--gold) 14px, var(--gold) 22px,
-                var(--red-lite) 22px, var(--red-lite) 30px,
-                var(--gold-lite) 30px, var(--gold-lite) 38px
-            );
-        }
-
-        /* ── Full-height split layout ── */
-        .login-wrap {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* ── LEFT PANEL: Brand side ── */
-        .login-brand {
-            background: linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 60%, rgba(184,48,32,0.12) 100%);
-            border-right: 1px solid var(--border);
-            padding: 64px 56px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Decorative orb blobs */
-        .login-brand::before {
-            content: '';
-            position: absolute;
-            width: 420px; height: 420px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(184,48,32,0.15) 0%, transparent 70%);
-            top: -80px; right: -100px;
-            pointer-events: none;
-        }
-        .login-brand::after {
-            content: '';
-            position: absolute;
-            width: 300px; height: 300px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(200,132,26,0.1) 0%, transparent 70%);
-            bottom: 40px; left: -60px;
-            pointer-events: none;
-        }
-
-        /* Big decorative Tindahan word */
-        .brand-watermark {
-            position: absolute;
-            bottom: -24px; right: -20px;
-            font-family: var(--font-display);
-            font-size: 140px;
-            font-weight: 800;
-            color: rgba(200,132,26,0.05);
-            line-height: 1;
-            pointer-events: none;
-            user-select: none;
-            white-space: nowrap;
-        }
-
-        .brand-eyebrow {
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--gold);
-            margin-bottom: 20px;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .brand-eyebrow::before {
-            content: '';
-            display: block;
-            width: 28px; height: 2px;
-            background: var(--gold);
-            border-radius: 2px;
-        }
-
-        .brand-headline {
-            font-family: var(--font-display);
-            font-size: 52px;
-            font-weight: 800;
-            color: var(--text);
-            line-height: 1.1;
-            margin-bottom: 20px;
-        }
-        .brand-headline span {
-            color: var(--gold-lite);
-            text-shadow: 0 0 30px var(--gold-glow);
-        }
-
-        .brand-sub {
-            font-size: 15px;
-            color: var(--text-soft);
-            line-height: 1.7;
-            margin-bottom: 44px;
-            max-width: 380px;
-        }
-
-        /* Divider */
-        .brand-divider {
-            display: flex; align-items: center; gap: 16px;
-            margin-bottom: 36px;
-        }
-        .brand-divider::before,
-        .brand-divider::after {
-            content: '';
-            flex: 1; height: 1px;
-            background: var(--border-lit);
-        }
-        .brand-divider-sym {
-            color: var(--gold);
-            font-size: 14px;
-            font-family: var(--font-display);
-        }
-
-        /* Feature list */
-        .brand-features { display: flex; flex-direction: column; gap: 20px; }
-        .brand-feature {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            padding: 16px 20px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            transition: border-color .2s, background .2s;
-            position: relative; z-index: 1;
-        }
-        .brand-feature:hover {
-            border-color: var(--border-lit);
-            background: rgba(200,132,26,0.04);
-        }
-        .brand-feature-icon {
-            font-size: 24px;
-            flex-shrink: 0;
-            width: 44px; height: 44px;
-            background: var(--surface-3);
-            border: 1px solid var(--border-lit);
-            border-radius: var(--radius-sm);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .brand-feature-title {
-            font-family: var(--font-display);
-            font-size: 16px; font-weight: 700;
-            color: var(--text); margin-bottom: 3px;
-        }
-        .brand-feature-sub { font-size: 13px; color: var(--text-muted); }
-
-        /* ── RIGHT PANEL: Form side ── */
-        .login-form-side {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 48px 56px;
-            background: var(--bg);
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 420px;
-        }
-
-        .login-card-header { margin-bottom: 36px; }
-        .login-card-title {
-            font-family: var(--font-display);
-            font-size: 38px; font-weight: 800;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        .login-card-sub { font-size: 14px; color: var(--text-muted); }
-
-        /* Top accent on the form card area */
-        .login-card-accent {
-            width: 48px; height: 4px;
-            background: linear-gradient(90deg, var(--red), var(--gold));
-            border-radius: 2px;
-            margin-bottom: 24px;
-        }
-
-        /* Form fields — re-use tindahan.css form-group / form-label / form-input */
-        .login-form { display: flex; flex-direction: column; gap: 20px; }
-
-        .pw-input-wrap {
-            position: relative;
-            display: flex; align-items: center;
-        }
-        .pw-input-wrap .form-input { padding-right: 48px !important; }
-        .pw-toggle-btn {
-            position: absolute; right: 14px;
-            background: none; border: none;
-            cursor: pointer; padding: 0;
-            font-size: 17px; color: var(--text-muted);
-            transition: color .2s;
-            line-height: 1;
-        }
-        .pw-toggle-btn:hover { color: var(--text-soft); }
-
-        /* Error message */
-        .login-error {
-            padding: 12px 16px;
-            background: rgba(184,48,32,0.12);
-            border: 1px solid rgba(184,48,32,0.35);
-            border-radius: var(--radius-sm);
-            color: var(--red-lite);
-            font-size: 14px;
-            font-weight: 600;
-            display: flex; align-items: center; gap: 10px;
-        }
-
-        /* Submit button — full width red gradient */
-        .login-submit-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, var(--red), var(--red-lite));
-            color: #fff;
-            border: none;
-            border-radius: var(--radius);
-            font-family: var(--font-body);
-            font-size: 16px; font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 6px 24px var(--red-glow);
-            transition: all .25s;
-            letter-spacing: 0.3px;
-            margin-top: 4px;
-        }
-        .login-submit-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 36px var(--red-glow);
-        }
-        .login-submit-btn:active { transform: translateY(0); }
-
-        /* Divider text */
-        .login-divider {
-            display: flex; align-items: center; gap: 14px;
-            font-size: 13px; color: var(--text-muted);
-            margin: 4px 0;
-        }
-        .login-divider::before, .login-divider::after {
-            content: ''; flex: 1; height: 1px;
-            background: var(--border-lit);
-        }
-
-        /* Sign-up link area */
-        .login-signup-row {
-            text-align: center;
-            font-size: 14px; color: var(--text-muted);
-            margin-top: 4px;
-        }
-        .login-signup-row a {
-            color: var(--gold-lite);
-            font-weight: 700;
-            text-decoration: none;
-            transition: color .2s;
-        }
-        .login-signup-row a:hover { color: var(--gold); text-decoration: underline; }
-
-        /* ── Responsive ── */
-        @media (max-width: 860px) {
-            .login-wrap { grid-template-columns: 1fr; }
-            .login-brand { display: none; }
-            .login-form-side { padding: 40px 24px; }
-            .auth-nav { padding: 0 24px; }
-        }
-        @media (max-width: 480px) {
-            .login-card-title { font-size: 30px; }
-        }
-    </style>
+    <title>Login | AgriResQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/agriresq.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
 </head>
-<body data-theme="dark">
+<body>
 
-    <div class="bg-texture"></div>
+<!-- ══ NAV ══════════════════════════════════════════════════════ -->
+<header class="auth-nav">
+    <a href="/" class="nav-brand">
+        <span class="nav-brand-name">AgriResQ</span>
+        <span class="nav-brand-sub">Fresh Market</span>
+    </a>
+</header>
 
-    <!-- ── Minimal auth navbar ── -->
-    <header class="auth-nav">
-        <a href="/" style="text-decoration:none;">
-            <div class="logo-wrap">
-                <div class="logo">Tindahan</div>
-                <div class="logo-tagline">Ang iyong merkado</div>
-            </div>
-        </a>
-        <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
-    </header>
+<!-- ══ SPLIT LAYOUT ══════════════════════════════════════════════ -->
+<div class="auth-wrap">
 
-    <div class="login-wrap">
+    <!-- ── LEFT: Brand panel ── -->
+    <div class="auth-brand">
+        <div class="auth-watermark">AgriResQ</div>
 
-        <!-- ════ LEFT: Brand Panel ════ -->
-        <div class="login-brand">
-            <div class="brand-watermark">Tindahan</div>
+        <div class="auth-eyebrow">Bulua Terminal · CDO</div>
 
-            <div class="brand-eyebrow">🇵🇭 Mabuhay!</div>
+        <h1 class="auth-headline">
+            Balik ka na,<br><em>suki!</em>
+        </h1>
 
-            <div class="brand-headline">
-                Balik ka na,<br><span>suki!</span>
-            </div>
+        <p class="auth-sub">
+            Mag-login para ma-access ang mga pinakabagong surplus listings, i-reserve ang mga gulay bago pa maubusan, at suportahan ang mga lokal na magsasaka.
+        </p>
 
-            <p class="brand-sub">
-                Mag-login para sa iyong personalized na karanasan sa pamimili at mga eksklusibong deals mula sa aming mga lokal na tindahan.
-            </p>
+        <div class="auth-divider">
+            <span class="auth-divider-sym">✦</span>
+        </div>
 
-            <div class="brand-divider">
-                <span class="brand-divider-sym">✦</span>
-            </div>
-
-            <div class="brand-features">
-                <div class="brand-feature">
-                    <div class="brand-feature-icon">🛍️</div>
-                    <div>
-                        <div class="brand-feature-title">Subaybayan ang Orders</div>
-                        <div class="brand-feature-sub">Real-time updates sa lahat ng binili mo</div>
-                    </div>
+        <div class="auth-features">
+            <div class="auth-feature">
+                <div class="auth-feature-icon">🥬</div>
+                <div>
+                    <div class="auth-feature-title">Real-Time Surplus</div>
+                    <div class="auth-feature-sub">Makita ang mga bago pang listings mula Bukidnon</div>
                 </div>
-                <div class="brand-feature">
-                    <div class="brand-feature-icon">💰</div>
-                    <div>
-                        <div class="brand-feature-title">Eksklusibong Deals</div>
-                        <div class="brand-feature-sub">Members-only na diskwento at alok</div>
-                    </div>
+            </div>
+            <div class="auth-feature">
+                <div class="auth-feature-icon">📋</div>
+                <div>
+                    <div class="auth-feature-title">I-Reserve Agad</div>
+                    <div class="auth-feature-sub">I-lock ang iyong gusto bago pa matuyo</div>
                 </div>
-                <div class="brand-feature">
-                    <div class="brand-feature-icon">⭐</div>
-                    <div>
-                        <div class="brand-feature-title">Mga Paboritong Item</div>
-                        <div class="brand-feature-sub">I-access ang iyong wishlist kahit saan</div>
-                    </div>
+            </div>
+            <div class="auth-feature">
+                <div class="auth-feature-icon">🌿</div>
+                <div>
+                    <div class="auth-feature-title">Zero-Waste Mission</div>
+                    <div class="auth-feature-sub">Bawat order nakakatulong sa komunidad at kalikasan</div>
                 </div>
             </div>
         </div>
-
-        <!-- ════ RIGHT: Form Panel ════ -->
-        <div class="login-form-side">
-            <div class="login-card">
-
-                <div class="login-card-accent"></div>
-
-                <div class="login-card-header">
-                    <div class="login-card-title">Mag-Login</div>
-                    <div class="login-card-sub">Ilagay ang iyong mga kredensyal para makapasok</div>
-                </div>
-
-                <form method="POST" autocomplete="off" class="login-form">
-                    {% csrf_token %}
-
-                    <div class="form-group">
-                        <label class="form-label">Username</label>
-                        <input
-                            type="text"
-                            name="username"
-                            class="form-input"
-                            placeholder="Ilagay ang username"
-                            required
-                            autocomplete="off"
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <div class="pw-input-wrap">
-                            <input
-                                type="password"
-                                name="password"
-                                id="loginPassword"
-                                class="form-input"
-                                placeholder="Ilagay ang password"
-                                autocomplete="new-password"
-                            >
-                            <button
-                                type="button"
-                                class="pw-toggle-btn"
-                                onclick="togglePassword('loginPassword', this)"
-                                aria-label="Ipakita ang password"
-                            >👁️</button>
-                        </div>
-                    </div>
-
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="login-error">
-                                <span>⚠️</span>
-                                <span>{{ message }}</span>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-
-                    <button type="submit" class="login-submit-btn">
-                        Mag-Login →
-                    </button>
-
-                    <div class="login-divider">o kaya</div>
-
-                    <div class="login-signup-row">
-                        Bago sa Tindahan?
-                        <a href="{% url 'register' %}">Mag-Sign Up dito</a>
-                    </div>
-
-                </form>
-            </div>
-        </div>
-
     </div>
 
-    <div class="footer-strip"></div>
+    <!-- ── RIGHT: Form panel ── -->
+    <div class="auth-form-side">
+        <div class="auth-card">
 
-    <script>
-        function toggleTheme() {
-            const body = document.body;
-            const isDark = body.getAttribute('data-theme') === 'dark';
-            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            document.querySelectorAll('.theme-toggle-nav').forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
-        }
+            <div class="auth-card-accent"></div>
+            <h2 class="auth-card-title">Mag-<em>Login</em></h2>
+            <p class="auth-card-sub">Ilagay ang iyong mga kredensyal para makapasok</p>
 
-        function togglePassword(inputId, btn) {
-            const input = document.getElementById(inputId);
-            const isHidden = input.type === 'password';
-            input.type = isHidden ? 'text' : 'password';
-            btn.textContent = isHidden ? '🙈' : '👁️';
-        }
-    </script>
+            <form method="POST" autocomplete="off" class="auth-form">
+                {% csrf_token %}
+
+                <!-- Username -->
+                <div class="auth-field">
+                    <label class="auth-label" for="id_username">Username</label>
+                    <input
+                        class="auth-input"
+                        type="text"
+                        name="username"
+                        id="id_username"
+                        placeholder="Ilagay ang username"
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+
+                <!-- Password -->
+                <div class="auth-field">
+                    <label class="auth-label" for="id_password">Password</label>
+                    <div class="auth-pw-wrap">
+                        <input
+                            class="auth-input"
+                            type="password"
+                            name="password"
+                            id="id_password"
+                            placeholder="Ilagay ang password"
+                            autocomplete="new-password"
+                        >
+                        <button
+                            type="button"
+                            class="auth-pw-toggle"
+                            onclick="togglePw('id_password', this)"
+                            aria-label="Ipakita ang password"
+                        >👁</button>
+                    </div>
+                </div>
+
+                <!-- Django messages (wrong credentials etc.) -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="auth-error">⚠ {{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <button type="submit" class="auth-submit">
+                    Mag-Login →
+                </button>
+
+                <div class="auth-or">o kaya</div>
+
+                <div class="auth-alt">
+                    Bago sa AgriResQ?
+                    <a href="{% url 'register' %}">Mag-Sign Up dito</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<footer class="footer">
+    AgriResQ © 2025 · USTP · IT323 Applications Development · Bulua West Bound Integrated Terminal, CDO
+</footer>
+
+<script>
+function togglePw(id, btn) {
+    const input = document.getElementById(id);
+    const hidden = input.type === 'password';
+    input.type = hidden ? 'text' : 'password';
+    btn.textContent = hidden ? '🙈' : '👁';
+}
+</script>
 
 </body>
 </html>
