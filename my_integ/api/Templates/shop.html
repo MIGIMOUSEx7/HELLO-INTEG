@@ -4,10 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tindahan - Ang Iyong Merkado</title>
+    <title>AgriResQ - Ang Iyong Sakahan Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
+    <style>
+        /* ===== AGRIRESQ THEME OVERRIDES ===== */
+        :root {
+        }
+    </style>
 </head>
-<body data-theme="dark">
+<body data-theme="light">
 
 <div class="bg-texture"></div>
 
@@ -47,8 +55,8 @@
     </div>
     <div class="navbar-main">
         <div class="logo-wrap" onclick="window.location.reload()">
-            <div class="logo">Tindahan</div>
-            <div class="logo-tagline">Ang iyong merkado</div>
+            <div class="logo">AgriResQ</div>
+            <div class="logo-tagline">Ang iyong sakahan marketplace</div>
         </div>
         <div class="search-bar">
             <input type="text" id="search-input" class="search-input"
@@ -69,9 +77,9 @@
     <div class="hero-orb hero-orb-1"></div>
     <div class="hero-orb hero-orb-2"></div>
     <div class="hero-text">
-        <div class="hero-eyebrow">Maligayang pagdating</div>
-        <h1>Ang Pinakamahusay<br>na <span>Mga Produkto</span></h1>
-        <p class="hero-sub">Tuklasin ang daan-daang produkto mula sa mga lokal na tindahan. Mabilis, madali, at maaasahan.</p>
+        <div class="hero-eyebrow">🌱 Suportahan ang Lokal na Magsasaka</div>
+        <h1>Sariwang Produkto<br>mula sa <span>Bukid Tungo sa Bahay</span></h1>
+        <p class="hero-sub">Tuklasin ang daan-daang produktong pang-agrikultura mula sa mga lokal na magsasaka. Mabilis, sariwa, at maaasahan.</p>
         <div class="hero-stats">
             <div><div class="hero-stat-num" id="stat-products">—</div><div class="hero-stat-label">Produkto</div></div>
             <div><div class="hero-stat-num" id="stat-stores">—</div><div class="hero-stat-label">Tindahan</div></div>
@@ -80,16 +88,16 @@
     </div>
     <div class="hero-badges">
         <div class="hero-badge">
-            <div class="hero-badge-icon">🚀</div>
-            <div><div class="hero-badge-title">Mabilis na Delivery</div><div class="hero-badge-sub">Hatid sa iyong pintuan</div></div>
+            <div class="hero-badge-icon">🚜</div>
+            <div><div class="hero-badge-title">Farm to Door</div><div class="hero-badge-sub">Direkta mula sa bukid</div></div>
         </div>
         <div class="hero-badge">
             <div class="hero-badge-icon">🔒</div>
             <div><div class="hero-badge-title">Ligtas na Bayad</div><div class="hero-badge-sub">100% secure checkout</div></div>
         </div>
         <div class="hero-badge">
-            <div class="hero-badge-icon">🏪</div>
-            <div><div class="hero-badge-title">Lokal na Tindahan</div><div class="hero-badge-sub">Suportahan ang lokal</div></div>
+            <div class="hero-badge-icon">🌾</div>
+            <div><div class="hero-badge-title">Lokal na Magsasaka</div><div class="hero-badge-sub">Suportahan ang agrikultura</div></div>
         </div>
     </div>
 </section>
@@ -97,7 +105,7 @@
 <div class="cat-bar" id="cat-bar">
     <span class="cat-bar-label">Filter:</span>
     <button class="cat-pill active" onclick="initShop(''); setCatActive(this)">✦ Lahat</button>
-    </div>
+</div>
 
 <div class="layout-3col">
 
@@ -127,17 +135,17 @@
     <aside class="sidebar-right">
         <div class="sidebar-heading">Espesyal</div>
         <div class="promo-card">
-            <span class="promo-card-emoji">🎉</span>
+            <span class="promo-card-emoji">🌿</span>
             <div class="promo-card-title">Bagong Arrivals</div>
-            <div class="promo-card-text">Tingnan ang pinakabago naming mga produkto ngayon!</div>
+            <div class="promo-card-text">Tingnan ang pinakabagong ani at produkto ngayon!</div>
             <button class="promo-btn" onclick="initShop('')">Tingnan Lahat →</button>
         </div>
         
         {% if not is_seller and not is_admin %}
         <div class="promo-card">
-            <span class="promo-card-emoji">🏪</span>
+            <span class="promo-card-emoji">🏡</span>
             <div class="promo-card-title">Mag-Open ng Tindahan</div>
-            <div class="promo-card-text">Gusto mong magbenta? Subukan na ngayon!</div>
+            <div class="promo-card-text">Gusto mong magbenta ng iyong ani? Subukan na ngayon!</div>
             <button class="promo-btn" onclick="window.location.href='/store/create/'">Magsimula →</button>
         </div>
         {% endif %}
@@ -159,9 +167,8 @@
     const API_URL = "http://127.0.0.1:8000/api/";
     let allProducts = [];
 
-    // Import Django variables securely into JavaScript
-    const isSeller = {{ is_seller|yesno:"true,false" }};
-    const isAdmin = {{ is_admin|yesno:"true,false" }};
+    window.isSeller = "{{ is_seller|yesno:'true,false' }}" === "true";
+    window.isAdmin  = "{{ is_admin|yesno:'true,false' }}" === "true";   
 
     window.addEventListener('DOMContentLoaded', () => { 
         if(!isSeller && !isAdmin) updateCartBadge(); 
@@ -243,7 +250,7 @@
 
             const trending = [...products].sort((a, b) => b.price - a.price).slice(0, 5);
             document.getElementById('trending-list').innerHTML = trending.map((p, i) => {
-                const clickAction = (!isSeller && !isAdmin) ? `onclick="buyNow(${p.id})"` : '';
+                const clickAction = (!isSeller && !isAdmin) ? `onclick="window.location.href='/reserve-checkout/${p.id}/'"` : '';
                 return `
                 <div class="trending-item" ${clickAction} style="${(!isSeller && !isAdmin) ? 'cursor:pointer;' : 'cursor:default; opacity:0.8;'}">
                     <div class="trending-rank">${i + 1}</div>
@@ -266,7 +273,7 @@
         if (products.length === 0) {
             grid.innerHTML = `
                 <div class="empty-state animate-entrance">
-                    <span class="empty-state-icon">🔍</span>
+                    <span class="empty-state-icon">🌾</span>
                     <div class="empty-state-title">Walang Nahanap</div>
                     <p>Subukan ang ibang salita sa paghahanap</p>
                 </div>`;
@@ -276,21 +283,24 @@
         grid.innerHTML = products.map((p, index) => {
             const isSoldOut = p.stock_quantity <= 0;
             
-            // CLEAN UI: Only build buttons if normal user. Else, leave completely empty.
             let actionHtml = '';
             if (!isSeller && !isAdmin) {
                 actionHtml = `
-                    <div class="btn-group">
-                        <button class="cart-btn" onclick="addToCart(${p.id})" ${isSoldOut ? 'disabled' : ''}>🛒 Cart</button>
-                        <button class="order-btn" onclick="buyNow(${p.id})" ${isSoldOut ? 'disabled' : ''}>Bilhin</button>
+                    <div class="btn-group" style="display: flex; gap: 5px;">
+                        <button class="cart-btn" onclick="addToCart(${p.id})" ${isSoldOut ? 'disabled' : ''} style="flex: 1; font-size: 11px; padding: 8px 4px;">🛒 Cart</button>
+                        
+                        <button onclick="window.location.href='/reserve-checkout/${p.id}/'" ${isSoldOut ? 'disabled' : ''} style="flex: 1; font-size: 11px; padding: 8px 4px; background: var(--gold); color: #120a05; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; font-family: var(--font-body);">
+                            ⏳ Reserve
+                        </button>
+
                     </div>`;
             }
 
             return `
                 <div class="card animate-entrance" style="animation-delay: ${index * 0.05}s">
                     ${isSoldOut ? '<div class="sold-out-overlay">UBOS NA</div>' : ''}
-                    <div class="card-image">
-                        <img src="${p.image || ''}" onerror="this.parentNode.innerHTML='<div style=font-size:52px>📦</div>'">
+                    <div class="card-image" style="cursor:pointer;" onclick="if(!isSeller && !isAdmin) window.location.href='/reserve-checkout/${p.id}/'">
+                        <img src="${p.image || ''}" onerror="this.parentNode.innerHTML='<div style=font-size:52px>🌿</div>'">
                     </div>
                     <div class="card-body">
                         <div class="product-name">${p.name}</div>
@@ -309,7 +319,7 @@
     }
 
     async function addToCart(productId) {
-        if(isSeller || isAdmin) return; // Hard block for JS bypass
+        if(isSeller || isAdmin) return;
         try {
             const res = await fetch(`${API_URL}cartitems/`, {
                 method: 'POST',

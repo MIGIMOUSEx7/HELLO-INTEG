@@ -8,27 +8,24 @@
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
     <link rel="stylesheet" href="{% static 'css/history.css' %}">
     <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .history-body {
-            flex: 1;
-        }
-        /* Added this to allow the tabs to scroll left/right on smaller screens since there are 8 tabs now */
-        .status-tabs {
-            display: flex;
-            overflow-x: auto;
-            white-space: nowrap;
-            scrollbar-width: none; /* Firefox */
-        }
-        .status-tabs::-webkit-scrollbar {
-            display: none; /* Safari/Chrome */
-        }
-        .status-tab {
-            flex-shrink: 0;
-        }
+        body { display: flex; flex-direction: column; min-height: 100vh; }
+        .history-body { flex: 1; }
+        .status-tabs { display: flex; overflow-x: auto; white-space: nowrap; scrollbar-width: none; border-bottom: 1px solid #3d2b1f; background: #120a05; }
+        .status-tabs::-webkit-scrollbar { display: none; }
+        .status-tab { flex-shrink: 0; padding: 15px 20px; background: none; border: none; color: #a89078; cursor: pointer; font-weight: bold; transition: 0.2s; border-bottom: 2px solid transparent; }
+        .status-tab.active { color: #ffcc00; border-bottom: 2px solid #ffcc00; background: #1e120a; }
+
+        /* Reservation Integration Styling */
+        .section-header { color: #ffcc00; font-size: 18px; font-weight: 900; text-transform: uppercase; margin: 30px 0 15px 0; border-bottom: 1px solid #3d2b1f; padding-bottom: 8px; }
+        .claim-card { background: #1e120a; border: 1px solid #ffcc00; border-left: 5px solid #ffcc00; border-radius: 8px; padding: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
+        .claim-card:hover { transform: translateY(-2px); }
+        .claim-info { display: flex; gap: 20px; align-items: center; }
+        .claim-details h3 { margin: 0 0 5px 0; color: #f5e6d3; font-size: 17px; }
+        
+        .timer-box { background: #120a05; border: 1px solid #3d2b1f; padding: 12px 20px; border-radius: 8px; text-align: center; min-width: 160px; }
+        .timer-label { font-size: 10px; color: #a89078; text-transform: uppercase; margin-bottom: 3px; font-weight: bold; letter-spacing: 1px; }
+        .timer-countdown { font-size: 20px; font-family: monospace; color: #00ff88; font-weight: bold; }
+        .timer-countdown.expired { color: #ff4d4d; }
     </style>
 </head>
 <body data-theme="dark">
@@ -68,6 +65,9 @@
 
 <div class="status-tabs">
     <button class="status-tab active" onclick="filterOrders('All', this)">✦ Lahat</button>
+    
+    <button class="status-tab" onclick="filterOrders('Pickup', this)" style="color: #ffcc00;">⏳ To Pickup</button>
+    
     <button class="status-tab" onclick="filterOrders('Pending', this)">🕒 Pending</button>
     <button class="status-tab" onclick="filterOrders('To Pay', this)">⏳ Babayaran</button>
     <button class="status-tab" onclick="filterOrders('Paid', this)">💸 Bayad Na</button>
@@ -75,12 +75,40 @@
     <button class="status-tab" onclick="filterOrders('To Receive', this)">📦 Darating</button>
     <button class="status-tab" onclick="filterOrders('Completed', this)">✅ Natapos</button>
     <button class="status-tab" onclick="filterOrders('Cancelled', this)">❌ Nakansela</button>
-    <button class="status-tab" onclick="filterOrders('Return/Refund', this)">🔄 Return/Refund</button>
 </div>
 
 <div class="history-body">
-
     <main class="history-main">
+
+        {% if active_claims %}
+            <div id="reservations-group">
+                <h2 class="section-header">⏳ Mga Aktibong Reservation (Claims)</h2>
+                {% for claim in active_claims %}
+                <div class="claim-card" data-status="Pickup">
+                    <div class="claim-info">
+                        <div class="order-item-img">
+                            {% if claim.product.image %}
+                                <img src="{{ claim.product.image.url }}" alt="{{ claim.product.name }}">
+                            {% else %}
+                                📦
+                            {% endif %}
+                        </div>
+                        <div class="claim-details">
+                            <h3>{{ claim.product.name }}</h3>
+                            <p style="color:#a89078; font-size:13px; margin:0;">🏪 {{ claim.product.store.store_name }}</p>
+                            <p style="color:#ffcc00; font-weight:bold; margin:5px 0 0 0;">Qty: {{ claim.quantity }} | Total: ₱{% widthratio claim.quantity 1 claim.product.price %}</p>
+                        </div>
+                    </div>
+                    <div class="timer-box">
+                        <div class="timer-label">Pickup Countdown</div>
+                        <div class="timer-countdown" data-expires="{{ claim.expires_at|date:'c' }}">
+                            00h 00m 00s
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <div class="history-heading">
             <div class="history-title">Mga Orders</div>
@@ -93,24 +121,14 @@
             {% for order in orders %}
             {% with first_item=order.items.first %}
             {% with store=first_item.product.store %}
-
-            <div class="order-card"
-                 data-status="{{ order.status }}"
-                 id="order-{{ order.id }}">
-
+            <div class="order-card" data-status="{{ order.status }}" id="order-{{ order.id }}">
                 <div class="order-store-header">
                     <div class="order-store-left">
                         <span class="order-store-name">🏪 {{ store.store_name|default:"SariSariStore" }}</span>
                         <span class="order-id-label">#{{ order.id }}</span>
-                        <button class="btn-chat"
-                                onclick="openStoreChat('{{ store.id }}', '{{ store.store_name|escapejs }}')">
-                            💬 Chat
-                        </button>
+                        <button class="btn-chat" onclick="openStoreChat('{{ store.id }}')">💬 Chat</button>
                         {% if store.id %}
-                            <button class="btn-view-shop"
-                                    onclick="window.location.href='/store/{{ store.id }}/'">
-                                👁️ View Shop
-                            </button>
+                            <button class="btn-view-shop" onclick="window.location.href='/store/{{ store.id }}/'">👁️ View Shop</button>
                         {% endif %}
                     </div>
                     <span class="order-status-badge status-{{ order.status|lower|slugify }}">
@@ -122,11 +140,7 @@
                     {% for item in order.items.all %}
                     <div class="order-item-row">
                         <div class="order-item-img">
-                            {% if item.product.image %}
-                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
-                            {% else %}
-                                📦
-                            {% endif %}
+                            {% if item.product.image %}<img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">{% else %}📦{% endif %}
                         </div>
                         <div class="order-item-info">
                             <div class="order-item-name">{{ item.product.name }}</div>
@@ -144,22 +158,16 @@
                     </div>
                     <div class="action-wrap">
                         {% if order.status == 'Pending' or order.status == 'To Pay' %}
-                            <button class="btn-cancel" onclick="cancelOrder('{{ order.id }}')">
-                                Kanselahin
-                            </button>
+                            <button class="btn-cancel" onclick="cancelOrder('{{ order.id }}')">Kanselahin</button>
                         {% else %}
-                            <button class="btn-buy-again" onclick="buyAgain('{{ first_item.product.id }}')">
-                                🔁 Bilhin Ulit
-                            </button>
+                            <button class="btn-buy-again" onclick="buyAgain('{{ first_item.product.id }}')">🔁 Bilhin Ulit</button>
                         {% endif %}
                     </div>
                 </div>
-
             </div>
             {% endwith %}
             {% endwith %}
             {% endfor %}
-
         {% else %}
             <div class="history-empty">
                 <div class="history-empty-icon">🛍️</div>
@@ -168,11 +176,9 @@
                 <button class="btn btn-primary" onclick="window.location.href='/'">Mamili Na →</button>
             </div>
         {% endif %}
-
     </main>
 
     <aside class="history-sidebar">
-
         <div class="sidebar-heading">Kabuuang Gastos</div>
         <div class="spend-box">
             <div class="spend-box-label">Total Spend</div>
@@ -191,23 +197,19 @@
                 <div class="stat-label">Pending</div>
             </div>
             <div class="stat-card">
+                <div class="stat-num" style="color:#ffcc00;">{{ active_claims|length }}</div>
+                <div class="stat-label">Reserved</div>
+            </div>
+            <div class="stat-card">
                 <div class="stat-num" id="count-done" style="color:var(--success)">0</div>
                 <div class="stat-label">Natapos</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-num" id="count-cancel" style="color:var(--error)">0</div>
-                <div class="stat-label">Nakansela</div>
-            </div>
         </div>
-
     </aside>
-
-</div><div class="footer-strip"></div>
-
-<div id="toast" class="toast">
-    <span id="toast-icon">✅</span>
-    <span id="toast-message">Tagumpay!</span>
 </div>
+
+<div class="footer-strip"></div>
+<div id="toast" class="toast"><span id="toast-icon">✅</span><span id="toast-message">Tagumpay!</span></div>
 
 <script>
     const API_URL = "http://127.0.0.1:8000/api/";
@@ -215,7 +217,60 @@
     window.addEventListener('DOMContentLoaded', () => {
         updateCartBadge();
         buildStats();
+        initTimers();
     });
+
+    function initTimers() {
+        const timerEls = document.querySelectorAll('.timer-countdown');
+        timerEls.forEach(el => {
+            const expireDate = new Date(el.getAttribute('data-expires')).getTime();
+            const x = setInterval(() => {
+                const now = new Date().getTime();
+                const diff = expireDate - now;
+                if (diff < 0) {
+                    clearInterval(x);
+                    el.innerHTML = "EXPIRED";
+                    el.classList.add('expired');
+                } else {
+                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((diff % (1000 * 60)) / 1000);
+                    el.innerHTML = `${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
+                }
+            }, 1000);
+        });
+    }
+
+    function filterOrders(status, tabEl) {
+        document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+        tabEl.classList.add('active');
+        
+        let visibleCount = 0;
+
+        // Filter standard orders
+        document.querySelectorAll('.order-card').forEach(card => {
+            const cardStatus = card.getAttribute('data-status');
+            const show = (status === 'All' || cardStatus === status);
+            card.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+
+        // Filter claims section
+        const resGroup = document.getElementById('reservations-group');
+        if (resGroup) {
+            let resVisible = 0;
+            document.querySelectorAll('.claim-card').forEach(claim => {
+                const show = (status === 'All' || status === 'Pickup');
+                claim.style.display = show ? '' : 'none';
+                if (show) resVisible++;
+            });
+            resGroup.style.display = resVisible > 0 ? '' : 'none';
+            if (status === 'Pickup') visibleCount = resVisible;
+        }
+
+        const countEl = document.getElementById('order-count');
+        if (countEl) countEl.textContent = `${visibleCount} item${visibleCount !== 1 ? 's' : ''}`;
+    }
 
     async function updateCartBadge() {
         try {
@@ -225,94 +280,49 @@
                 const b = document.getElementById('cart-count');
                 if (b) b.innerText = items.length;
             }
-        } catch (e) { console.error(e); }
+        } catch (e) {}
     }
 
     function buildStats() {
         const cards = [...document.querySelectorAll('.order-card')];
-        
-        // Track all 8 possible statuses from your database
-        const counts = { 
-            'Pending': 0, 'To Pay': 0, 'Paid': 0, 'Shipping': 0, 
-            'To Receive': 0, 'Completed': 0, 'Cancelled': 0, 'Return/Refund': 0 
-        };
+        const counts = { 'Pending': 0, 'Completed': 0, 'Cancelled': 0 };
         let total = 0;
-
         cards.forEach(card => {
             const s = card.getAttribute('data-status') || 'Pending';
             counts[s] = (counts[s] || 0) + 1;
             const p = card.querySelector('.order-total-price');
             if (p) total += parseFloat(p.textContent.replace(/[₱,\s]/g, '')) || 0;
         });
-
-        // Update Sidebar Stats
-        setEl('count-all',     cards.length);
-        setEl('count-pending', counts['Pending']); 
-        setEl('count-done',    counts['Completed']);
-        setEl('count-cancel',  counts['Cancelled']);
-        setEl('total-spend',   '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }));
-        setEl('spend-sub',     `Sa ${cards.length} order${cards.length !== 1 ? 's' : ''}`);
-    }
-
-    function setEl(id, val) {
-        const el = document.getElementById(id);
-        if (el) el.textContent = val;
+        const totalSpendEl = document.getElementById('total-spend');
+        if (totalSpendEl) totalSpendEl.textContent = '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+        
+        const pendingEl = document.getElementById('count-pending');
+        if (pendingEl) pendingEl.textContent = counts['Pending'] || 0;
+        
+        const doneEl = document.getElementById('count-done');
+        if (doneEl) doneEl.textContent = counts['Completed'] || 0;
     }
 
     function toggleTheme() {
         const body = document.body;
         const isDark = body.getAttribute('data-theme') === 'dark';
         body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-        document.querySelectorAll('.theme-toggle-nav').forEach(b =>
-            b.textContent = isDark ? '🌙 Mode' : '☀️ Mode'
-        );
-    }
-
-    function filterOrders(status, tabEl) {
-        document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
-        tabEl.classList.add('active');
-        let visible = 0;
-        document.querySelectorAll('.order-card').forEach(card => {
-            const cardStatus = card.getAttribute('data-status');
-            const show = status === 'All' || cardStatus === status;
-            card.style.display = show ? '' : 'none';
-            if (show) visible++;
-        });
-        setEl('order-count', visible + ' order' + (visible !== 1 ? 's' : ''));
+        document.querySelectorAll('.theme-toggle-nav').forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
     }
 
     async function cancelOrder(orderId) {
-        if (!orderId || orderId === 'None') { showToast('Maling Order ID.', 'error'); return; }
-        if (!confirm('Sigurado ka bang gustong kanselahin ang order na ito?')) return;
+        if (!confirm('Sigurado ka bang gustong kanselahin ang order?')) return;
         try {
             const res = await fetch(`/api/orders/${orderId}/`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
                 body: JSON.stringify({ status: 'Cancelled' })
             });
-            if (res.ok) { showToast('Order nakansela.'); setTimeout(() => location.reload(), 1000); }
-            else showToast('Hindi nakansela ang order.', 'error');
-        } catch (e) { showToast('Network error.', 'error'); }
+            if (res.ok) location.reload();
+        } catch (e) {}
     }
 
-    function buyAgain(productId) {
-        if (!productId || productId === 'None') return;
-        window.location.href = `/checkout/?product_id=${productId}&quantity=1`;
-    }
-
-    function openStoreChat(storeId) {
-        if (!storeId || storeId === 'None') { showToast("Hindi nahanap ang tindahan.", "error"); return; }
-        window.location.href = `/store/${storeId}/?open_chat=true`;
-    }
-
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        document.getElementById('toast-message').textContent = message;
-        document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
-        toast.className = `toast ${type} show`;
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-
+    function buyAgain(pId) { window.location.href = `/checkout/?product_id=${pId}&quantity=1`; }
     function getCookie(name) {
         let v = null;
         if (document.cookie) for (const c of document.cookie.split(';')) {

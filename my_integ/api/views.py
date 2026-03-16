@@ -343,13 +343,24 @@ def reserve_product(request, product_id):
     
     if product.stock_quantity >= qty:
         with transaction.atomic():
-            Reservation.objects.create(buyer=request.user, product=product, quantity=qty)
+            # Calculate exactly 12 hours from right now
+            expiry_time = timezone.now() + datetime.timedelta(hours=12)
+            
+            # Create the reservation WITH the expires_at time included
+            Reservation.objects.create(
+                buyer=request.user, 
+                product=product, 
+                quantity=qty,
+                expires_at=expiry_time  # <-- FIX: Added the missing expiration timestamp
+            )
+            
             product.stock_quantity -= qty
             product.save()
-            messages.success(request, "Surplus Claimed! Check your pickup timer.")
+            messages.success(request, "Surplus Claimed! Check your pickup timer in your History.")
     else:
         messages.error(request, "Not enough stock available for reservation.")
-    return redirect('manage_products')
+    
+    return redirect('purchase_history')
 
 @login_required(login_url='login')
 def complete_reservation(request, res_id):
@@ -358,6 +369,13 @@ def complete_reservation(request, res_id):
     res.save()
     messages.success(request, "Claim marked as picked up.")
     return redirect('manage_products')
+
+
+@login_required(login_url='login')
+def reserve_checkout(request, pk):
+    """Loads the dedicated Reservation Page for a buyer."""
+    product = get_object_or_404(Product, pk=pk)
+    return render(request, 'orders/reserve.html', {'product': product})
 
 # ─────────────────────────────────────────
 #   BUYER LOGIC & RESTRICTIONS
