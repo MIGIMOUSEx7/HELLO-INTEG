@@ -1,77 +1,169 @@
 /* ================================================================
-   AgriResQ — Cart Page Layout
-   Save to: static/css/cart.css
-   Requires: agriresq.css loaded first
+   AgriResQ — Wide & Full-Width Cart Fix
 ================================================================ */
 
-/* ── TWO-COLUMN LAYOUT ──────────────────────────────────────── */
+:root {
+    --max-w: 1400px; /* Increased from 1200px */
+}
+
+/* ── MAIN WRAPPER ───────────────────────────────────────────── */
 .cart-wrap {
     max-width: var(--max-w);
     margin: 0 auto;
-    padding: 32px var(--pad-x) 80px;
+    padding: 40px 40px 100px; /* Added more side padding */
     display: grid;
-    grid-template-columns: 1fr 360px;
-    gap: 28px;
+    /* This ratio (1fr 380px) ensures the list gets most of the room */
+    grid-template-columns: 1fr 380px; 
+    gap: 40px;
     align-items: start;
-    position: relative;
-    z-index: 1;
 }
 
 .cart-main {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    min-width: 0;
+    gap: 24px;
+    min-width: 0; /* CRITICAL: Prevents content from pushing past the grid */
 }
 
-/* Summary sidebar — sticky below nav */
-.cart-side {
-    position: sticky;
-    top: calc(var(--nav-h) + 16px);
+/* ── THE ROW FIX (Preventing the "Cut" look) ────────────────── */
+.col-labels, .cart-row {
+    display: grid;
+    /* Explicitly define widths: Checkbox, Img, Info(stretches), Price, Qty, Total, Delete */
+    grid-template-columns: 40px 80px 1fr 120px 140px 120px 50px;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+}
+
+.col-labels {
+    background: rgba(0,0,0,0.03);
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--moss);
+    margin-bottom: 8px;
+}
+
+.cart-row {
+    background: #fff;
+    border-bottom: 1px solid var(--border-light, #eee);
+    transition: background 0.2s;
+}
+
+.cart-row:hover {
+    background: #fdfdfd;
+}
+
+/* ── PRODUCT INFO STRETCH ───────────────────────────────────── */
+.row-img img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #f0f0f0;
+}
+
+.row-info {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 4px;
 }
 
-/* ── CHECKOUT BUTTON ────────────────────────────────────────── */
+.row-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--midnight);
+}
+
+.row-price, .row-total {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.row-total {
+    color: var(--leaf);
+    font-size: 18px;
+}
+
+/* ── ENHANCED CHECKOUT BUTTON ───────────────────────────────── */
 .btn-checkout {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
-    margin-top: 24px;
-    padding: 15px;
+    margin-top: 32px;
+    padding: 20px; /* Thicker, more substantial button */
     background: linear-gradient(135deg, var(--leaf), var(--moss));
     color: var(--cream);
-    font-size: 15px;
-    font-weight: 700;
-    border-radius: var(--r-lg);
-    border: 1px solid var(--border-moss);
+    font-size: 18px; /* Larger text */
+    font-weight: 800; /* Bolder weight */
+    border-radius: var(--r-xl);
+    border: none;
     cursor: pointer;
     font-family: var(--font-body);
-    transition: all .25s;
-    letter-spacing: 0.3px;
+    transition: all .3s cubic-bezier(0.2, 0, 0.2, 1);
+    letter-spacing: 0.5px;
+    text-transform: uppercase; /* Adds authority to the action */
 }
+
 .btn-checkout:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--sprout), var(--leaf));
-    border-color: var(--sprout);
-    box-shadow: 0 6px 24px rgba(74,124,53,0.35);
+    box-shadow: 0 12px 30px rgba(74,124,53,0.4);
+    transform: translateY(-3px); /* More pronounced lift */
+}
+
+.btn-checkout:active:not(:disabled) {
     transform: translateY(-1px);
 }
+
 .btn-checkout:disabled {
-    opacity: .35;
+    opacity: .4;
+    filter: grayscale(0.5);
     cursor: not-allowed;
-    transform: none;
 }
-.checkout-arrow { transition: transform .2s; }
-.btn-checkout:hover:not(:disabled) .checkout-arrow { transform: translateX(4px); }
+
+.checkout-arrow { 
+    font-size: 22px; 
+    transition: transform .3s ease; 
+}
+
+.btn-checkout:hover:not(:disabled) .checkout-arrow { 
+    transform: translateX(8px); /* Further arrow movement */
+}
+
+/* ── SIDEBAR ENHANCEMENTS ───────────────────────────────────── */
+.cart-side {
+    position: sticky;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.summary-card, .trust-card {
+    background: #fff;
+    padding: 30px;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.03);
+
+}
 
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
-@media (max-width: 1000px) {
-    .cart-wrap { grid-template-columns: 1fr 300px; }
-}
-@media (max-width: 800px) {
-    .cart-wrap { grid-template-columns: 1fr; }
-    .cart-side { position: static; }
+@media (max-width: 1100px) {
+    .cart-wrap {
+        grid-template-columns: 1fr; /* Stack on small screens */
+        padding: 20px;
+    }
+    
+    .col-labels { display: none; } /* Hide labels on mobile */
+    
+    .cart-row {
+        grid-template-columns: 40px 70px 1fr 1fr; /* Simplified mobile row */
+        grid-template-rows: auto auto;
+    }
 }

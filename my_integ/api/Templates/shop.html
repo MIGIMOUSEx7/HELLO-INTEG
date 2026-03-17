@@ -329,10 +329,6 @@
         } catch (e) { console.error(e); }
     }
 
-    function buyNow(productId) { 
-        if(isSeller || isAdmin) return;
-        window.location.href = `/checkout/?product_id=${productId}&quantity=1`; 
-    }
     
     function handleSearch(e) { if (e.key === 'Enter') performSearch(); }
     

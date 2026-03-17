@@ -9,11 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/agriresq.css' %}">
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
+    <link rel="stylesheet" href="{% static 'css/cart.css' %}">
 </head>
 <body>
-<div style="display:none;">{% csrf_token %}</div>
-
-<body data-theme="light">
 
 <div class="bg-texture"></div>
 
@@ -37,10 +35,10 @@
         {% endif %}
         <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
     </div>
-    <div class="navbar-main">
+     <div class="navbar-main">
         <div class="logo-wrap" onclick="window.location.href='/'">
-            <div class="logo">Tindahan</div>
-            <div class="logo-tagline">Ang iyong merkado</div>
+            <div class="logo">AgriResQ</div>
+            <div class="logo-tagline">Ang iyong sakahan marketplace</div>
         </div>
         <div class="navbar-page-title">📋 Purchase History</div>
     
@@ -201,7 +199,7 @@
             <button class="btn-checkout"
                     onclick="window.location.href='/checkout/'"
                     {% if not cart_items %}disabled{% endif %}>
-                Mag-Checkout ({{ cart_items|length }})
+                Mag-Reserve ({{ cart_items|length }})
                 <span class="checkout-arrow">→</span>
             </button>
         </div>
@@ -329,6 +327,14 @@ function getCookie(name) {
     }
     return null;
 }
+
+function toggleTheme() {
+        const body = document.body;
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.querySelectorAll('.theme-toggle-nav').forEach(b => b.textContent = isDark ? '🌙 Mode' : '☀️ Mode');
+    }
+
 </script>
 </body>
 </html>
