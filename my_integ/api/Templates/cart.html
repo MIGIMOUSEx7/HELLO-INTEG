@@ -23,8 +23,8 @@
     <div class="navbar-top">
         <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
         {% if user.is_authenticated %}
-            <div class="user-dropdown-wrap">
-                <a class="user-chip" tabindex="0">👤 {{ user.username }} ▾</a>
+             <div class="user-dropdown-wrap">
+                <a class="user-chip" tabindex="0">👤 {{ user.first_name|default:user.username }} ▾</a>
                 <div class="user-dropdown">
                     <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
                     <a href="{% url 'logout' %}">🚪 Mag-Logout</a>

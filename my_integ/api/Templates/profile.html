@@ -4,12 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aking Profile | Tindahan</title>
+    <title>Aking Profile | AgriResQ</title>
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
     <link rel="stylesheet" href="{% static 'css/profile_custom.css' %}">
+    <style>
+        /* Karagdagang styling para sa Edit Mode */
+        .form-input[readonly] {
+            background-color: var(--bg-body);
+            border-color: transparent;
+            cursor: default;
+            padding-left: 0;
+            font-weight: 500;
+        }
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+        #save-btn { display: none; background-color: var(--green-main); color: white; }
+        #cancel-btn { display: none; background-color: var(--text-muted); color: white; }
+    </style>
 </head>
-<body data-theme="dark">
-
+<body data-theme="light">
     <div class="bg-texture"></div>
 
     <nav class="navbar">
@@ -23,42 +40,27 @@
                 <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
             {% endif %}
 
-            {% if user.is_authenticated %}
-                <div class="user-dropdown-wrap">
-                    <a class="user-chip" tabindex="0">👤 {{ user.first_name|default:user.username }} ▾</a>
-                    <div class="user-dropdown">
-                        <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
-                        <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
-                    </div>
+            <div class="user-dropdown-wrap">
+                <a class="user-chip" tabindex="0">👤 {{ user.first_name|default:user.username }} ▾</a>
+                <div class="user-dropdown">
+                    <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
+                    <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
                 </div>
-            {% else %}
-                <a href="{% url 'login' %}">Login / Sign Up</a>
-            {% endif %}
+            </div>
             <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
         </div>
+        
         <div class="navbar-main">
             <div class="logo-wrap" onclick="window.location.href='/'">
-                <div class="logo">Tindahan</div>
-                <div class="logo-tagline">Ang iyong merkado</div>
+                <div class="logo">AgriResQ</div>
+                <div class="logo-tagline">Ang iyong sakahan marketplace</div>
             </div>
             <div class="navbar-page-title">👤 Aking Profile</div>
-            <div class="navbar-actions">
-                {% if not is_approved_seller and not user.is_superuser %}
-                <a href="{% url 'cart' %}" class="cart-link">
-                    🛒 <span id="cart-count" class="cart-badge">0</span>
-                </a>
-                {% endif %}
-            </div>
         </div>
     </nav>
 
     <div class="profile-wrapper">
-
         <div class="p-card">
-            <div class="p-card-header">
-                <div class="p-card-title">👤 Impormasyon ng Account</div>
-                <span class="badge badge-gold">Miyembro</span>
-            </div>
             <div class="p-card-body">
                 <div class="profile-header-container">
                     <div class="main-avatar-wrap">
@@ -73,129 +75,102 @@
                         <div class="profile-username">{{ profile.full_name|default:user.username }}</div>
                         <div class="profile-email">{{ user.email }}</div>
                         <div class="profile-badges">
-                            {% if user.is_superuser %}
-                                <span class="badge badge-error">System Admin</span>
-                            {% elif is_approved_seller %}
-                                <span class="badge badge-success">Shop Owner</span>
-                            {% else %}
-                                <span class="badge badge-gold">Buyer</span>
-                            {% endif %}
+                            {% if user.is_superuser %}<span class="badge badge-error">System Admin</span>
+                            {% elif is_approved_seller %}<span class="badge badge-success">Shop Owner</span>
+                            {% else %}<span class="badge badge-gold">Buyer</span>{% endif %}
                         </div>
                     </div>
-                    <button class="btn-profile-ghost" onclick="document.getElementById('settings-card').scrollIntoView({behavior:'smooth'})">
-                        ✏ I-edit Profile
-                    </button>
                 </div>
             </div>
-        </div>
-
-        <div class="group-row">
-            
-            {% if is_approved_seller or user.is_superuser %}
-                <div class="p-card" style="margin-bottom:0; width: 100%;">
-                    <div class="p-card-header">
-                        <div class="p-card-title">🚀 Dashboard Access</div>
-                    </div>
-                    <div class="p-card-body" style="text-align: center; padding: 40px;">
-                        <p style="margin-bottom: 20px; color: var(--text-muted);">
-                            You are logged in as a <strong>{% if user.is_superuser %}Admin{% else %}Shop Owner{% endif %}</strong>. 
-                            Use your dedicated terminal to manage products and monitor trends.
-                        </p>
-                        <a href="{% if user.is_superuser %}{% url 'admin_terminal' %}{% else %}{% url 'manage_products' %}{% endif %}" 
-                           class="btn-profile-action" style="display: inline-block;">
-                           Open Management Terminal →
-                        </a>
-                    </div>
-                </div>
-            {% else %}
-                <div class="p-card" style="margin-bottom:0; width: 100%;">
-                    <div class="p-card-header">
-                        <div class="p-card-title">🛍 Bumibili</div>
-                    </div>
-                    <div class="p-card-body">
-                        <div class="section-title">Mga Aksyon</div>
-                        <div class="buyer-grid">
-                            <div class="action-item">
-                                <div class="action-item-info">
-                                    <div class="action-item-label">Kasaysayan ng Purchases</div>
-                                    <div class="action-item-sub">Lahat ng iyong biniling items</div>
-                                </div>
-                                <a href="{% url 'purchase_history' %}" class="btn-profile-action">Tingnan →</a>
-                            </div>
-                            <div class="action-item">
-                                <div class="action-item-info">
-                                    <div class="action-item-label">Aking Cart</div>
-                                    <div class="action-item-sub">Mga item na naghihintay</div>
-                                </div>
-                                <a href="{% url 'cart' %}" class="btn-profile-action">Buksan →</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
         </div>
 
         <div class="p-card" id="settings-card">
             <div class="p-card-header">
-                <div class="p-card-title">⚙ Mga Setting</div>
+                <div class="p-card-title">⚙ Profile & Delivery Address</div>
+                <button type="button" id="edit-toggle-btn" class="btn-profile-ghost" onclick="enableEditMode()">✏ I-edit Impormasyon</button>
             </div>
             <div class="p-card-body">
-                <div class="settings-grid">
-                    <div>
-                        <div class="section-title">Personal na Impormasyon</div>
-                        <form method="POST" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <input type="hidden" name="form_type" value="profile">
+                <form id="profile-form" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="profile">
+                    
+                    <div class="settings-grid">
+                        <div class="settings-section">
+                            <div class="section-title">Personal Information</div>
                             <div class="form-group mb-12">
                                 <label class="form-label">Buong Pangalan</label>
-                                <input type="text" name="full_name" class="form-input" value="{{ profile.full_name|default:'' }}">
+                                <input type="text" name="full_name" class="form-input" value="{{ profile.full_name|default:'' }}" readonly>
                             </div>
                             <div class="form-group mb-12">
                                 <label class="form-label">Email</label>
-                                <input type="email" name="email" class="form-input" value="{{ user.email }}">
+                                <input type="email" name="email" class="form-input" value="{{ user.email }}" readonly>
                             </div>
                             <div class="form-group mb-12">
                                 <label class="form-label">Telepono</label>
-                                <input type="text" name="phone" class="form-input" value="{{ address.phone|default:'' }}">
+                                <input type="text" name="phone" class="form-input" value="{{ profile.phone_number|default:'' }}" readonly>
                             </div>
-                            <button type="submit" class="btn-profile-action mt-8">💾 I-save ang Pagbabago</button>
-                        </form>
+                        </div>
+
+                        <div class="settings-section">
+                            <div class="section-title">Delivery Address</div>
+                            <div class="form-group mb-12">
+                                <label class="form-label">Street / Brgy</label>
+                                <input type="text" name="street" class="form-input" value="{{ address.street|default:'' }}" readonly>
+                            </div>
+                            <div class="form-group mb-12">
+                                <label class="form-label">City</label>
+                                <input type="text" name="city" class="form-input" value="{{ address.city|default:'' }}" readonly>
+                            </div>
+                            <div class="form-row" style="display: flex; gap: 10px;">
+                                <div style="flex: 2;">
+                                    <label class="form-label">Province</label>
+                                    <input type="text" name="province" class="form-input" value="{{ address.province|default:'' }}" readonly>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label class="form-label">Zip Code</label>
+                                    <input type="text" name="zip_code" class="form-input" value="{{ address.zip_code|default:'' }}" readonly>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <div class="section-title">Profile Picture</div>
-                        <form method="POST" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <input type="hidden" name="form_type" value="picture">
-                            <label class="pic-uploader-label">
-                                <div class="pic-uploader" id="pic-uploader">
-                                    {% if profile.profile_picture %}
-                                        <img src="{{ profile.profile_picture.url }}" class="pic-uploader-preview" id="pic-preview">
-                                        <div class="uploader-overlay">Palitan</div>
-                                    {% else %}
-                                        <div class="empty-pic-preview" id="pic-empty">📷</div>
-                                        <div class="uploader-label">I-click para mag-upload</div>
-                                    {% endif %}
-                                    <input type="file" name="profile_picture" accept="image/*" onchange="previewPic(this)">
-                                </div>
-                            </label>
-                            <button type="submit" class="btn-profile-ghost mt-8">⬆ I-upload</button>
-                        </form>
+                    <div class="edit-actions">
+                        <button type="button" id="cancel-btn" class="btn-profile-ghost" onclick="disableEditMode()">I-cancel</button>
+                        <button type="submit" id="save-btn" class="btn-profile-action">💾 I-save ang Pagbabago</button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
 
         <div class="p-card">
-            <div class="p-card-header"><div class="p-card-title" style="color:var(--red-lite);">⚠ Danger Zone</div></div>
-            <div class="p-card-body" style="display:flex; flex-direction:column; gap:14px;">
-                <div class="danger-row">
-                    <div><div class="danger-row-label">Mag-Logout</div></div>
-                    <a href="{% url 'logout' %}" class="logout-link">🚪 Mag-Logout</a>
-                </div>
+            <div class="p-card-header"><div class="p-card-title">📷 Profile Picture</div></div>
+            <div class="p-card-body">
+                <form method="POST" enctype="multipart/form-data" style="display: flex; align-items: center; gap: 20px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="picture">
+                    <label class="pic-uploader-label" style="cursor: pointer;">
+                        <div class="pic-uploader" id="pic-uploader" style="width: 80px; height: 80px; border-radius: 50%; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            {% if profile.profile_picture %}
+                                <img src="{{ profile.profile_picture.url }}" id="pic-preview" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <span id="pic-empty">📷</span>
+                            {% endif %}
+                            <input type="file" name="profile_picture" accept="image/*" onchange="previewPic(this)" style="display: none;">
+                        </div>
+                    </label>
+                    <button type="submit" class="btn-profile-ghost">I-upload ang Larawan</button>
+                </form>
             </div>
         </div>
 
+        <div class="p-card">
+            <div class="p-card-body">
+                <div class="danger-row" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="color: var(--text-muted);">Gusto mo na bang umalis?</div>
+                    <a href="{% url 'logout' %}" class="logout-link" style="color: var(--red-lite); font-weight: bold; text-decoration: none;">🚪 Mag-Logout</a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -205,32 +180,39 @@
             body.setAttribute('data-theme', isDark ? 'light' : 'dark');
         }
 
-        function previewPic(input) {
-            if (!input.files || !input.files[0]) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                const uploader = document.getElementById('pic-uploader');
-                const empty = document.getElementById('pic-empty');
-                if (empty) empty.style.display = 'none';
-                uploader.querySelectorAll('.uploader-label').forEach(el => el.style.display = 'none');
-                let preview = document.getElementById('pic-preview');
-                if (!preview) {
-                    preview = document.createElement('img');
-                    preview.id = 'pic-preview';
-                    preview.className = 'pic-uploader-preview';
-                    uploader.prepend(preview);
-                }
-                preview.src = e.target.result;
-            };
-            reader.readAsDataURL(input.files[0]);
+        // Logic para i-enable ang editing ng Address at Personal Info
+        function enableEditMode() {
+            const inputs = document.querySelectorAll('#profile-form .form-input');
+            inputs.forEach(input => {
+                input.removeAttribute('readonly');
+                input.style.borderBottom = "2px solid var(--green-lite)";
+                input.style.paddingLeft = "10px";
+            });
+
+            document.getElementById('edit-toggle-btn').style.display = 'none';
+            document.getElementById('save-btn').style.display = 'block';
+            document.getElementById('cancel-btn').style.display = 'block';
         }
 
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = msg;
-            document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
-            toast.className = `toast ${type} show`;
-            setTimeout(() => toast.classList.remove('show'), 3000);
+        function disableEditMode() {
+            window.location.reload(); // Simpleng paraan para i-reset ang form
+        }
+
+        function previewPic(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const preview = document.getElementById('pic-preview') || document.createElement('img');
+                    preview.id = 'pic-preview';
+                    preview.src = e.target.result;
+                    preview.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+                    
+                    const uploader = document.getElementById('pic-uploader');
+                    if (!document.getElementById('pic-preview')) uploader.prepend(preview);
+                    if (document.getElementById('pic-empty')) document.getElementById('pic-empty').style.display = 'none';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
         }
     </script>
 </body>

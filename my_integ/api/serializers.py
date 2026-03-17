@@ -5,9 +5,13 @@ from .models import (
 )
 
 class UserSerializer(serializers.ModelSerializer):
+
+    address = serializers.CharField(source='profile.address', read_only=True)
+    phone_number = serializers.CharField(source='profile.phone_number', read_only=True)
+    
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'address', 'phone_number']
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
