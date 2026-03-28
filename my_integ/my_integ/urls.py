@@ -44,7 +44,8 @@ urlpatterns = [
     path('store/edit-product/<int:pk>/', views.edit_product, name='edit_product'),
     path('store/delete-product/<int:pk>/', views.delete_product, name='delete_product'),
     path('store/download-pdf/', views.download_inventory_pdf, name='download_inventory_pdf'),
-
+    
+     
     # Authentication
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),

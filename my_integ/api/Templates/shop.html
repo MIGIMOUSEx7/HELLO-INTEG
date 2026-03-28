@@ -33,16 +33,19 @@
              <div class="user-dropdown-wrap">
                 <a class="user-chip" tabindex="0">👤 {{ user.first_name|default:user.username }} ▾</a>
                 <div class="user-dropdown">
-                    <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
+                    
                     
                     {% if is_seller %}
-                        <a href="{% url 'manage_products' %}" style="color: var(--gold-lite) !important;">📦 Seller Dashboard</a>
+                        <!-- <a href="{% url 'manage_products' %}" style="color: var(--gold-lite) !important;">📦 Seller Dashboard</a> -->
                     {% endif %}
                     
                     {% if user.is_superuser %}
                         <a href="{% url 'admin_terminal' %}" style="color: var(--red-lite) !important;">💻 Admin Terminal</a>
                     {% endif %}
                     
+                    <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
+
+
                     <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
                 </div>
             </div>
