@@ -52,6 +52,7 @@ class Product(models.Model):
     stock_quantity = models.IntegerField(default=20) 
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=100, default="Active")
+    is_surplus = models.BooleanField(default=False) 
     image = models.ImageField(upload_to='products/', null=True, blank=True)
 
     def __str__(self):

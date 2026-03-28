@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ store.store_name }} | Tindahan</title>
+    <title>{{ store.store_name }} | ArgriResQ
+    </title>
     <link rel="stylesheet" href="{% static 'css/tindahan.css' %}">
     <link rel="stylesheet" href="{% static 'css/store_profile.css' %}">
 </head>
@@ -13,38 +14,58 @@
     <div class="bg-texture"></div>
 
     <nav class="navbar">
-        <div class="woven"></div>
-        <div class="navbar-top">
+    <div class="navbar-top">
+        
+        {% if user.is_superuser %}
+            <a href="{% url 'admin_terminal' %}" style="color: var(--red-lite);">💻 Admin Terminal</a>
+        {% elif is_seller %}
+            <a href="{% url 'manage_products' %}" style="color: var(--gold-lite);">📦 Seller Dashboard</a>
+        {% elif user.is_authenticated %}
             <a href="{% url 'purchase_history' %}">📋 Kasaysayan ng Purchases</a>
-            {% if user.is_authenticated %}
-                <div class="user-dropdown-wrap">
-                    <a class="user-chip" tabindex="0">👤 {{ user.username }} ▾</a>
-                    <div class="user-dropdown">
-                        <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
-                        <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
-                    </div>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+             <div class="user-dropdown-wrap">
+                <a class="user-chip" tabindex="0">👤 {{ user.first_name|default:user.username }} ▾</a>
+                <div class="user-dropdown">
+                    <a href="{% url 'user_profile' %}">👤 Aking Profile</a>
+                    
+                    {% if is_seller %}
+                        <a href="{% url 'manage_products' %}" style="color: var(--gold-lite) !important;">📦 Seller Dashboard</a>
+                    {% endif %}
+                    
+                    {% if user.is_superuser %}
+                        <a href="{% url 'admin_terminal' %}" style="color: var(--red-lite) !important;">💻 Admin Terminal</a>
+                    {% endif %}
+                    
+                    <a href="{% url 'logout' %}">🚪 Mag-Logout</a>
                 </div>
-            {% else %}
-                <a href="{% url 'login' %}">Login / Sign Up</a>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}">Login / Sign Up</a>
+        {% endif %}
+        <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
+    </div>
+    <div class="navbar-main">
+        <div class="logo-wrap" onclick="window.location.reload()">
+            <div class="logo">AgriResQ</div>
+            <div class="logo-tagline">Ang iyong sakahan marketplace</div>
+        </div>
+        <div class="search-bar">
+            <input type="text" id="search-input" class="search-input"
+                   placeholder="Hanapin ang produkto..." onkeyup="handleSearch(event)">
+            <button class="search-btn" onclick="performSearch()">🔍</button>
+        </div>
+        <div class="navbar-actions">
+            {% if not is_seller and not is_admin %}
+            <a href="{% url 'cart' %}" class="cart-link">
+                🛒 <span id="cart-count" class="cart-badge">0</span>
+            </a>
             {% endif %}
-            <button class="theme-toggle-nav" onclick="toggleTheme()">🌙 Mode</button>
         </div>
-        <div class="navbar-main">
-            <div class="logo-wrap" onclick="window.location.href='/'">
-                <div class="logo">Tindahan</div>
-                <div class="logo-tagline">Ang iyong merkado</div>
-            </div>
-            <div class="search-bar">
-                <input type="text" id="search-input" class="search-input" placeholder="Hanapin sa tindahang ito...">
-                <button class="search-btn" onclick="performSearch()">🔍</button>
-            </div>
-            <div class="navbar-actions">
-                <a href="{% url 'cart' %}" class="cart-link">
-                    🛒 <span id="cart-count" class="cart-badge">0</span>
-                </a>
-            </div>
-        </div>
-    </nav>
+    </div>
+</nav>
+
 
     <!-- ── Store Banner ── -->
     <section class="store-banner"

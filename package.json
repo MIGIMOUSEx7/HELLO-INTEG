@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "code": "^5.2.4",
+    "django": "^99.99.99",
+    "enoent": "^1.0.0"
+  }
+}
