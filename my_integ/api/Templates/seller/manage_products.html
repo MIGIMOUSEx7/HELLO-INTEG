@@ -49,6 +49,7 @@
 
         .status-pill { background: #2a1a10; color: #ffcc00; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
         .pill-danger { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; }
+        .pill-standard { background: rgba(0, 230, 118, 0.1); color: #00e676; }
         
         .img-thumb { width: 44px; height: 44px; background: #23150d; border-radius: 8px; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 1px solid #3d2b1f; }
 
@@ -75,14 +76,12 @@
 <nav class="navbar" style="border-bottom: 1px solid #2a8a45; background: #f9f6f0; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
     <div class="woven"></div>
     <div style="padding: 15px 40px; display: flex; align-items: center; justify-content: space-between;">
-        
         <a href="{% url 'manage_products' %}" class="logo" style="text-decoration: none; display: flex; align-items: center; gap: 12px;">
             <div style="color: #2a8a45; font-size: 24px; font-weight: 900; display: flex; flex-direction: column; line-height: 1;">
                 <span style="font-size: 28px; font-family: serif;">AgriResQ</span>
                 <span style="font-size: 10px; color: #666; letter-spacing: 1.5px; font-family: sans-serif;">MERCHANT TERMINAL</span>
             </div>
         </a>
-
         <div style="display: flex; gap: 30px; align-items: center;">
             <button id="theme-toggle" class="theme-toggle" style="background: none; border: none; color: #2a8a45; cursor: pointer; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px;">
                 🌙 Mode
@@ -102,28 +101,30 @@
     <div class="panel monitor-card">
         <div class="monitor-title">
             📡 Live Pickup Monitor 
-            <span style="font-size: 10px; background: #ff4d4d; color: white; padding: 3px 8px; border-radius: 12px;">{{ reservations|length }} ACTIVE</span>
+            <span style="font-size: 10px; background: #ff4d4d; color: white; padding: 3px 8px; border-radius: 12px;">
+                {{ reservations|length|add:pending_orders|length }} ACTIVE
+            </span>
         </div>
         
-        {% if reservations %}
+        {% if reservations or pending_orders %}
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th>Type</th>
                         <th>Buyer</th>
                         <th>Item</th>
                         <th>Qty</th>
-                        <th>Created</th>
-                        <th>Expires In</th>
+                        <th>Status / Timer</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for res in reservations %}
                     <tr>
+                        <td><span class="status-pill" style="background:rgba(255,204,0,0.1)">Surplus</span></td>
                         <td><strong>{{ res.buyer.username }}</strong></td>
                         <td>{{ res.product.name }}</td>
                         <td>{{ res.quantity }}</td>
-                        <td style="color: #a89078;">{{ res.created_at|time:"H:i" }}</td>
                         <td>
                             <span class="status-pill timer-countdown" data-expires="{{ res.expires_at|date:'c' }}">
                                 Calculating...
@@ -134,6 +135,19 @@
                                 {% csrf_token %}
                                 <button type="submit" class="btn-complete">✓ Mark Picked Up</button>
                             </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    {% for item in pending_orders %}
+                    <tr>
+                        <td><span class="status-pill pill-standard">Standard</span></td>
+                        <td><strong>{{ item.order.user.username }}</strong></td>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td><span class="status-pill pill-standard">Awaiting Pickup</span></td>
+                        <td>
+                            <a href="{% url 'seller_orders' %}" class="btn-complete" style="text-decoration:none; display:inline-block;">View Details</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -170,7 +184,7 @@
         </div>
         <div class="stat-card">
             <div class="stat-label">Active Claims</div>
-            <div class="stat-value val-warning">{{ reservations|length }}</div>
+            <div class="stat-value val-warning">{{ reservations|length|add:pending_orders|length }}</div>
         </div>
     </div>
 
@@ -240,7 +254,7 @@
                     const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                     const s = Math.floor((distance % (1000 * 60)) / 1000);
-                    el.innerHTML = `${h}h ${m}m ${s}s`;
+                    el.innerHTML = `⏳ ${h}h ${m}m ${s}s`;
                 }
             }, 1000);
         });

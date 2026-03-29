@@ -281,15 +281,23 @@ def manage_products(request):
     total_earnings = order_earnings + res_earnings
     total_items_sold = order_items_sold + res_items_sold
     
-    # Active claims for the monitor
+    # --- FIX: Fetch the missing variables for the template ---
     active_claims = Reservation.objects.filter(product__store=user_store, status='Active')
+    
+    # This is the specific variable the template is crying about:
+    pending_standard_orders = OrderItem.objects.filter(
+        product__store=user_store, 
+        order__status='Pending'
+    ).select_related('order', 'order__user')
 
     return render(request, 'seller/manage_products.html', {
-        'products': products, 'store': user_store,
+        'products': products, 
+        'store': user_store,
         'out_of_stock_count': products.filter(stock_quantity=0).count(), 
         'total_earnings': total_earnings, 
         'total_items_sold': total_items_sold, 
         'reservations': active_claims,
+        'pending_orders': pending_standard_orders, # <--- THIS MUST MATCH THE HTML KEY
     })
 
 @login_required(login_url='login')

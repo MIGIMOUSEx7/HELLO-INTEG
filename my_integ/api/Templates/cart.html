@@ -199,7 +199,7 @@
             <button class="btn-checkout"
                     onclick="window.location.href='/checkout/'"
                     {% if not cart_items %}disabled{% endif %}>
-                Mag-Reserve ({{ cart_items|length }})
+                Mag-CheckOut ({{ cart_items|length }})
                 <span class="checkout-arrow">→</span>
             </button>
         </div>
