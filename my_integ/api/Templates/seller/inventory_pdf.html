@@ -37,13 +37,14 @@
             background-color: #fdfaf7;
             border: 1px solid #ddd;
             padding: 10px;
+            width: 100%;
         }
         .summary-item {
             display: inline-block;
-            width: 30%;
+            width: 24%; /* Shrunk slightly to fit 4 boxes on one line */
             text-align: center;
         }
-        .summary-val { display: block; font-size: 16pt; font-weight: bold; }
+        .summary-val { display: block; font-size: 14pt; font-weight: bold; margin-top: 5px; color: #111; }
 
         /* 5. Main Table */
         table.inventory { width: 100%; border-collapse: collapse; }
@@ -73,7 +74,7 @@
 <body>
     <div class="company-header">
         <div class="company-name">AgriResQ</div>
-        <div style="font-size: 12pt; color: #555;">Official Inventory Report</div>
+        <div style="font-size: 12pt; color: #555;">Official Merchant Report</div>
     </div>
 
     <table class="info-table">
@@ -86,22 +87,26 @@
             <td class="text-right">
                 <div class="label">Date:</div>
                 {% now "F j, Y" %}<br>
-                ID: #INV-{{ store.id }}-{% now "Ymd" %}
+                ID: #RPT-{{ store.id }}-{% now "Ymd" %}
             </td>
         </tr>
     </table>
 
     <div class="summary-row">
         <div class="summary-item">
-            <span class="label">Products</span>
-            <span class="summary-val">{{ total_count }}</span>
+            <span class="label">Total Earnings</span>
+            <span class="summary-val">PHP {{ total_earnings|floatformat:2 }}</span>
+        </div>
+        <div class="summary-item">
+            <span class="label">Items Sold</span>
+            <span class="summary-val">{{ total_items_sold }}</span>
         </div>
         <div class="summary-item">
             <span class="label">Asset Value</span>
-            <span class="summary-val">₱{{ total_value }}</span>
+            <span class="summary-val">PHP {{ total_value|floatformat:2 }}</span>
         </div>
         <div class="summary-item">
-            <span class="label">Status</span>
+            <span class="label">Registry Status</span>
             <span class="summary-val" style="color: green;">ACTIVE</span>
         </div>
     </div>
@@ -109,10 +114,10 @@
     <table class="inventory">
         <thead>
             <tr>
-                <th>Item</th>
+                <th>Item Name</th>
                 <th>Category</th>
                 <th class="text-right">Price</th>
-                <th class="text-right">Stock</th>
+                <th class="text-right">Current Stock</th>
             </tr>
         </thead>
         <tbody>
@@ -120,8 +125,18 @@
             <tr>
                 <td><strong>{{ p.name }}</strong></td>
                 <td>{{ p.category.category_name }}</td>
-                <td class="text-right">₱{{ p.price }}</td>
-                <td class="text-right">{{ p.stock_quantity }}</td>
+                <td class="text-right">PHP {{ p.price|floatformat:2 }}</td>
+                <td class="text-right">
+                    {% if p.stock_quantity == 0 %}
+                        <span style="color: red; font-size: 8pt;">OUT OF STOCK</span>
+                    {% else %}
+                        {{ p.stock_quantity }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #666; padding: 20px;">No products found in registry.</td>
             </tr>
             {% endfor %}
         </tbody>

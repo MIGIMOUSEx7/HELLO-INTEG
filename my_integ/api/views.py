@@ -42,32 +42,45 @@ from .serializers import (
 #   AUTHENTICATION & ROUTING
 # ─────────────────────────────────────────
 
+@login_required(login_url='login')
 def download_inventory_pdf(request):
-    """Generates an official Company Inventory Report PDF for the Seller."""
+    """Generates an Official Report with both Inventory and Sales data."""
     user_store = Store.objects.filter(user=request.user).first()
     if not user_store:
         return HttpResponse("Wala kang tindahan!", status=404)
 
     products = Product.objects.filter(store=user_store)
     
-    # Calculate the total asset value (Unit Price * Qty on Hand) safely using Decimal
-    total_value = sum((p.price * p.stock_quantity for p in products), Decimal('0.00'))
+    # 1. Inventory Asset Value (Current Stock)
+    total_asset_value = sum((p.price * p.stock_quantity for p in products), Decimal('0.00'))
+    
+    # 2. Calculate Total Sales (Deliveries + Pickups)
+    store_orders = OrderItem.objects.filter(product__store=user_store, order__status='Completed')
+    order_earnings = sum((item.price * item.quantity for item in store_orders), Decimal('0.00'))
+    order_items_sold = sum((item.quantity for item in store_orders), 0)
+    
+    completed_res = Reservation.objects.filter(product__store=user_store, status='Completed')
+    res_earnings = sum((res.product.price * res.quantity for res in completed_res), Decimal('0.00'))
+    res_items_sold = sum((res.quantity for res in completed_res), 0)
+
+    # 3. Combine for Grand Totals
+    total_earnings = order_earnings + res_earnings
+    total_items_sold = order_items_sold + res_items_sold
     
     context = {
         'products': products,
         'store': user_store,
         'total_count': products.count(),
         'out_of_stock': products.filter(stock_quantity=0).count(),
-        'total_value': total_value,
+        'total_value': total_asset_value,
+        'total_earnings': total_earnings,        # <-- NEW
+        'total_items_sold': total_items_sold,    # <-- NEW
     }
     
-    # 1. Get Template
     template = get_template('seller/inventory_pdf.html')
     html = template.render(context)
     
-    # 2. Create the PDF using a more robust encoding setting
     result = io.BytesIO()
-    # Changed to "utf-8" lowercase for better pisa compatibility
     pdf = pisa.pisaDocument(io.BytesIO(html.encode("utf-8")), result)
     
     if not pdf.err:
@@ -124,6 +137,17 @@ def logout_view(request):
 @login_required(login_url='login')
 def home(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
+    
+    # --- TRAFFIC COP REDIRECTS ---
+    # If the user is a seller, redirect them directly to the Seller Dashboard
+    if profile.is_seller:
+        return redirect('manage_products')
+    
+    # If the user is an admin, redirect them to the Admin Terminal
+    if request.user.is_superuser:
+        return redirect('admin_terminal')
+    # -----------------------------
+        
     return render(request, 'shop.html', {
         'is_seller': profile.is_seller,
         'is_admin': request.user.is_superuser
@@ -233,44 +257,54 @@ def admin_terminal(request):
 
 @login_required(login_url='login')
 def manage_products(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     user_store = Store.objects.filter(user=request.user).first()
-    if not user_store:
-        messages.error(request, "Wala kang tindahan!")
+    
+    if profile.is_seller and not user_store:
+        return redirect('create_store')
+    if not profile.is_seller:
         return redirect('user_profile')
     
     products = Product.objects.filter(store=user_store).order_by('-created_at')
-    out_of_stock_count = products.filter(stock_quantity=0).count()
     
-    # Store Earnings & Order Count
+    # 1. Calculate Standard Online Orders
     store_orders = OrderItem.objects.filter(product__store=user_store, order__status='Completed')
-    total_earnings = sum((item.price * item.quantity for item in store_orders), Decimal('0.00'))
-    total_items_sold = sum((item.quantity for item in store_orders), 0)
-    completed_orders = store_orders.values('order').distinct().count()
+    order_earnings = sum((item.price * item.quantity for item in store_orders), Decimal('0.00'))
+    order_items_sold = sum((item.quantity for item in store_orders), 0)
     
-    # Live Monitor Active Reservations
+    # 2. Calculate Completed In-Person Reservations
+    completed_res = Reservation.objects.filter(product__store=user_store, status='Completed')
+    res_earnings = sum((res.product.price * res.quantity for res in completed_res), Decimal('0.00'))
+    res_items_sold = sum((res.quantity for res in completed_res), 0)
+
+    # 3. Combine for Grand Totals
+    total_earnings = order_earnings + res_earnings
+    total_items_sold = order_items_sold + res_items_sold
+    
+    # Active claims for the monitor
     active_claims = Reservation.objects.filter(product__store=user_store, status='Active')
 
     return render(request, 'seller/manage_products.html', {
-        'products': products, 
-        'store': user_store,
-        'out_of_stock_count': out_of_stock_count, 
-        'total_earnings': total_earnings,
+        'products': products, 'store': user_store,
+        'out_of_stock_count': products.filter(stock_quantity=0).count(), 
+        'total_earnings': total_earnings, 
         'total_items_sold': total_items_sold, 
-        'completed_orders': completed_orders,
         'reservations': active_claims,
     })
 
 @login_required(login_url='login')
 def create_store(request):
-    if not hasattr(request.user, 'profile') or not request.user.profile.is_seller:
-        messages.error(request, "Denied.")
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    if not profile.is_seller:
+        messages.error(request, "Denied. You are not registered as a seller.")
         return redirect('user_profile')
+        
     if request.method == 'POST':
         store_name = request.POST.get('store_name')
         if store_name:
             Store.objects.create(user=request.user, store_name=store_name)
             messages.success(request, "🎉 Tindahan naidagdag!")
-            return redirect('user_profile')
+            return redirect('manage_products')
     return render(request, 'seller/create_store.html')
 
 @login_required(login_url='login')
@@ -346,14 +380,13 @@ def reserve_product(request, product_id):
             # Calculate exactly 12 hours from right now
             expiry_time = timezone.now() + datetime.timedelta(hours=12)
             
-            # Create the reservation WITH the expires_at time included
             Reservation.objects.create(
                 buyer=request.user, 
                 product=product, 
                 quantity=qty,
-                expires_at=expiry_time  # <-- FIX: Added the missing expiration timestamp
+                expires_at=expiry_time,
+                status='Active'
             )
-            
             product.stock_quantity -= qty
             product.save()
             messages.success(request, "Surplus Claimed! Check your pickup timer in your History.")
@@ -432,6 +465,8 @@ def purchase_history(request, pk=None):
         return render(request, 'orders/OrderDetail.html', {'order': order})
         
     orders = Order.objects.filter(user=request.user).order_by('-order_date')
+    
+    # Passing active_claims to render in the 'To Pickup' tab
     active_claims = Reservation.objects.filter(buyer=request.user, status='Active')
     
     return render(request, 'orders/PurchaseHistory.html', {
