@@ -26,3 +26,11 @@ class Migration(migrations.Migration):
             ],
         ),
     ]
+
+operations = [
+        migrations.AddField(
+            model_name='product',
+            name='is_surplus',
+            field=models.BooleanField(default=False),
+        ),
+    ]

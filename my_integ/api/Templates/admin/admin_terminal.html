@@ -1,0 +1,1079 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Terminal</title>
+<link rel="stylesheet" href="{% static 'css/admin_terminal.css' %}">
+<style>
+    
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap');
+
+
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">ADMIN TERMINAL</div>
+  <div class="topbar-stats">
+    <div class="stat-pill ok">Revenue <span class="val">₱<span id="rev">—</span></span></div>
+    <div class="stat-pill">Users <span class="val" id="stat-users">—</span></div>
+    <div class="stat-pill">Orders <span class="val" id="stat-orders">—</span></div>
+    <div class="stat-pill warn">Low Stock <span class="val" id="stat-lowstock">—</span></div>
+    <div class="stat-pill">Active Reservations <span class="val" id="stat-reservations">—</span></div>
+  </div>
+  <div class="topbar-right">
+    <span class="clock" id="clock"></span>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">Commerce</div>
+    <div class="nav-item active" data-res="orders" onclick="load('orders',this)"><span class="icon">📦</span>Orders</div>
+    <div class="nav-item" data-res="orderitems" onclick="load('orderitems',this)"><span class="icon">🧾</span>Order Items</div>
+    <div class="nav-item" data-res="payments" onclick="load('payments',this)"><span class="icon">💳</span>Payments</div>
+    <div class="nav-item" data-res="vouchers" onclick="load('vouchers',this)"><span class="icon">🎟</span>Vouchers</div>
+    <div class="sidebar-section">Catalog</div>
+    <div class="nav-item" data-res="products" onclick="load('products',this)"><span class="icon">🏷</span>Products</div>
+    <div class="nav-item" data-res="categories" onclick="load('categories',this)"><span class="icon">📂</span>Categories</div>
+    <div class="nav-item" data-res="stores" onclick="load('stores',this)"><span class="icon">🏪</span>Stores</div>
+    <div class="nav-item" data-res="reservations" onclick="load('reservations',this)"><span class="icon">🔖</span>Reservations</div>
+    <div class="nav-item" data-res="reviews" onclick="load('reviews',this)"><span class="icon">⭐</span>Reviews</div>
+    <div class="sidebar-section">Logistics</div>
+    <div class="nav-item" data-res="shipments" onclick="load('shipments',this)"><span class="icon">🚚</span>Shipments</div>
+    <div class="sidebar-section">Cart</div>
+    <div class="nav-item" data-res="carts" onclick="load('carts',this)"><span class="icon">🛒</span>Carts</div>
+    <div class="nav-item" data-res="cartitems" onclick="load('cartitems',this)"><span class="icon">🔢</span>Cart Items</div>
+    <div class="sidebar-section">Users</div>
+    <div class="nav-item" data-res="users" onclick="load('users',this)"><span class="icon">👤</span>Users</div>
+    <div class="nav-item" data-res="profiles" onclick="load('profiles',this)"><span class="icon">🪪</span>Profiles</div>
+    <div class="nav-item" data-res="addresses" onclick="load('addresses',this)"><span class="icon">📍</span>Addresses</div>
+    <div class="sidebar-section">Communication</div>
+    <div class="nav-item" data-res="messages" onclick="load('messages',this)"><span class="icon">💬</span>Messages</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="page-title" id="page-title">Orders</div>
+        <div class="search-wrap">
+          <input type="search" id="search" placeholder="Search..." oninput="filterData()">
+        </div>
+      </div>
+      <!-- View toggle — only shows for products -->
+      <div class="view-toggle" id="view-toggle" style="display:none">
+        <button class="view-btn" id="btn-gallery" title="Gallery" onclick="setView('gallery')">⊞</button>
+        <button class="view-btn active" id="btn-table" title="Table" onclick="setView('table')">☰</button>
+      </div>
+      <select id="bulk-action">
+        <option value="">── Bulk Action ──</option>
+        <option value="delete">Delete Selected</option>
+        <option value="complete">Mark Completed</option>
+        <option value="cancel">Mark Cancelled</option>
+        <option value="active">Mark Active</option>
+        <option value="shipping">Mark Shipping</option>
+      </select>
+      <button class="btn" onclick="bulkRun()">Run</button>
+      <button class="btn btn-primary" onclick="openCreate()">＋ Add</button>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div class="table-wrap" id="table-view">
+      <table>
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- GALLERY VIEW (products only) -->
+    <div class="gallery-wrap" id="gallery-view" style="display:none">
+      <div class="gallery-grid" id="gallery-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <span>Resource: <span class="sel" id="sb-resource">orders</span></span>
+  <span>Total: <span class="total" id="sb-total">0</span></span>
+  <span>Selected: <span class="sel" id="sb-selected">0</span></span>
+  <span style="margin-left:auto; color:var(--text3)">API: /api/</span>
+</div>
+
+<!-- PRODUCT DETAIL PANEL -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="detail-panel" onclick="event.stopPropagation()">
+    <div class="detail-img-col">
+      <div id="detail-main-img-wrap"></div>
+      <div class="detail-img-thumbs" id="detail-thumbs"></div>
+      <!-- Upload zone inside detail -->
+      <div class="detail-upload-zone">
+        <label class="detail-upload-btn" for="detail-file-input">
+          📎 Upload Images
+        </label>
+        <input type="file" id="detail-file-input" accept="image/*" multiple style="display:none" onchange="handleDetailUpload(event)">
+      </div>
+    </div>
+    <div class="detail-info-col">
+      <div class="detail-header">
+        <div>
+          <div class="detail-name" id="detail-name">—</div>
+          <div style="color:var(--text3);font-size:11px;margin-top:3px" id="detail-id-label">—</div>
+        </div>
+        <button class="detail-close" onclick="closeDetail()">✕</button>
+      </div>
+      <div class="detail-body" id="detail-body"></div>
+      <div class="detail-footer">
+        <button class="btn" onclick="closeDetail()">Close</button>
+        <button class="btn btn-primary" id="detail-edit-btn">Edit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT / CREATE MODAL -->
+<div class="overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Edit Record</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">⚠️</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:8px;color:var(--red)">Confirm Delete</div>
+    <div class="confirm-msg" id="confirm-msg">Are you sure?</div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+const API = "/api/";
+let current = "orders";
+let allData = [];
+let editingId = null;
+let isCreating = false;
+let currentView = 'table'; // 'table' | 'gallery'
+let detailProductId = null;
+// productImages: { [productId]: [ { src, file? } ] }
+// We store as data URLs for local preview; on save we'd upload via FormData.
+// For this template we keep it client-side so the UI works fully standalone.
+let productImages = {}; // populated from API image fields or localStorage
+let pendingDetailImages = []; // images staged for a product in detail view
+
+/* ─── CONFIG ─────────────────────────────────────────────── */
+const CONFIG = {
+  orders: {
+    // 'user' will now contain the string "IvanJP" instead of 1
+    cols: ['id', 'user', 'email' ,'status', 'payment_method', 'total_amount', 'order_date'],
+    label: 'Orders',
+    fields: [
+      // Change type to 'text' if you just want to see/edit the name string
+      { key: 'user', label: 'Customer Username', type: 'text', required: true },
+      { key:'email', label:'Email', type:'email' },
+      { key:'status', label:'Status', type:'select', options:['Pending','To Pay','Paid','Shipping','To Receive','Completed','Cancelled','Return/Refund'] },
+      { key:'payment_method', label:'Payment Method', type:'select', options:['COD','GCASH','BANK','CARD'] },
+      { key:'total_amount', label:'Total Amount', type:'number' },
+      { key:'shipping_address', label:'Shipping Address', type:'textarea' },
+    ]
+  },
+  orderitems: {
+    cols: ['id','order','product','quantity','price'],
+    label: 'Order Items',
+    fields: [
+      { key:'order', label:'Order ID', type:'number', required:true },
+      { key:'product', label:'Product ID', type:'number', required:true },
+      { key:'quantity', label:'Quantity', type:'number', required:true },
+      { key:'price', label:'Price', type:'number', required:true },
+    ]
+  },
+  products: {
+    cols: ['id', 'name', 'price', 'stock_quantity', 'status', 'is_surplus', 'store', 'category'],
+    label: 'Products',
+    fields: [
+      { key: 'name', label: 'Name', type: 'text', required: true },
+      { key: 'price', label: 'Price', type: 'number', required: true },
+      { key: 'stock_quantity', label: 'Stock Quantity', type: 'number' },
+      { key: 'status', label: 'Status', type: 'select', options: ['Active', 'Inactive', 'Archived'] },
+      { key: 'is_surplus', label: 'Is Surplus', type: 'select', options: ['true', 'false'] },
+      { key: 'store', label: 'Store Name', type: 'select', options: [] }, 
+      { key: 'category', label: 'Category Name', type: 'select', options: [] },      
+      { key: 'description', label: 'Description', type: 'textarea' },
+    ]
+},
+  categories: {
+    cols: ['id','category_name','parent'],
+    label: 'Categories',
+    fields: [
+      { key:'category_name', label:'Category Name', type:'text', required:true },
+      { key:'parent', label:'Parent Category ID', type:'number' },
+    ]
+  },
+  reservations: {
+    cols: ['id','buyer','product','quantity','status','created_at','expires_at'],
+    label: 'Reservations',
+    fields: [
+      { key:'buyer', label:'Buyer ID', type:'number', required:true },
+      { key:'product', label:'Product ID', type:'number', required:true },
+      { key:'quantity', label:'Quantity', type:'number', required:true },
+      { key:'status', label:'Status', type:'select', options:['Active','Completed','Expired','Cancelled'] },
+      { key:'expires_at', label:'Expires At', type:'datetime-local' },
+    ]
+  },
+  reviews: {
+    cols: ['id','user','product','order','rating','comment','created_at'],
+    label: 'Reviews',
+    fields: [
+      { key:'user', label:'User ID', type:'number', required:true },
+      { key:'product', label:'Product ID', type:'number', required:true },
+      { key:'order', label:'Order ID', type:'number', required:true },
+      { key:'rating', label:'Rating (1-5)', type:'number', required:true },
+      { key:'comment', label:'Comment', type:'textarea' },
+    ]
+  },
+  users: {
+    cols: ['id','username','email','is_staff','is_active','date_joined'],
+    label: 'Users',
+    fields: [
+      { key:'username', label:'Username', type:'text', required:true },
+      { key:'email', label:'Email', type:'email' },
+      { key:'is_staff', label:'Is Staff', type:'select', options:['true','false'] },
+      { key:'is_active', label:'Is Active', type:'select', options:['true','false'] },
+    ]
+  },
+  profiles: {
+    cols: ['id','user','is_seller','phone_number'],
+    label: 'Profiles',
+    fields: [
+      { key:'user', label:'User ID', type:'number', required:true },
+      { key:'is_seller', label:'Is Seller', type:'select', options:['true','false'] },
+      { key:'phone_number', label:'Phone Number', type:'text' },
+      { key:'bio', label:'Bio', type:'textarea' },
+    ]
+  },
+  stores: {
+    cols: ['id','store_name','rating','user','created_at'],
+    label: 'Stores',
+    fields: [
+      { key:'store_name', label:'Store Name', type:'text', required:true },
+      { key:'user', label:'Owner User ID', type:'number', required:true },
+      { key:'store_description', label:'Description', type:'textarea' },
+      { key:'rating', label:'Rating', type:'number' },
+    ]
+  },
+  shipments: {
+    cols: ['id','courier','tracking_number','status','shipped_at','delivered_at'],
+    label: 'Shipments',
+    fields: [
+      { key:'courier', label:'Courier', type:'text', required:true },
+      { key:'tracking_number', label:'Tracking Number', type:'text', required:true },
+      { key:'status', label:'Status', type:'select', options:['Pending','Shipped','In Transit','Out for Delivery','Delivered','Returned'] },
+      { key:'shipped_at', label:'Shipped At', type:'datetime-local' },
+      { key:'delivered_at', label:'Delivered At', type:'datetime-local' },
+      { key:'return_at', label:'Return At', type:'datetime-local' },
+    ]
+  },
+  payments: {
+    cols: ['id','user','method','amount','status','paid_at'],
+    label: 'Payments',
+    fields: [
+      { key:'user', label:'User ID', type:'number', required:true },
+      { key:'method', label:'Method', type:'select', options:['COD','GCASH','BANK','CARD'] },
+      { key:'amount', label:'Amount', type:'number', required:true },
+      { key:'status', label:'Status', type:'select', options:['Pending','Paid','Failed','Refunded'] },
+      { key:'voucher', label:'Voucher ID', type:'number' },
+    ]
+  },
+  vouchers: {
+    cols: ['id','code','discount_type','discount_value','min_spend','start_date','end_date'],
+    label: 'Vouchers',
+    fields: [
+      { key:'code', label:'Code', type:'text', required:true },
+      { key:'discount_type', label:'Discount Type', type:'select', options:['percentage','fixed'] },
+      { key:'discount_value', label:'Discount Value', type:'number', required:true },
+      { key:'min_spend', label:'Min Spend', type:'number' },
+      { key:'start_date', label:'Start Date', type:'datetime-local' },
+      { key:'end_date', label:'End Date', type:'datetime-local' },
+    ]
+  },
+  messages: {
+    cols: ['id','sender','receiver','store','message','timestamp','is_read'],
+    label: 'Messages',
+    fields: [
+      { key:'sender', label:'Sender ID', type:'number', required:true },
+      { key:'receiver', label:'Receiver ID', type:'number', required:true },
+      { key:'store', label:'Store ID', type:'number', required:true },
+      { key:'message', label:'Message', type:'textarea', required:true },
+      { key:'is_read', label:'Is Read', type:'select', options:['true','false'] },
+    ]
+  },
+  addresses: {
+    cols: ['id','user','full_name','city','province','country','is_default'],
+    label: 'Addresses',
+    fields: [
+      { key:'user', label:'User ID', type:'number', required:true },
+      { key:'full_name', label:'Full Name', type:'text', required:true },
+      { key:'phone', label:'Phone', type:'text' },
+      { key:'street', label:'Street', type:'text' },
+      { key:'city', label:'City', type:'text', required:true },
+      { key:'province', label:'Province', type:'text' },
+      { key:'zip_code', label:'Zip Code', type:'text' },
+      { key:'country', label:'Country', type:'text' },
+      { key:'is_default', label:'Is Default', type:'select', options:['true','false'] },
+    ]
+  },
+  carts: {
+    cols: ['id','user','created_at','updated_at'],
+    label: 'Carts',
+    fields: [
+      { key:'user', label:'User ID', type:'number', required:true },
+    ]
+  },
+  cartitems: {
+    cols: ['id','cart','product','quantity'],
+    label: 'Cart Items',
+    fields: [
+      { key:'cart', label:'Cart ID', type:'number', required:true },
+      { key:'product', label:'Product ID', type:'number', required:true },
+      { key:'quantity', label:'Quantity', type:'number', required:true },
+    ]
+  },
+};
+
+/* ─── IMAGE HELPERS ─────────────────────────────────────── */
+function getProductImages(id) {
+  return productImages[id] || [];
+}
+
+function getProductPrimaryImage(id) {
+  const imgs = getProductImages(id);
+  return imgs.length ? imgs[0].src : null;
+}
+
+// Try to pull image URL from product data itself (e.g. data.image or data.images)
+function hydrateImagesFromData(data) {
+  if(Array.isArray(data)) {
+    data.forEach(d => {
+      const id = d.id;
+      if(!productImages[id]) {
+        const srcs = [];
+        if(d.image) srcs.push({ src: d.image });
+        if(d.images && Array.isArray(d.images)) d.images.forEach(i => srcs.push({ src: typeof i === 'string' ? i : i.image || i.url || i.src }));
+        if(srcs.length) productImages[id] = srcs;
+      }
+    });
+  }
+}
+
+/* ─── VIEW TOGGLE ─────────────────────────────────────── */
+function setView(v) {
+  currentView = v;
+  document.getElementById('table-view').style.display = v === 'table' ? '' : 'none';
+  document.getElementById('gallery-view').style.display = v === 'gallery' ? '' : 'none';
+  document.getElementById('btn-table').classList.toggle('active', v === 'table');
+  document.getElementById('btn-gallery').classList.toggle('active', v === 'gallery');
+  if(v === 'gallery') renderGallery();
+}
+
+/* ─── STATUS BADGE ─────────────────────────────────────── */
+function statusBadge(v) {
+  if(v === null || v === undefined) return `<span class="badge badge-gray">—</span>`;
+  const s = String(v);
+  const map = {
+    'Active':'green','Completed':'green','Paid':'green','Delivered':'green','True':'green',
+    'Pending':'orange','Shipping':'orange','In Transit':'orange','Shipped':'orange','To Pay':'orange','Out for Delivery':'orange',
+    'Cancelled':'red','Expired':'red','Failed':'red','Returned':'red','Return/Refund':'red',
+    'To Receive':'blue','COD':'blue','GCASH':'blue','BANK':'blue','CARD':'blue',
+    'Inactive':'gray','Archived':'gray','False':'gray',
+  };
+  const cls = map[s] || 'gray';
+  return `<span class="badge badge-${cls}">${s}</span>`;
+}
+
+function fmtCell(col, val) {
+  if(val === null || val === undefined) return '<span style="color:var(--text3)">—</span>';
+  if(typeof val === 'boolean') return val ? '<span class="bool-true">✔ Yes</span>' : '<span class="bool-false">✖ No</span>';
+  const statusCols = ['status','is_surplus','is_seller','is_staff','is_active','is_default','is_read','payment_method','method','discount_type'];
+  if(statusCols.includes(col)) return statusBadge(val);
+  if(col === 'rating') {
+    const n = parseFloat(val);
+    return '★'.repeat(Math.round(n)) + '<span style="color:var(--text3)">' + '★'.repeat(5 - Math.round(n)) + '</span>';
+  }
+  if(col.includes('amount') || col === 'price' || col === 'discount_value' || col === 'min_spend')
+    return '₱' + parseFloat(val).toLocaleString('en-PH', {minimumFractionDigits:2});
+  if(col.includes('_at') || col.includes('_date') || col === 'date_joined')
+    return new Date(val).toLocaleString('en-PH', {dateStyle:'short', timeStyle:'short'});
+  if(typeof val === 'object') return `<span style="color:var(--text3)">{obj}</span>`;
+  const s = String(val);
+  return s.length > 40 ? `<span title="${s}">${s.slice(0,38)}…</span>` : s;
+}
+
+/* ─── LOAD DATA ─────────────────────────────────────────── */
+
+async function hydrateDropdowns() {
+    try {
+        // Fetch Categories and Stores simultaneously
+        const [catRes, storeRes] = await Promise.all([
+            fetch(API + 'categories/'),
+            fetch(API + 'stores/')
+        ]);
+
+        const categories = await catRes.json();
+        const stores = await storeRes.json();
+
+        // 1. Fill Category Options
+        // We use 'category_name' to match your SlugRelatedField in Django
+        const categoryNames = categories.map(c => c.category_name);
+        CONFIG.products.fields.find(f => f.key === 'category').options = categoryNames;
+
+        // 2. Fill Store Options 
+        // We use 'store_name' to match your SlugRelatedField in Django
+        const storeNames = stores.map(s => s.store_name);
+        CONFIG.products.fields.find(f => f.key === 'store').options = storeNames;
+
+        console.log("Dropdowns hydrated successfully");
+    } catch (e) {
+        console.error("Failed to hydrate dropdowns:", e);
+        toast('error', "Failed to load Store/Category list");
+    }
+}
+
+async function load(res, el) {
+  current = res;
+  document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const cfg = CONFIG[res];
+  document.getElementById('page-title').textContent = cfg ? cfg.label : res;
+  document.getElementById('sb-resource').textContent = res;
+
+  // show/hide view toggle
+  const vt = document.getElementById('view-toggle');
+  vt.style.display = res === 'products' ? 'flex' : 'none';
+  if(res !== 'products' && currentView === 'gallery') setView('table');
+
+  document.getElementById('tbody').innerHTML = `<tr class="loading-row"><td colspan="99">Loading…</td></tr>`;
+
+  try {
+    const r = await fetch(API + res + '/');
+    if(!r.ok) throw new Error(r.status);
+    allData = await r.json();
+    if(res === 'products') hydrateImagesFromData(allData);
+    render();
+    if(res === 'products' && currentView === 'gallery') renderGallery();
+  } catch(e) {
+    document.getElementById('tbody').innerHTML = `<tr class="loading-row"><td colspan="99" style="color:var(--red)">Failed to load: ${e.message}</td></tr>`;
+    toast('error', `Failed to load ${res}`);
+  }
+
+  document.getElementById('sb-total').textContent = allData.length;
+  document.getElementById('search').value = '';
+}
+
+/* ─── RENDER TABLE ───────────────────────────────────────── */
+function render(rows) {
+  const cfg = CONFIG[current];
+  if(!cfg) { document.getElementById('tbody').innerHTML = ''; return; }
+  const cols = cfg.cols;
+  const list = rows || allData;
+
+  document.getElementById('thead').innerHTML = `<tr>
+    <th class="check-col"><input type="checkbox" onclick="selectAll(this)"></th>
+    ${cols.map(c => `<th onclick="sortBy('${c}')">${c.replace(/_/g,' ')}</th>`).join('')}
+    <th>Actions</th>
+  </tr>`;
+
+  if(!list.length) {
+    document.getElementById('tbody').innerHTML = `<tr><td colspan="${cols.length + 2}" class="empty-state"><div class="icon">📭</div>No records found</td></tr>`;
+    return;
+  }
+
+  document.getElementById('tbody').innerHTML = list.map(d => {
+    // For products, show a tiny image thumbnail in table row
+    const imgCell = current === 'products'
+      ? `<td style="width:40px;padding:4px 8px">
+          ${getProductPrimaryImage(d.id)
+            ? `<img src="${getProductPrimaryImage(d.id)}" style="width:32px;height:32px;border-radius:4px;object-fit:cover;border:1px solid var(--border)">`
+            : `<div style="width:32px;height:32px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text3)">🏷</div>`}
+        </td>`
+      : '';
+    const extraCols = current === 'products' ? `<th style="width:40px"></th>` : '';
+
+    return `<tr>
+      <td class="check-col"><input type="checkbox" value="${d.id}" onchange="updateCount()"></td>
+      ${current === 'products' ? `<td style="width:40px;padding:4px 8px">
+        ${getProductPrimaryImage(d.id)
+          ? `<img src="${getProductPrimaryImage(d.id)}" style="width:32px;height:32px;border-radius:4px;object-fit:cover;border:1px solid var(--border)">`
+          : `<div style="width:32px;height:32px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text3)">🏷</div>`}
+      </td>` : ''}
+      ${cols.map(c => `<td title="${d[c] ?? ''}">${fmtCell(c, d[c])}</td>`).join('')}
+      <td class="actions">
+        ${current === 'products' ? `<button class="btn btn-sm" style="color:var(--accent)" onclick="openDetail(${d.id})">🔍</button>` : ''}
+        <button class="btn btn-sm" onclick="openEdit(${d.id})">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="confirmDelete(${d.id})">Del</button>
+        ${current==='orders' ? `<button class="btn btn-sm btn-success" onclick="patchStatus(${d.id},'Completed')">✓</button>` : ''}
+        ${current==='shipments' ? `<button class="btn btn-sm btn-success" onclick="patchStatus(${d.id},'Delivered')">📦</button>` : ''}
+        ${current==='payments' ? `<button class="btn btn-sm" onclick="patchStatus(${d.id},'Refunded')" style="color:var(--orange)">↩</button>` : ''}
+        ${current==='reservations' ? `<button class="btn btn-sm" onclick="patchStatus(${d.id},'Cancelled')" style="color:var(--red)">✕</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Fix: add img col header if products
+  if(current === 'products') {
+    document.getElementById('thead').innerHTML = `<tr>
+      <th class="check-col"><input type="checkbox" onclick="selectAll(this)"></th>
+      <th style="width:40px"></th>
+      ${cfg.cols.map(c => `<th onclick="sortBy('${c}')">${c.replace(/_/g,' ')}</th>`).join('')}
+      <th>Actions</th>
+    </tr>`;
+  }
+
+  document.getElementById('sb-total').textContent = allData.length;
+  updateCount();
+}
+
+/* ─── RENDER GALLERY ─────────────────────────────────────── */
+function renderGallery(rows) {
+  const list = rows || allData;
+  const grid = document.getElementById('gallery-grid');
+
+  if(!list.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">📭</div>No products found</div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(d => {
+    const imgSrc = getProductPrimaryImage(d.id);
+    const imgs = getProductImages(d.id);
+    const price = d.price ? '₱' + parseFloat(d.price).toLocaleString('en-PH', {minimumFractionDigits:2}) : '—';
+    const surplus = d.is_surplus === true || d.is_surplus === 'true';
+    return `<div class="product-card ${''}" id="pcard-${d.id}" onclick="openDetail(${d.id})">
+      ${surplus ? `<div class="product-card-surplus">SURPLUS</div>` : ''}
+      <input class="product-card-select" type="checkbox" value="${d.id}" onclick="event.stopPropagation();updateCount()" onchange="updateCardSelected(${d.id},this)">
+      ${imgSrc
+        ? `<img class="product-card-img" src="${imgSrc}" alt="${d.name}" loading="lazy">`
+        : `<div class="product-card-img-placeholder">🏷</div>`}
+      <div class="product-card-body">
+        <div class="product-card-name" title="${d.name}">${d.name || '—'}</div>
+        <div class="product-card-price">${price}</div>
+        <div class="product-card-meta">
+          ${statusBadge(d.status)}
+          <span style="color:var(--text3);font-size:10px">Stock: ${d.stock_quantity ?? '—'}</span>
+          ${imgs.length > 1 ? `<span style="color:var(--text3);font-size:10px">🖼 ${imgs.length}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateCardSelected(id, cb) {
+  const card = document.getElementById('pcard-' + id);
+  if(card) card.classList.toggle('selected', cb.checked);
+  updateCount();
+}
+
+/* ─── PRODUCT DETAIL PANEL ───────────────────────────────── */
+function openDetail(id) {
+  const d = allData.find(x => x.id == id);
+  if(!d) return;
+  detailProductId = id;
+  pendingDetailImages = [...(productImages[id] || [])];
+
+  document.getElementById('detail-name').textContent = d.name || '—';
+  document.getElementById('detail-id-label').textContent = `#${d.id} · ${d.category ? 'Cat: ' + d.category : ''} ${d.store ? '· Store: ' + d.store : ''}`;
+
+  // Body
+  const price = d.price ? '₱' + parseFloat(d.price).toLocaleString('en-PH', {minimumFractionDigits:2}) : '—';
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-price">${price}</div>
+    <div class="detail-row"><span class="lbl">Status</span><span class="val">${statusBadge(d.status)}</span></div>
+    <div class="detail-row"><span class="lbl">Stock</span><span class="val">${d.stock_quantity ?? '—'}</span></div>
+    <div class="detail-row"><span class="lbl">Surplus</span><span class="val">${d.is_surplus === true || d.is_surplus === 'true' ? '<span class="bool-true">✔ Yes</span>' : '<span class="bool-false">✖ No</span>'}</span></div>
+    <div class="detail-row"><span class="lbl">Store ID</span><span class="val">${d.store ?? '—'}</span></div>
+    <div class="detail-row"><span class="lbl">Category ID</span><span class="val">${d.category ?? '—'}</span></div>
+    ${d.description ? `<div class="detail-desc"><div class="lbl">Description</div><div class="val">${d.description}</div></div>` : ''}
+  `;
+
+  document.getElementById('detail-edit-btn').onclick = () => { closeDetail(); openEdit(id); };
+
+  renderDetailImages();
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function renderDetailImages() {
+  const imgs = pendingDetailImages;
+  const wrap = document.getElementById('detail-main-img-wrap');
+  const thumbs = document.getElementById('detail-thumbs');
+
+  if(!imgs.length) {
+    wrap.innerHTML = `<div class="detail-main-img-placeholder">🏷</div>`;
+    thumbs.innerHTML = '';
+    return;
+  }
+
+  wrap.innerHTML = `<img class="detail-main-img" id="detail-main-img" src="${imgs[0].src}" alt="">`;
+  thumbs.innerHTML = imgs.map((img, i) => `
+    <div style="position:relative;flex-shrink:0">
+      <img class="detail-thumb ${i===0?'active':''}" src="${img.src}" onclick="switchDetailImg(${i})" data-idx="${i}">
+      <button onclick="removeDetailImg(${i})" style="position:absolute;top:-4px;right:-4px;background:var(--red);border:none;border-radius:50%;width:16px;height:16px;cursor:pointer;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+    </div>
+  `).join('');
+}
+
+function switchDetailImg(idx) {
+  const mainImg = document.getElementById('detail-main-img');
+  if(mainImg && pendingDetailImages[idx]) mainImg.src = pendingDetailImages[idx].src;
+  document.querySelectorAll('.detail-thumb').forEach((t,i) => t.classList.toggle('active', i===idx));
+}
+
+function removeDetailImg(idx) {
+  pendingDetailImages.splice(idx, 1);
+  renderDetailImages();
+  // auto-save to productImages store
+  if(detailProductId) {
+    productImages[detailProductId] = [...pendingDetailImages];
+    saveImagesToStorage(detailProductId);
+    if(currentView === 'gallery') renderGallery();
+    else render();
+    toast('info', 'Image removed');
+  }
+}
+
+function handleDetailUpload(e) {
+  const files = Array.from(e.target.files);
+  if(!files.length) return;
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      pendingDetailImages.push({ src: ev.target.result, file });
+      loaded++;
+      if(loaded === files.length) {
+        // Save to productImages
+        if(detailProductId) {
+          productImages[detailProductId] = [...pendingDetailImages];
+          saveImagesToStorage(detailProductId);
+          renderDetailImages();
+          if(currentView === 'gallery') renderGallery();
+          else render();
+          toast('success', `${files.length} image(s) added`);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+/* ─── PERSIST IMAGES (localStorage) ──────────────────────── */
+function saveImagesToStorage(id) {
+  try {
+    const imgs = (productImages[id] || []).map(i => ({ src: i.src }));
+    localStorage.setItem('prod_img_' + id, JSON.stringify(imgs));
+  } catch(e) {}
+}
+
+function loadImagesFromStorage(id) {
+  try {
+    const raw = localStorage.getItem('prod_img_' + id);
+    if(raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+function hydrateImagesFromStorage(data) {
+  if(Array.isArray(data)) {
+    data.forEach(d => {
+      if(!productImages[d.id]) {
+        const stored = loadImagesFromStorage(d.id);
+        if(stored && stored.length) productImages[d.id] = stored;
+      }
+    });
+  }
+}
+
+function closeDetail(e) {
+  if(e && e.target !== document.getElementById('detail-overlay')) return;
+  document.getElementById('detail-overlay').classList.remove('open');
+  detailProductId = null;
+}
+
+/* ─── SORT ──────────────────────────────────────────────── */
+let sortCol = null, sortAsc = true;
+function sortBy(col) {
+  if(sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+  const sorted = [...allData].sort((a,b) => {
+    const av = a[col] ?? ''; const bv = b[col] ?? '';
+    if(av < bv) return sortAsc ? -1 : 1;
+    if(av > bv) return sortAsc ? 1 : -1;
+    return 0;
+  });
+  render(sorted);
+  if(currentView === 'gallery') renderGallery(sorted);
+}
+
+/* ─── SEARCH ────────────────────────────────────────────── */
+function filterData() {
+  const q = document.getElementById('search').value.toLowerCase();
+  if(!q) { render(); if(currentView==='gallery') renderGallery(); return; }
+  const filtered = allData.filter(d => Object.values(d).some(v => String(v ?? '').toLowerCase().includes(q)));
+  render(filtered);
+  if(currentView === 'gallery') renderGallery(filtered);
+}
+
+/* ─── SELECT ────────────────────────────────────────────── */
+function selectAll(el) {
+  document.querySelectorAll('#tbody input[type=checkbox]').forEach(x => x.checked = el.checked);
+  document.querySelectorAll('.product-card-select').forEach(x => {
+    x.checked = el.checked;
+    const card = document.getElementById('pcard-' + x.value);
+    if(card) card.classList.toggle('selected', el.checked);
+  });
+  updateCount();
+}
+
+function updateCount() {
+  const t = document.querySelectorAll('#tbody input[type=checkbox]:checked').length;
+  const g = document.querySelectorAll('.product-card-select:checked').length;
+  document.getElementById('sb-selected').textContent = Math.max(t, g);
+}
+
+function getSelected() {
+  const t = [...document.querySelectorAll('#tbody input[type=checkbox]:checked')].map(x => x.value);
+  const g = [...document.querySelectorAll('.product-card-select:checked')].map(x => x.value);
+  return [...new Set([...t, ...g])];
+}
+
+/* ─── BULK ACTION ───────────────────────────────────────── */
+async function bulkRun() {
+  const act = document.getElementById('bulk-action').value;
+  const ids = getSelected();
+  if(!ids.length) { toast('error','No items selected'); return; }
+  if(!act) { toast('error','No action selected'); return; }
+  const statusMap = { complete:'Completed', cancel:'Cancelled', active:'Active', shipping:'Shipping' };
+  let ok = 0;
+  for(const id of ids) {
+    try {
+      if(act === 'delete') {
+        await fetch(API + current + '/' + id + '/', { method:'DELETE', headers:{ 'X-CSRFToken':'{{csrf_token}}' } });
+      } else if(statusMap[act]) {
+        await fetch(API + current + '/' + id + '/', {
+          method:'PATCH',
+          headers:{ 'Content-Type':'application/json', 'X-CSRFToken':'{{csrf_token}}' },
+          body: JSON.stringify({ status: statusMap[act] })
+        });
+      }
+      ok++;
+    } catch(e) {}
+  }
+  toast('success', `${ok} record(s) updated`);
+  load(current);
+}
+
+/* ─── PATCH STATUS ──────────────────────────────────────── */
+async function patchStatus(id, status) {
+  try {
+    const r = await fetch(API + current + '/' + id + '/', {
+      method:'PATCH',
+      headers:{ 'Content-Type':'application/json', 'X-CSRFToken':'{{csrf_token}}' },
+      body: JSON.stringify({ status })
+    });
+    if(!r.ok) throw new Error(r.status);
+    toast('success', `#${id} → ${status}`);
+    load(current);
+  } catch(e) {
+    toast('error', `Failed: ${e.message}`);
+  }
+}
+
+/* ─── EDIT ──────────────────────────────────────────────── */
+async function openEdit(id) {
+  const rec = allData.find(d => d.id == id);
+  if(!rec) return;
+  editingId = id;
+  isCreating = false;
+  document.getElementById('modal-title').textContent = `Edit ${CONFIG[current]?.label ?? current} #${id}`;
+  buildForm(rec);
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function openCreate() {
+  editingId = null;
+  isCreating = true;
+  document.getElementById('modal-title').textContent = `Add ${CONFIG[current]?.label ?? current}`;
+  buildForm({});
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+/* ─── BUILD FORM ────────────────────────────────────────── */
+function buildForm(data) {
+  const cfg = CONFIG[current];
+  if(!cfg) {
+    document.getElementById('modal-body').innerHTML = '<p style="color:var(--text2)">No form configured for this resource.</p>';
+    return;
+  }
+
+  // For products, add image upload section at top
+  const imgSection = current === 'products' ? buildProductImageSection(data.id) : '';
+
+  const html = cfg.fields.map(f => {
+    const val = data[f.key] ?? '';
+    let input;
+    if(f.type === 'textarea') {
+      input = `<textarea class="form-input" name="${f.key}" rows="3" style="resize:vertical">${val}</textarea>`;
+    } else if(f.type === 'select') {
+      const opts = f.options.map(o => `<option value="${o}" ${String(val)===o?'selected':''}>${o}</option>`).join('');
+      input = `<select class="form-input" name="${f.key}">${opts}</select>`;
+    } else {
+      input = `<input class="form-input" type="${f.type}" name="${f.key}" value="${val}" ${f.required?'required':''}>`;
+    }
+    return `<div class="form-group">
+      <label class="form-label">${f.label}${f.required?' *':''}</label>${input}
+    </div>`;
+  }).join('');
+
+  document.getElementById('modal-body').innerHTML = imgSection + html;
+
+  // Wire up drag-drop for image zone
+  if(current === 'products') wireImageUpload(data.id);
+}
+
+function buildProductImageSection(id) {
+  const imgs = id ? (productImages[id] || []) : [];
+  const previewHtml = imgs.map((img, i) => `
+    <div class="img-preview-item" id="modal-img-${i}">
+      <img src="${img.src}">
+      ${i===0 ? '<div class="img-preview-primary">PRIMARY</div>' : ''}
+      <button class="img-preview-remove" onclick="removeModalImg(${i},${id||'null'})">✕</button>
+    </div>
+  `).join('');
+
+  return `
+    <div class="img-upload-section">
+      <label class="img-upload-label">Product Images</label>
+      <div class="img-upload-zone" id="img-upload-zone">
+        <input type="file" id="modal-img-input" accept="image/*" multiple onchange="handleModalImgUpload(event,${id||'null'})">
+        <div class="img-upload-icon">🖼</div>
+        <div class="img-upload-text">Drop images here or <span>browse</span></div>
+        <div style="color:var(--text3);font-size:10px;margin-top:4px">PNG, JPG, WEBP · Multiple allowed</div>
+      </div>
+      <div class="img-preview-grid" id="modal-img-preview">${previewHtml}</div>
+    </div>
+  `;
+}
+
+// Temporary storage for images staged in the modal (for new products)
+let modalStagedImages = [];
+
+function wireImageUpload(id) {
+  modalStagedImages = id ? [...(productImages[id] || [])] : [];
+  const zone = document.getElementById('img-upload-zone');
+  if(!zone) return;
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if(files.length) processModalFiles(files, id);
+  });
+}
+
+function handleModalImgUpload(e, id) {
+  const files = Array.from(e.target.files);
+  if(files.length) processModalFiles(files, id);
+  e.target.value = '';
+}
+
+function processModalFiles(files, id) {
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      modalStagedImages.push({ src: ev.target.result, file });
+      loaded++;
+      if(loaded === files.length) refreshModalImgPreview(id);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function refreshModalImgPreview(id) {
+  const preview = document.getElementById('modal-img-preview');
+  if(!preview) return;
+  preview.innerHTML = modalStagedImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.src}">
+      ${i===0 ? '<div class="img-preview-primary">PRIMARY</div>' : ''}
+      <button class="img-preview-remove" onclick="removeModalImg(${i},${id||'null'})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeModalImg(idx, id) {
+  modalStagedImages.splice(idx, 1);
+  refreshModalImgPreview(id);
+}
+
+/* ─── SAVE MODAL ────────────────────────────────────────── */
+async function saveModal() {
+  const cfg = CONFIG[current];
+  if(!cfg) return;
+
+  const body = {};
+  cfg.fields.forEach(f => {
+    const el = document.querySelector(`#modal-body [name="${f.key}"]`);
+    if(!el) return;
+    let v = el.value;
+    if(f.type === 'number') v = v === '' ? null : parseFloat(v);
+    if(f.type === 'select' && (v === 'true' || v === 'false')) v = v === 'true';
+    body[f.key] = v;
+  });
+
+  const url = isCreating ? API + current + '/' : API + current + '/' + editingId + '/';
+  const method = isCreating ? 'POST' : 'PATCH';
+
+  try {
+    const r = await fetch(url, {
+      method,
+      headers:{ 'Content-Type':'application/json', 'X-CSRFToken':'{{csrf_token}}' },
+      body: JSON.stringify(body)
+    });
+    if(!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(JSON.stringify(err));
+    }
+
+    const saved = await r.json().catch(() => ({}));
+    const savedId = saved.id || editingId;
+
+    // Persist staged images
+    if(current === 'products' && modalStagedImages.length) {
+      productImages[savedId] = modalStagedImages.map(i => ({ src: i.src }));
+      saveImagesToStorage(savedId);
+      // If your backend supports image upload, send FormData here:
+      // const fd = new FormData();
+      // modalStagedImages.forEach((img,i) => img.file && fd.append('images', img.file));
+      // await fetch(API + 'products/' + savedId + '/images/', { method:'POST', body: fd, headers:{'X-CSRFToken':'{{csrf_token}}'} });
+    }
+
+    closeModal();
+    toast('success', isCreating ? 'Record created' : `#${editingId} updated`);
+    load(current);
+  } catch(e) {
+    toast('error', `Save failed: ${e.message.slice(0,80)}`);
+  }
+}
+
+/* ─── DELETE ────────────────────────────────────────────── */
+let pendingDeleteId = null;
+function confirmDelete(id) {
+  pendingDeleteId = id;
+  document.getElementById('confirm-msg').textContent = `Delete record #${id} from ${CONFIG[current]?.label ?? current}?`;
+  document.getElementById('confirm-ok').onclick = doDelete;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+async function doDelete() {
+  try {
+    const r = await fetch(API + current + '/' + pendingDeleteId + '/', {
+      method:'DELETE',
+      headers:{ 'X-CSRFToken':'{{csrf_token}}' }
+    });
+    if(r.status !== 204 && !r.ok) throw new Error(r.status);
+    toast('success', `#${pendingDeleteId} deleted`);
+    load(current);
+  } catch(e) {
+    toast('error', `Delete failed: ${e.message}`);
+  }
+  closeConfirm();
+}
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  pendingDeleteId = null;
+}
+
+/* ─── MODAL CLOSE ───────────────────────────────────────── */
+function closeModal(e) {
+  if(e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+/* ─── TOAST ─────────────────────────────────────────────── */
+function toast(type, msg) {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+/* ─── STATS ─────────────────────────────────────────────── */
+async function updateStats() {
+  try {
+    const [orders, users, products, reservations] = await Promise.all([
+      fetch(API + 'orders/').then(r => r.json()).catch(() => []),
+      fetch(API + 'users/').then(r => r.json()).catch(() => []),
+      fetch(API + 'products/').then(r => r.json()).catch(() => []),
+      fetch(API + 'reservations/').then(r => r.json()).catch(() => []),
+    ]);
+    const rev = orders.reduce((a, b) => a + parseFloat(b.total_amount || 0), 0);
+    document.getElementById('rev').textContent = rev.toLocaleString('en-PH', {minimumFractionDigits:2});
+    document.getElementById('stat-users').textContent = users.length;
+    document.getElementById('stat-orders').textContent = orders.length;
+    document.getElementById('stat-lowstock').textContent = products.filter(x => x.stock_quantity < 5).length;
+    document.getElementById('stat-reservations').textContent = reservations.filter(x => x.status === 'Active').length;
+  } catch(e) {}
+}
+
+/* ─── CLOCK ─────────────────────────────────────────────── */
+function tick() { document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-PH'); }
+tick(); setInterval(tick, 1000);
+
+/* ─── KEYBOARD ──────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') { closeModal(); closeConfirm(); closeDetail(); }
+  if((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); document.getElementById('search').focus(); }
+});
+
+/* ─── INIT ───────────────────────────────────────────────── */
+
+/* ─── INIT ─── */
+async function initTerminal() {
+    await hydrateDropdowns(); // Load the dropdown data first
+    load('orders');           // Then load the default view
+    updateStats();
+    setInterval(updateStats, 60000);
+}
+
+initTerminal();
+
+load('orders');
+updateStats();
+setInterval(updateStats, 60000);
+</script>
+</body>
+</html>

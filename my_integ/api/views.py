@@ -9,7 +9,19 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.template.loader import get_template
+from decimal import Decimal
+from django.db.models import Sum
+from django.http import JsonResponse
 from django.utils import timezone
+from .models import Voucher
+import json
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+# views.py
+from django_filters.rest_framework import DjangoFilterBackend
+
+
+
 
 # PDF Generation Imports
 from xhtml2pdf import pisa
@@ -24,6 +36,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.messages import get_messages
+from rest_framework import viewsets
+from .models import Reservation
+from .serializers import ReservationSerializer
+
 
 from .forms import RegisterForm
 from .models import (
@@ -227,33 +243,95 @@ def admin_terminal(request):
     if not request.user.is_superuser:
         messages.error(request, "Access Denied.")
         return redirect('home')
-    
+
+    # --- BASIC COUNTS ---
     total_users = User.objects.count()
     total_products = Product.objects.count()
-    total_sales = Order.objects.filter(status='Completed').aggregate(models.Sum('total_amount'))['total_amount__sum'] or 0
-    completed_orders_count = Order.objects.filter(status='Completed').count()
-    category_trends = Category.objects.annotate(p_count=models.Count('product')).order_by('-p_count')
+    total_stores = Store.objects.count()
+    total_orders = Order.objects.count()
+
+    # --- ORDER STATUS ---
+    completed_orders = Order.objects.filter(status='Completed')
+    pending_orders = Order.objects.filter(status='Pending').count()
+
+    # --- SALES ---
+    total_sales = completed_orders.aggregate(
+        total=models.Sum('total_amount')
+    )['total'] or 0
+
+    # --- RESERVATIONS ---
+    total_reservations = Reservation.objects.count()
+    active_reservations = Reservation.objects.filter(status='Active').count()
+    completed_reservations = Reservation.objects.filter(status='Completed')
+
+    reservation_earnings = sum(
+        (r.product.price * r.quantity for r in completed_reservations),
+        Decimal('0.00')
+    )
+
+    # --- COMBINED REVENUE ---
+    total_revenue = total_sales + reservation_earnings
+
+    # --- INVENTORY STATUS ---
+    low_stock = Product.objects.filter(stock_quantity__lte=5).count()
+    out_of_stock = Product.objects.filter(stock_quantity=0).count()
+
+    # --- TOP PRODUCTS ---
+    top_products = (
+        OrderItem.objects.values('product__name')
+        .annotate(total_sold=Sum('quantity'))
+        .order_by('-total_sold')[:5]
+    )
+
+    # --- CATEGORY TRENDS ---
+    category_trends = Category.objects.annotate(
+        p_count=models.Count('product')
+    ).order_by('-p_count')
+
+    # --- RECENT USERS ---
     system_users = User.objects.all().order_by('-date_joined')[:10]
-    
-    # Sales Graph Data for Last 6 Months
+
+    # --- CHAT ACTIVITY ---
+    total_messages = ChatMessage.objects.count()
+
+    # --- SALES GRAPH ---
     six_months_ago = timezone.now() - datetime.timedelta(days=180)
-    monthly_sales = Order.objects.filter(
-        status='Completed', order_date__gte=six_months_ago
-    ).annotate(month=TruncMonth('order_date')).values('month').annotate(total=Sum('total_amount')).order_by('month')
+
+    monthly_sales = (
+        Order.objects.filter(
+            status='Completed',
+            order_date__gte=six_months_ago
+        )
+        .annotate(month=TruncMonth('order_date'))
+        .values('month')
+        .annotate(total=Sum('total_amount'))
+        .order_by('month')
+    )
 
     sales_labels = [d['month'].strftime("%b %Y") for d in monthly_sales]
     sales_values = [float(d['total']) for d in monthly_sales]
 
-    return render(request, 'admin/terminal.html', {
-        'total_users': total_users, 
-        'total_products': total_products, 
+    return render(request, 'admin/admin_terminal.html', {
+        'total_users': total_users,
+        'total_products': total_products,
+        'total_stores': total_stores,
+        'total_orders': total_orders,
+        'pending_orders': pending_orders,
         'total_sales': total_sales,
-        'completed_orders_count': completed_orders_count, 
-        'category_trends': category_trends, 
+        'total_revenue': total_revenue,
+        'low_stock': low_stock,
+        'out_of_stock': out_of_stock,
+        'total_reservations': total_reservations,
+        'active_reservations': active_reservations,
+        'total_messages': total_messages,
+        'category_trends': category_trends,
         'system_users': system_users,
+        'top_products': top_products,
         'sales_labels': sales_labels,
         'sales_values': sales_values,
     })
+
+
 
 @login_required(login_url='login')
 def manage_products(request):
@@ -512,8 +590,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
     
-    def get_queryset(self): 
-        return Order.objects.filter(user=self.request.user)
+    def get_queryset(self):
+        user = self.request.user
+        # If the user is an Admin/Staff, show all orders for the Terminal
+        if user.is_superuser or user.is_staff:
+            return Order.objects.all().order_by('-order_date')
+        
+        # Regular customers only see their own
+        return Order.objects.filter(user=user).order_by('-order_date')
         
     def create(self, request, *args, **kwargs):
         profile, _ = Profile.objects.get_or_create(user=request.user)
@@ -572,6 +656,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ChatMessageViewSet(viewsets.ModelViewSet):
     serializer_class = ChatMessageSerializer
     permission_classes = [IsAuthenticated]
@@ -596,6 +681,48 @@ class CartItemViewSet(viewsets.ModelViewSet):
             raise ValidationError("Restricted. Sellers cannot add items to cart.")
         serializer.save(cart=Cart.objects.get_or_create(user=self.request.user)[0])
 
+
+class ReservationViewSet(viewsets.ModelViewSet):
+    queryset = Reservation.objects.all()
+    serializer_class = ReservationSerializer
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    queryset = Profile.objects.all()
+    serializer_class = UserSerializer
+
+@api_view(['POST'])
+def validate_voucher(request):
+    code = request.data.get('code')
+    subtotal = float(request.data.get('subtotal', 0))
+    
+    try:
+        voucher = Voucher.objects.get(code=code, start_date__lte=timezone.now(), end_date__gte=timezone.now())
+        
+        # Check minimum spend
+        if voucher.min_spend and subtotal < voucher.min_spend:
+            return Response({'valid': False, 'message': f'Min spend ₱{voucher.min_spend} required.'}, status=400)
+        
+        # Calculate Discount
+        if voucher.discount_type == 'percentage':
+            discount_amount = subtotal * (float(voucher.discount_value) / 100)
+        else:
+            discount_amount = float(voucher.discount_value)
+
+        return Response({
+            'valid': True,
+            'code': voucher.code,
+            'discount_amount': discount_amount
+        })
+    except Voucher.DoesNotExist:
+        return Response({'valid': False, 'message': 'Voucher not found or expired.'}, status=404)
+
+class VoucherViewSet(viewsets.ModelViewSet):
+    queryset = Voucher.objects.all()
+    serializer_class = VoucherSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['code'] # This allows the ?code= query
+    
 class UserViewSet(viewsets.ModelViewSet): queryset = User.objects.all(); serializer_class = UserSerializer
 class CategoryViewSet(viewsets.ModelViewSet): queryset = Category.objects.all(); serializer_class = CategorySerializer
 class StoreViewSet(viewsets.ModelViewSet): queryset = Store.objects.all(); serializer_class = StoreSerializer

@@ -7,969 +7,9 @@
     <title>Purchase History | AgriResQ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="{% static 'css/history.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;0,900;1,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-    /* ═══════════════════════════════════════════
-       TOKENS — matched to agriresq.css
-    ═══════════════════════════════════════════ */
-    :root {
-        --bg:          #FFFFFF;
-        --bg-subtle:   #F7FAF5;
-        --bg-muted:    #EFF5EC;
-        --bg-2:        #F7FAF5;
-        --bg-3:        #EFF5EC;
-        --surface:     #FFFFFF;
-        --surface-2:   #F7FAF5;
-        --surface-3:   #EFF5EC;
-        --border:      #DDE8D8;
-        --border-mid:  #C4D9BC;
-        --border-lit:  #C4D9BC;
-        --border-hi:   #A8C49E;
-        --border-strong: #A8C49E;
-        --green:       #2A7D3F;
-        --green-mid:   #3A9952;
-        --green-2:     #3A9952;
-        --green-lite:  #4DB868;
-        --green-pale:  #E8F5EC;
-        --green-glow:  rgba(42,125,63,0.15);
-        --gold:        #C17B2A;
-        --gold-2:      #E09A40;
-        --gold-lite:   #E09A40;
-        --gold-pale:   #FDF3E3;
-        --gold-glow:   rgba(193,123,42,0.15);
-        --red:         #C0392B;
-        --red-lite:    #E74C3C;
-        --red-pale:    #FEF0EE;
-        --ok:          #1E8449;
-        --ok-pale:     #E8F8EE;
-        --success:     #1E8449;
-        --success-bg:  #E8F8EE;
-        --warn:        #B7770D;
-        --warn-pale:   #FEF9E7;
-        --warning:     #B7770D;
-        --warning-bg:  #FEF9E7;
-        --info:        #1A6FA8;
-        --info-bg:     #EBF5FB;
-        --error:       #C0392B;
-        --error-bg:    #FEF0EE;
-        --text:        #1A2E1E;
-        --text-soft:   #3D5C44;
-        --text-2:      #3D5C44;
-        --text-muted:  #7A9A80;
-        --text-3:      #7A9A80;
-        --text-faint:  #B0C8B4;
-        --text-4:      #B0C8B4;
-        --nav-bg:      #FFFFFF;
-        --nav-border:  #DDE8D8;
-        --font-display: 'Fraunces', Georgia, serif;
-        --font-body:   'Outfit', system-ui, sans-serif;
-        --fd:          'Fraunces', Georgia, serif;
-        --fb:          'Outfit', system-ui, sans-serif;
-        --radius-xs:   4px;
-        --radius-sm:   8px;
-        --radius:      12px;
-        --radius-lg:   18px;
-        --radius-xl:   24px;
-        --radius-pill: 100px;
-        --r-s:         6px;
-        --r:           10px;
-        --r-l:         16px;
-        --r-xl:        22px;
-        --r-pill:      100px;
-        --navbar-h:    70px;
-        --nav-h:       70px;
-        --shadow-xs:   0 1px 4px rgba(26,46,30,0.06);
-        --shadow-sm:   0 2px 10px rgba(26,46,30,0.08);
-        --shadow:      0 4px 20px rgba(26,46,30,0.10);
-        --shadow-lg:   0 12px 40px rgba(26,46,30,0.12);
-        --shadow-xl:   0 24px 64px rgba(26,46,30,0.14);
-        --sh-xs:       0 1px 4px rgba(26,46,30,0.07);
-        --sh-s:        0 2px 12px rgba(26,46,30,0.09);
-        --sh:          0 4px 24px rgba(26,46,30,0.11);
-        --sh-l:        0 10px 40px rgba(26,46,30,0.13);
-        --sh-xl:       0 20px 60px rgba(26,46,30,0.15);
-    }
-
-    [data-theme="dark"] {
-        --bg:          #0F1A10;
-        --bg-subtle:   #141F15;
-        --bg-muted:    #1A2A1C;
-        --bg-2:        #141F15;
-        --bg-3:        #1A2A1C;
-        --surface:     #1A2A1C;
-        --surface-2:   #203324;
-        --surface-3:   #273D2A;
-        --border:      #2D4530;
-        --border-mid:  #3A5840;
-        --border-lit:  #3A5840;
-        --border-hi:   #4A6E52;
-        --border-strong: #4A6E52;
-        --green:       #4DB868;
-        --green-mid:   #5DC878;
-        --green-2:     #5DC878;
-        --green-lite:  #72D88E;
-        --green-pale:  rgba(77,184,104,0.12);
-        --green-glow:  rgba(77,184,104,0.20);
-        --gold:        #E09A40;
-        --gold-2:      #F0B45A;
-        --gold-lite:   #F0B45A;
-        --gold-pale:   rgba(224,154,64,0.10);
-        --gold-glow:   rgba(224,154,64,0.20);
-        --text:        #E8F2EA;
-        --text-soft:   #A8C8AE;
-        --text-2:      #A8C8AE;
-        --text-muted:  #6A8A70;
-        --text-3:      #6A8A70;
-        --text-faint:  #3A5040;
-        --text-4:      #3A5040;
-        --nav-bg:      #0F1A10;
-        --nav-border:  #2D4530;
-        --sh-xs:       0 1px 4px rgba(0,0,0,0.35);
-        --sh-s:        0 2px 12px rgba(0,0,0,0.4);
-        --sh:          0 4px 24px rgba(0,0,0,0.45);
-        --sh-l:        0 10px 40px rgba(0,0,0,0.55);
-        --sh-xl:       0 20px 60px rgba(0,0,0,0.65);
-        --shadow-xs:   0 1px 4px rgba(0,0,0,0.3);
-        --shadow-sm:   0 2px 10px rgba(0,0,0,0.35);
-        --shadow:      0 4px 20px rgba(0,0,0,0.40);
-        --shadow-lg:   0 12px 40px rgba(0,0,0,0.50);
-        --shadow-xl:   0 24px 64px rgba(0,0,0,0.60);
-    }
-
-    /* ═══════════════════════════════════════════
-       RESET & BASE
-    ═══════════════════════════════════════════ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-
-    body {
-        font-family: var(--fb);
-        font-size: 15px;
-        line-height: 1.65;
-        background: var(--bg);
-        color: var(--text);
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        -webkit-font-smoothing: antialiased;
-        transition: background .3s, color .3s;
-    }
-
-    a    { color: inherit; text-decoration: none; }
-    img  { display: block; max-width: 100%; }
-    button { font-family: var(--fb); cursor: pointer; border: none; background: none; }
-    ul   { list-style: none; }
-
-    /* ═══════════════════════════════════════════
-       ANIMATIONS
-    ═══════════════════════════════════════════ */
-    @keyframes up   { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
-    @keyframes in   { from { opacity:0; } to { opacity:1; } }
-    @keyframes pop  { from { opacity:0; transform:scale(0.93) translateY(16px); } to { opacity:1; transform:none; } }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
-    @keyframes dropIn { from { opacity:0; transform:translateY(-8px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
-
-    /* ═══════════════════════════════════════════
-       WOVEN STRIPE — matches agriresq.css exactly
-    ═══════════════════════════════════════════ */
-    .woven {
-        height: 4px;
-        flex-shrink: 0;
-        background: repeating-linear-gradient(
-            90deg,
-            var(--green)      0px,  var(--green)      10px,
-            var(--gold)       10px, var(--gold)        18px,
-            var(--green-mid)  18px, var(--green-mid)   26px,
-            var(--gold-lite)  26px, var(--gold-lite)   34px,
-            #8DC26A           34px, #8DC26A            42px
-        );
-    }
-
-    /* ═══════════════════════════════════════════
-       NAVBAR — exactly matching agriresq.css
-    ═══════════════════════════════════════════ */
-    .navbar {
-        background: var(--nav-bg);
-        position: sticky;
-        top: 0;
-        z-index: 200;
-        box-shadow: 0 1px 0 var(--nav-border), var(--shadow-sm);
-    }
-
-    /* Top utility bar — .navbar-top in agriresq.css */
-    .navbar-top {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 8px;
-        padding: 6px 32px;
-        background: var(--bg-subtle);
-        border-bottom: 1px solid var(--border);
-        font-size: 13px;
-    }
-
-    .navbar-top a,
-    .navbar-top button {
-        color: var(--text-soft);
-        font-size: 13px;
-        font-weight: 600;
-        padding: 4px 12px;
-        border-radius: var(--radius-pill);
-        border: none;
-        background: transparent;
-        transition: background .2s, color .2s;
-        font-family: var(--fb);
-        white-space: nowrap;
-    }
-
-    .navbar-top a:hover,
-    .navbar-top button:hover {
-        background: var(--green-pale);
-        color: var(--green);
-    }
-
-    /* Main nav bar — .navbar-main in agriresq.css */
-    .navbar-main {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        padding: 0 32px;
-        height: var(--navbar-h);
-    }
-
-    /* Logo — matches agriresq.css .logo */
-    .logo-wrap { cursor: pointer; flex-shrink: 0; user-select: none; }
-
-    .logo {
-        font-family: var(--fd);
-        font-size: 26px;
-        font-weight: 900;
-        color: var(--green);
-        letter-spacing: -0.5px;
-        line-height: 1;
-    }
-
-    .logo::before {
-        content: "🌾 ";
-        font-style: normal;
-        font-size: 20px;
-    }
-
-    .logo-tagline {
-        font-size: 9px;
-        font-weight: 600;
-        color: var(--text-muted);
-        letter-spacing: 2.5px;
-        text-transform: uppercase;
-        margin-top: 1px;
-    }
-
-    /* Page title — matches .navbar-page-title in agriresq.css */
-    .navbar-page-title {
-        font-family: var(--fd);
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--text-soft);
-        border-left: 2px solid var(--border-strong);
-        padding-left: 18px;
-        margin-left: 4px;
-        flex: 1;
-    }
-
-    /* Navbar actions — matches .navbar-actions */
-    .navbar-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-left: auto;
-        flex-shrink: 0;
-    }
-
-    /* Cart link — matches .cart-link in agriresq.css */
-    .cart-link {
-        position: relative;
-        font-size: 20px;
-        padding: 9px 12px;
-        background: var(--green-pale);
-        border: 1.5px solid var(--border-lit);
-        border-radius: var(--radius-sm);
-        display: inline-flex;
-        align-items: center;
-        transition: border-color .2s, background .2s;
-        color: var(--text);
-    }
-
-    .cart-link:hover {
-        border-color: var(--green);
-        background: rgba(42,125,63,0.08);
-    }
-
-    .cart-badge {
-        position: absolute;
-        top: -5px; right: -5px;
-        background: var(--green);
-        color: #fff;
-        font-size: 10px;
-        font-weight: 800;
-        min-width: 18px; height: 18px;
-        border-radius: 9px;
-        display: flex; align-items: center; justify-content: center;
-        padding: 0 4px;
-        border: 2px solid var(--bg);
-        box-shadow: var(--shadow-xs);
-    }
-
-    /* Theme toggle — matches .theme-toggle-nav */
-    .theme-toggle-nav {
-        background: var(--bg-subtle);
-        border: 1.5px solid var(--border-lit);
-        color: var(--text-soft);
-        padding: 7px 14px;
-        border-radius: var(--radius-pill);
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        font-family: var(--fb);
-        transition: all .2s;
-    }
-
-    .theme-toggle-nav:hover {
-        border-color: var(--green);
-        color: var(--green);
-        background: var(--green-pale);
-    }
-
-    /* User dropdown — matches agriresq.css .user-dropdown-wrap */
-    .user-dropdown-wrap {
-        position: relative;
-        display: inline-block;
-    }
-
-    .user-chip {
-        display: inline-flex !important;
-        align-items: center;
-        gap: 6px;
-        background: var(--green) !important;
-        color: #fff !important;
-        padding: 7px 16px !important;
-        border-radius: var(--radius-pill) !important;
-        font-weight: 700 !important;
-        font-size: 13px !important;
-        border: none !important;
-        box-shadow: 0 2px 8px var(--green-glow);
-        transition: background .2s !important;
-        cursor: pointer;
-        font-family: var(--fb) !important;
-    }
-
-    .user-chip:hover { background: var(--green-mid) !important; }
-
-    .user-dropdown {
-        display: none;
-        position: absolute;
-        top: calc(100% + 8px); right: 0;
-        background: var(--bg);
-        border: 1.5px solid var(--border-lit);
-        border-radius: var(--radius);
-        overflow: hidden;
-        min-width: 200px;
-        box-shadow: var(--shadow-lg);
-        z-index: 300;
-    }
-
-    .user-dropdown-wrap:hover .user-dropdown,
-    .user-dropdown-wrap:focus-within .user-dropdown {
-        display: block;
-        animation: dropIn .18s cubic-bezier(.22,.68,0,1.2);
-    }
-
-    .user-dropdown a {
-        display: flex !important;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 18px !important;
-        font-size: 14px !important;
-        font-weight: 600 !important;
-        background: transparent !important;
-        border-bottom: 1px solid var(--border) !important;
-        color: var(--text) !important;
-        border-radius: 0 !important;
-        transition: background .15s, color .15s;
-    }
-
-    .user-dropdown a:last-child { border-bottom: none !important; }
-
-    .user-dropdown a:hover {
-        background: var(--green-pale) !important;
-        color: var(--green) !important;
-    }
-
-    /* ═══════════════════════════════════════════
-       STATUS TABS
-    ═══════════════════════════════════════════ */
-    .tabs {
-        position: sticky; top: var(--navbar-h); z-index: 89;
-        display: flex; justify-content: center; overflow-x: auto; scrollbar-width: none;
-        background: var(--bg); border-bottom: 2px solid var(--border);
-        flex-shrink: 0;
-    }
-    .tabs::-webkit-scrollbar { display: none; }
-
-    .tab {
-        flex-shrink: 0; padding: 15px 26px;
-        border-bottom: 3px solid transparent; margin-bottom: -2px;
-        color: var(--text-muted); font-size: 13px; font-weight: 600;
-        cursor: pointer; transition: all .2s; white-space: nowrap;
-        font-family: var(--fb); background: none; border-top: none; border-left: none; border-right: none;
-    }
-    .tab:hover  { color: var(--text-soft); background: var(--bg-subtle); }
-    .tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 700; }
-
-    /* ═══════════════════════════════════════════
-       PAGE LAYOUT
-    ═══════════════════════════════════════════ */
-    .page {
-        display: grid;
-        grid-template-columns: 1fr 288px;
-        gap: 28px;
-        max-width: 1300px;
-        margin: 0 auto;
-        padding: 32px clamp(16px, 4vw, 48px) 80px;
-        flex: 1;
-        align-items: start;
-    }
-
-    .main-col { display: flex; flex-direction: column; min-width: 0; }
-
-    .side-col {
-        position: sticky;
-        top: calc(var(--navbar-h) + 54px + 16px);
-        display: flex; flex-direction: column; gap: 14px;
-    }
-
-    /* ═══════════════════════════════════════════
-       PAGE HEADING
-    ═══════════════════════════════════════════ */
-    .page-heading {
-        display: flex; align-items: center; justify-content: space-between;
-        margin: 20px 0 22px;
-    }
-
-    .page-title {
-        font-family: var(--fd); font-size: 26px; font-weight: 900;
-        color: var(--text); letter-spacing: -0.3px;
-    }
-
-    .count-pill {
-        font-size: 12px; color: var(--text-muted); font-weight: 600;
-        background: var(--bg-muted); border: 1px solid var(--border);
-        border-radius: var(--radius-pill); padding: 4px 14px;
-    }
-
-    /* ═══════════════════════════════════════════
-       SECTION HEADER (reservations)
-    ═══════════════════════════════════════════ */
-    .res-group { margin-bottom: 28px; }
-
-    .section-tag {
-        display: inline-flex; align-items: center; gap: 8px;
-        font-family: var(--fd); font-size: 14px; font-weight: 700;
-        color: var(--gold); margin-bottom: 14px;
-        padding: 7px 16px 7px 12px;
-        background: var(--gold-pale);
-        border: 1.5px solid rgba(193,123,42,0.22);
-        border-radius: var(--radius-pill);
-    }
-
-    /* ═══════════════════════════════════════════
-       CLAIM CARD
-    ═══════════════════════════════════════════ */
-    .claim-card {
-        background: var(--bg);
-        border: 1.5px solid var(--border-mid);
-        border-left: 4px solid var(--gold);
-        border-radius: var(--radius-xl);
-        padding: 16px 20px; margin-bottom: 12px;
-        display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-        box-shadow: var(--shadow-xs);
-        animation: up .4s both;
-        transition: transform .22s, box-shadow .22s;
-        position: relative; overflow: hidden;
-    }
-    .claim-card::after {
-        content: '';
-        position: absolute; top: 0; left: 0; right: 0; height: 2px;
-        background: linear-gradient(90deg, var(--gold), var(--gold-lite), transparent);
-        opacity: 0; transition: opacity .22s;
-    }
-    .claim-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-    .claim-card:hover::after { opacity: 1; }
-    [data-theme="dark"] .claim-card { background: var(--bg-3); }
-
-    .thumb {
-        width: 56px; height: 56px; border-radius: var(--radius);
-        background: var(--bg-muted); border: 1.5px solid var(--border);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 22px; overflow: hidden; flex-shrink: 0;
-    }
-    .thumb img { width: 100%; height: 100%; object-fit: cover; }
-
-    .claim-info { flex: 1; min-width: 0; }
-    .claim-name {
-        font-family: var(--fd); font-size: 15px; font-weight: 700; color: var(--text);
-        margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .claim-store { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
-    .claim-meta  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .claim-amt   { font-size: 13px; font-weight: 700; color: var(--gold); }
-
-    /* Timer */
-    .timer-box {
-        background: var(--bg-subtle); border: 1.5px solid var(--border-mid);
-        border-radius: var(--radius-lg); padding: 10px 16px;
-        text-align: center; min-width: 136px; box-shadow: var(--shadow-xs);
-    }
-    .timer-label {
-        font-size: 8px; font-weight: 700; letter-spacing: 2px;
-        text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; display: block;
-    }
-    .timer-val {
-        font-size: 17px; font-family: monospace; font-weight: 800;
-        color: var(--success); letter-spacing: 1px; line-height: 1;
-    }
-    .timer-val.urgent  { color: var(--warning); animation: blink 1.5s infinite; }
-    .timer-val.expired { color: var(--red); font-size: 11px; letter-spacing: 1.5px; }
-
-    /* ═══════════════════════════════════════════
-       ORDER CARD
-    ═══════════════════════════════════════════ */
-    .order-card {
-        background: var(--bg);
-        border: 1.5px solid var(--border);
-        border-radius: var(--radius-xl); overflow: hidden;
-        margin-bottom: 14px; box-shadow: var(--shadow-xs);
-        animation: up .4s both;
-        transition: border-color .2s, box-shadow .22s, transform .22s;
-    }
-    .order-card:nth-child(1){animation-delay:.04s}
-    .order-card:nth-child(2){animation-delay:.08s}
-    .order-card:nth-child(3){animation-delay:.12s}
-    .order-card:nth-child(4){animation-delay:.16s}
-    .order-card:nth-child(5){animation-delay:.20s}
-    [data-theme="dark"] .order-card { background: var(--bg-3); }
-    .order-card:hover { border-color: var(--green); box-shadow: var(--shadow); transform: translateY(-2px); }
-
-    /* Store row */
-    .store-row {
-        display: flex; align-items: center; justify-content: space-between;
-        gap: 10px; padding: 16px 28px; flex-wrap: wrap;
-        background: var(--bg-subtle); border-bottom: 1px solid var(--border);
-    }
-    [data-theme="dark"] .store-row { background: var(--surface); }
-
-    .store-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .store-name { font-weight: 700; font-size: 14px; color: var(--text); }
-
-    .order-id {
-        font-size: 10px; font-family: monospace; color: var(--text-muted);
-        background: var(--bg-muted); border: 1px solid var(--border);
-        padding: 2px 8px; border-radius: var(--radius-sm); letter-spacing: .5px;
-    }
-
-    .btn-sm {
-        font-size: 11px; font-weight: 600; padding: 4px 12px;
-        border-radius: var(--radius-pill); border: 1.5px solid var(--border-mid);
-        background: var(--bg); color: var(--text-soft);
-        font-family: var(--fb); cursor: pointer; transition: all .2s;
-    }
-    [data-theme="dark"] .btn-sm { background: var(--bg-3); }
-    .btn-sm:hover { border-color: var(--green); color: var(--green); background: var(--green-pale); }
-    .btn-sm.gold:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-pale); }
-
-    /* Status badges */
-    .badge {
-        font-size: 9px; font-weight: 800; letter-spacing: 1.2px;
-        text-transform: uppercase; padding: 4px 12px;
-        border-radius: var(--radius-pill); flex-shrink: 0;
-    }
-    .b-pending, .b-topay   { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(183,119,13,0.22); }
-    .b-paid, .b-ship,
-    .b-receive             { background: var(--green-pale);  color: var(--green);   border: 1px solid rgba(42,125,63,0.22); }
-    .b-done                { background: var(--success-bg);  color: var(--success); border: 1px solid rgba(30,132,73,0.22); }
-    .b-cancel              { background: var(--red-pale);    color: var(--red);     border: 1px solid rgba(192,57,43,0.18); }
-    .b-pickup              { background: var(--gold-pale);   color: var(--gold);    border: 1px solid rgba(193,123,42,0.22); }
-
-    /* Items */
-    .items-list { padding: 4px 28px; }
-
-    .item-row {
-        display: flex; align-items: center; gap: 16px;
-        padding: 15px 0; border-bottom: 1px solid var(--border);
-        transition: background .15s;
-    }
-    .item-row:last-child { border-bottom: none; }
-    .item-row:hover {
-        background: var(--bg-subtle);
-        margin: 0 -28px; padding-left: 28px; padding-right: 28px;
-    }
-
-    .item-info  { flex: 1; min-width: 0; }
-    .item-name  {
-        font-weight: 600; font-size: 14px; color: var(--text);
-        margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .item-qty   { font-size: 12px; color: var(--text-muted); }
-    .item-price { font-family: var(--fd); font-size: 20px; font-weight: 700; color: var(--green); flex-shrink: 0; }
-
-    /* Card footer */
-    .card-foot {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 16px 28px; border-top: 1px solid var(--border);
-        flex-wrap: wrap; gap: 12px; background: var(--bg-subtle);
-    }
-    [data-theme="dark"] .card-foot { background: var(--surface); }
-
-    .total-wrap  { display: flex; align-items: baseline; gap: 8px; }
-    .total-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
-    .total-amt   { font-family: var(--fd); font-size: 26px; font-weight: 900; color: var(--green); line-height: 1; }
-
-    .foot-actions { display: flex; gap: 8px; }
-
-    .btn-cancel {
-        background: var(--red-pale); color: var(--red);
-        border: 1.5px solid rgba(192,57,43,0.2);
-        padding: 8px 16px; border-radius: var(--radius-pill);
-        font-size: 12px; font-weight: 700; cursor: pointer;
-        transition: all .2s; font-family: var(--fb);
-    }
-    .btn-cancel:hover { background: var(--red); color: #fff; border-color: var(--red); transform: translateY(-1px); }
-
-    .btn-again {
-        background: var(--green-pale); color: var(--green);
-        border: 1.5px solid rgba(42,125,63,0.22);
-        padding: 8px 16px; border-radius: var(--radius-pill);
-        font-size: 12px; font-weight: 700; cursor: pointer;
-        transition: all .2s; font-family: var(--fb);
-    }
-    .btn-again:hover { background: var(--green); color: #fff; border-color: var(--green); transform: translateY(-1px); box-shadow: 0 4px 12px var(--green-glow); }
-
-    /* ═══════════════════════════════════════════
-       EMPTY STATE
-    ═══════════════════════════════════════════ */
-    .empty {
-        background: var(--bg); border: 1.5px solid var(--border);
-        border-radius: var(--radius-xl); padding: 72px 40px; text-align: center;
-        margin-top: 16px; box-shadow: var(--shadow-xs); animation: pop .4s both;
-    }
-    [data-theme="dark"] .empty { background: var(--bg-3); }
-    .empty-icon  { font-size: 52px; display: block; margin-bottom: 18px; opacity: .45; }
-    .empty-title { font-family: var(--fd); font-size: 22px; font-weight: 900; color: var(--text); margin-bottom: 8px; }
-    .empty-sub   { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.65; }
-
-    .btn-primary {
-        display: inline-flex; align-items: center; gap: 7px;
-        background: var(--green); color: #fff; border: none;
-        padding: 11px 24px; border-radius: var(--radius-pill);
-        font-size: 13px; font-weight: 700; cursor: pointer;
-        font-family: var(--fb); box-shadow: 0 3px 12px var(--green-glow);
-        transition: all .2s;
-    }
-    .btn-primary:hover { background: var(--green-mid); transform: translateY(-2px); box-shadow: 0 6px 20px var(--green-glow); }
-
-    /* ═══════════════════════════════════════════
-       SIDEBAR
-    ═══════════════════════════════════════════ */
-    .side-label {
-        font-size: 9px; font-weight: 700; color: var(--text-muted);
-        text-transform: uppercase; letter-spacing: 2.5px;
-        padding-bottom: 10px; margin-bottom: 12px;
-        border-bottom: 1px solid var(--border);
-        display: flex; align-items: center; gap: 6px;
-    }
-
-    /* Spend box */
-    .spend-box {
-        background: var(--bg); border: 1.5px solid var(--border-mid);
-        border-radius: var(--radius-xl); padding: 22px; position: relative;
-        overflow: hidden; box-shadow: var(--shadow-sm); animation: in .5s both;
-    }
-    [data-theme="dark"] .spend-box { background: var(--bg-3); }
-    .spend-box::before {
-        content: '';
-        position: absolute; top: 0; left: 0; right: 0; height: 4px;
-        background: linear-gradient(90deg, var(--green), var(--gold), var(--green-mid));
-    }
-    .spend-box::after {
-        content: '₱';
-        position: absolute; right: -8px; bottom: -20px;
-        font-family: var(--fd); font-size: 110px; font-weight: 900;
-        color: rgba(42,125,63,0.06); line-height: 1; pointer-events: none;
-    }
-    .spend-label  { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; display: block; }
-    .spend-amt    { font-family: var(--fd); font-size: 34px; font-weight: 900; color: var(--green); line-height: 1; margin-bottom: 5px; }
-    .spend-sub    { font-size: 11px; color: var(--text-muted); }
-
-    /* Stat grid */
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-    .stat-card {
-        background: var(--bg); border: 1.5px solid var(--border);
-        border-radius: var(--radius-lg); padding: 16px 10px 14px;
-        text-align: center; box-shadow: var(--shadow-xs);
-        transition: border-color .2s, box-shadow .2s, transform .2s;
-        position: relative; overflow: hidden; cursor: default;
-    }
-    [data-theme="dark"] .stat-card { background: var(--bg-3); }
-    .stat-card::after {
-        content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
-        background: linear-gradient(90deg, var(--green), var(--gold));
-        transform: scaleX(0); transform-origin: left; transition: transform .28s;
-    }
-    .stat-card:hover { border-color: var(--green); box-shadow: var(--shadow-sm); transform: translateY(-2px); }
-    .stat-card:hover::after { transform: scaleX(1); }
-    .stat-num {
-        font-family: var(--fd); font-size: 28px; font-weight: 900;
-        color: var(--text); line-height: 1; margin-bottom: 5px; display: block;
-    }
-    .stat-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
-
-    /* Quick links */
-    .quick-links { display: flex; flex-direction: column; gap: 5px; }
-
-    .quick-link {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 10px 13px; background: var(--bg);
-        border: 1.5px solid var(--border-mid); border-radius: var(--radius);
-        font-size: 12px; font-weight: 600; color: var(--text-soft);
-        transition: all .2s; text-decoration: none;
-    }
-    [data-theme="dark"] .quick-link { background: var(--bg-3); }
-    .quick-link:hover { border-color: var(--green); color: var(--green); background: var(--green-pale); }
-
-    /* ═══════════════════════════════════════════
-       TOAST
-    ═══════════════════════════════════════════ */
-    .toast {
-        position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-        display: flex; align-items: center; gap: 10px;
-        background: var(--bg); border: 1.5px solid var(--border-mid);
-        color: var(--text); padding: 13px 20px;
-        border-radius: var(--radius-lg); font-size: 13px; font-weight: 600;
-        box-shadow: var(--shadow-xl); border-left: 4px solid var(--green);
-        max-width: 320px;
-        transform: translateY(18px) scale(.96); opacity: 0; pointer-events: none;
-        transition: all .28s cubic-bezier(.34,1.56,.64,1);
-    }
-    .toast.show    { transform: none; opacity: 1; pointer-events: auto; }
-    .toast.success { border-left-color: var(--success); }
-    .toast.error   { border-left-color: var(--red); }
-
-    /* ═══════════════════════════════════════════
-       FOOTER
-    ═══════════════════════════════════════════ */
-    .footer-strip {
-        height: 4px; margin-top: auto;
-        background: repeating-linear-gradient(
-            90deg,
-            var(--green)      0px,  var(--green)      10px,
-            var(--gold)       10px, var(--gold)        18px,
-            var(--green-mid)  18px, var(--green-mid)   26px,
-            var(--gold-lite)  26px, var(--gold-lite)   34px,
-            #8DC26A           34px, #8DC26A            42px
-        );
-    }
-    .footer {
-        text-align: center; font-size: 11px; color: var(--text-muted);
-        padding: 16px; border-top: 1px solid var(--border);
-    }
-
-    /* ═══════════════════════════════════════════
-       VIEW RECEIPT BUTTON
-    ═══════════════════════════════════════════ */
-    .btn-receipt {
-        background: var(--bg-muted); color: var(--text-soft);
-        border: 1.5px solid var(--border-mid);
-        padding: 8px 16px; border-radius: var(--radius-pill);
-        font-size: 12px; font-weight: 700; cursor: pointer;
-        transition: all .2s; font-family: var(--fb);
-        display: inline-flex; align-items: center; gap: 6px;
-    }
-    .btn-receipt:hover {
-        background: var(--bg-subtle); border-color: var(--border-hi);
-        color: var(--text); transform: translateY(-1px);
-    }
-
-    /* ═══════════════════════════════════════════
-       RECEIPT MODAL
-    ═══════════════════════════════════════════ */
-    .modal-overlay {
-        position: fixed; inset: 0; z-index: 800;
-        background: rgba(10,26,14,0.6);
-        backdrop-filter: blur(6px);
-        display: flex; align-items: center; justify-content: center;
-        padding: 20px;
-        opacity: 0; pointer-events: none;
-        transition: opacity .25s;
-    }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-
-    .receipt-modal {
-        background: var(--bg);
-        border-radius: var(--radius-xl);
-        width: 100%; max-width: 480px;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: var(--shadow-xl);
-        transform: translateY(24px) scale(0.97);
-        transition: transform .28s cubic-bezier(.34,1.56,.64,1);
-        position: relative;
-    }
-    .modal-overlay.open .receipt-modal { transform: none; }
-
-    .receipt-stripe {
-        height: 6px; border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-        background: repeating-linear-gradient(
-            90deg,
-            var(--green)     0px,  var(--green)     10px,
-            var(--gold)      10px, var(--gold)       18px,
-            var(--green-mid) 18px, var(--green-mid)  26px,
-            var(--gold-lite) 26px, var(--gold-lite)  34px,
-            #8DC26A          34px, #8DC26A           42px
-        );
-        flex-shrink: 0;
-    }
-
-    .receipt-inner { padding: 28px 32px 24px; }
-
-    .receipt-header { text-align: center; margin-bottom: 22px; }
-    .receipt-logo   { font-family: var(--fd); font-size: 24px; font-weight: 900; color: var(--green); line-height: 1; }
-    .receipt-logo::before { content: "🌾 "; font-size: 18px; }
-    .receipt-tagline { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); margin-top: 3px; }
-    .receipt-badge {
-        display: inline-block; margin-top: 12px;
-        background: var(--green-pale); border: 1px solid rgba(42,125,63,0.22);
-        color: var(--green); font-size: 10px; font-weight: 700;
-        letter-spacing: 1.5px; text-transform: uppercase;
-        padding: 5px 16px; border-radius: var(--radius-pill);
-    }
-
-    .receipt-ref {
-        display: flex; justify-content: space-between; align-items: center;
-        background: var(--bg-subtle); border: 1px dashed var(--border-mid);
-        border-radius: var(--radius-lg); padding: 12px 16px; margin-bottom: 20px;
-    }
-    .ref-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-    .ref-val   { font-family: monospace; font-size: 15px; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
-
-    .r-section {
-        font-size: 9px; font-weight: 700; letter-spacing: 2px;
-        text-transform: uppercase; color: var(--gold);
-        margin-bottom: 10px; margin-top: 18px;
-        display: flex; align-items: center; gap: 8px;
-    }
-    .r-section::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-    .r-row {
-        display: flex; justify-content: space-between; align-items: flex-start;
-        gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border);
-        font-size: 13px;
-    }
-    .r-row:last-child { border-bottom: none; }
-    .r-key  { color: var(--text-muted); flex-shrink: 0; }
-    .r-val  { font-weight: 600; text-align: right; color: var(--text); }
-    .r-green { color: var(--success); }
-    .r-gold  { color: var(--gold); font-family: monospace; font-size: 12px; letter-spacing: .5px; }
-
-    .r-item {
-        display: flex; align-items: center; gap: 12px;
-        padding: 9px 0; border-bottom: 1px solid var(--border);
-    }
-    .r-item:last-child { border-bottom: none; }
-    .r-thumb {
-        width: 40px; height: 40px; border-radius: var(--radius-sm);
-        background: var(--bg-muted); border: 1px solid var(--border);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 16px; overflow: hidden; flex-shrink: 0;
-    }
-    .r-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .r-item-info { flex: 1; min-width: 0; }
-    .r-item-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .r-item-qty  { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-    .r-item-price { font-family: var(--fd); font-size: 15px; font-weight: 700; color: var(--green); flex-shrink: 0; }
-
-    .r-total-block {
-        background: var(--green-pale);
-        border: 1px solid rgba(42,125,63,0.2);
-        border-radius: var(--radius-lg); padding: 14px 18px;
-        display: flex; justify-content: space-between; align-items: center;
-        margin: 16px 0;
-    }
-    [data-theme="dark"] .r-total-block { background: rgba(42,125,63,0.1); }
-    .r-total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-soft); }
-    .r-total-amt   { font-family: var(--fd); font-size: 30px; font-weight: 900; color: var(--green); line-height: 1; }
-
-    .r-barcode {
-        display: flex; align-items: flex-end; gap: 2px;
-        justify-content: center; margin: 16px 0 8px; height: 32px;
-    }
-    .r-barcode span { background: var(--border-hi); border-radius: 2px; width: 3px; }
-
-    .receipt-actions { display: flex; gap: 10px; padding: 0 32px 24px; }
-
-    .btn-print {
-        flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
-        background: var(--green); color: #fff; border: none;
-        padding: 13px; border-radius: var(--radius-lg);
-        font-size: 13px; font-weight: 700; cursor: pointer;
-        font-family: var(--fb); transition: all .2s;
-        box-shadow: 0 3px 12px var(--green-glow);
-    }
-    .btn-print:hover { background: var(--green-mid); transform: translateY(-1px); box-shadow: 0 6px 20px var(--green-glow); }
-
-    .btn-close-modal {
-        padding: 13px 20px; border-radius: var(--radius-lg);
-        background: var(--bg-subtle); color: var(--text-soft);
-        border: 1.5px solid var(--border-mid);
-        font-size: 13px; font-weight: 700; cursor: pointer;
-        font-family: var(--fb); transition: all .2s;
-    }
-    .btn-close-modal:hover { border-color: var(--border-hi); color: var(--text); }
-
-    /* Print styles */
-    @media print {
-        body > *:not(.modal-overlay) { display: none !important; }
-        .modal-overlay { position: static !important; background: none !important; backdrop-filter: none !important; padding: 0 !important; display: block !important; opacity: 1 !important; }
-        .receipt-modal { box-shadow: none !important; max-height: none !important; transform: none !important; border-radius: 0 !important; }
-        .receipt-actions { display: none !important; }
-        .receipt-stripe { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-    }
-
-    /* ═══════════════════════════════════════════
-       RESPONSIVE — matches agriresq.css breakpoints
-    ═══════════════════════════════════════════ */
-    @media (max-width: 960px) {
-        .page      { grid-template-columns: 1fr; }
-        .side-col  { position: static; }
-        .stat-grid { grid-template-columns: repeat(4, 1fr); }
-    }
-    @media (max-width: 768px) {
-        .page { padding: 16px 16px 60px; }
-        .navbar-main { flex-wrap: wrap; gap: 10px; padding: 10px 16px; }
-        .navbar-top  { padding: 5px 16px; flex-wrap: wrap; }
-    }
-    @media (max-width: 600px) {
-        .claim-card { flex-direction: column; align-items: flex-start; }
-        .timer-box  { width: 100%; }
-        .card-foot  { flex-direction: column; align-items: flex-start; }
-        .stat-grid  { grid-template-columns: 1fr 1fr; }
-        .item-row:hover { margin: 0; padding: 15px 0; }
-    }
-    @media (max-width: 480px) {
-        .tabs .tab { padding: 11px 14px; font-size: 12px; }
-        .navbar-page-title { font-size: 16px; }
-    }
-    </style>
-</head>
+  
 <body>
 
 <!-- ══ NAVBAR — structure and classes match agriresq.css exactly ═══════════ -->
@@ -1069,14 +109,20 @@
         {% if orders %}
             {% for order in orders %}
             {% with fi=order.items.first st=fi.product.store %}
-            <div class="order-card" data-status="{{ order.status }}" id="order-{{ order.id }}"
-                 data-order-id="{{ order.id }}"
-                 data-store="{{ st.store_name|default:'SariSariStore' }}"
-                 data-total="{{ order.total_amount }}"
-                 data-status-label="{{ order.status }}"
-                 data-date="{{ order.created_at|date:'M d, Y' }}"
-                 data-items='[{% for item in order.items.all %}{"name":"{{ item.product.name }}","qty":{{ item.quantity }},"price":"{{ item.price }}","img":"{% if item.product.image %}{{ item.product.image.url }}{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+          <div class="order-card"
+                    data-status="{{ order.status }}"
+                    id="order-{{ order.id }}"
 
+                    data-order-id="{{ order.id }}"
+                    data-total="{{ order.total_amount|default:'0.00' }}"
+                    data-subtotal="{{ order.subtotal_amount|default:'0.00' }}"
+                    data-shipping="{{ order.shipping_fee|default:'0.00' }}"
+                    data-protection="{{ order.protection_amount|default:'0.00' }}"
+                    data-discount="{{ order.discount_amount|default:'0.00' }}"
+                    data-voucher-code="{{ order.voucher_code|default:'None' }}"
+                    data-date="{{ order.created_at|date:'Y-m-d H:i' }}"
+
+                    data-items='{{ order.items_json|escapejs }}'>
                 <div class="store-row">
                     <div class="store-left">
                         <span class="store-name">🏪 {{ st.store_name|default:"SariSariStore" }}</span>
@@ -1269,7 +315,7 @@ window.addEventListener('DOMContentLoaded', () => {
     updateCart(); buildStats(); initTimers(); syncTheme();
 });
 
-/* Theme */
+/* ── THEME LOGIC ── */
 function toggleTheme() {
     const dark = document.documentElement.getAttribute('data-theme') === 'dark';
     document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
@@ -1280,7 +326,7 @@ function syncTheme() {
     document.querySelectorAll('#theme-btn').forEach(b => b.textContent = dark ? '☀️ Mode' : '🌙 Mode');
 }
 
-/* Timers */
+/* ── TIMERS ── */
 function initTimers() {
     document.querySelectorAll('.timer-val[data-expires]').forEach(el => {
         const ms = new Date(el.dataset.expires).getTime();
@@ -1295,7 +341,7 @@ function initTimers() {
     });
 }
 
-/* Filter */
+/* ── FILTERING ── */
 function filterOrders(status, tab) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
@@ -1320,7 +366,13 @@ function filterOrders(status, tab) {
     if (el) el.textContent = `${n} item${n !== 1 ? 's' : ''}`;
 }
 
-/* Cart badge */
+/* ── FORMATTING ── */
+function fmt(n) {
+    const val = typeof n === 'string' ? parseFloat(n) : n;
+    return '₱' + val.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/* ── STATS & CART ── */
 async function updateCart() {
     try {
         const r = await fetch(`${API}cartitems/`);
@@ -1328,48 +380,50 @@ async function updateCart() {
     } catch {}
 }
 
-/* Stats */
 function buildStats() {
-    let total = 0, pending = 0, done = 0;
+    let totalSpent = 0, pending = 0, done = 0;
     document.querySelectorAll('.order-card').forEach(c => {
         const s = c.dataset.status || '';
+        const amt = parseFloat(c.dataset.total || '0');
         if (s === 'Pending' || s === 'To Pay') pending++;
-        if (s === 'Completed') done++;
-        const p = c.querySelector('.total-amt');
-        if (p) total += parseFloat(p.textContent.replace(/[₱,\s]/g, '')) || 0;
+        if (s === 'Completed') { done++; totalSpent += amt; }
     });
-    const cnt = document.querySelectorAll('.order-card').length;
-    const sp = document.getElementById('total-spend'); if (sp) sp.textContent = '₱' + total.toLocaleString('en-PH', {minimumFractionDigits:2});
-    const sb = document.getElementById('spend-sub');   if (sb) sb.textContent = `Sa ${cnt} na order${cnt !== 1 ? 's' : ''}`;
-    const pe = document.getElementById('count-pending'); if (pe) pe.textContent = pending;
-    const de = document.getElementById('count-done');    if (de) de.textContent = done;
+    const sp = document.getElementById('total-spend'); 
+    if (sp) sp.textContent = fmt(totalSpent);
+    document.getElementById('count-pending').textContent = pending;
+    document.getElementById('count-done').textContent = done;
 }
 
-/* ── RECEIPT ──────────────────────────────── */
+/* ── RECEIPT LOGIC (ORDERS) ── */
 function openReceipt(orderId) {
     const card = document.getElementById(`order-${orderId}`);
     if (!card) return;
 
-    const ordNum  = card.dataset.orderId || orderId;
-    const store   = card.dataset.store   || '—';
-    const total   = card.dataset.total   || '0.00';
-    const status  = card.dataset.statusLabel || '—';
-    const date    = card.dataset.date    || '—';
-    let   items   = [];
+    // 1. Pull data from the synced attributes
+    const ordNum   = card.dataset.orderId;
+    const store    = card.dataset.store;
+    const finalTotal = parseFloat(card.dataset.total || '0');
+    const status   = card.dataset.statusLabel || '—';
+    const date     = card.dataset.date;
+    const vCode    = card.dataset.voucherCode;
+    const discount = parseFloat(card.dataset.discount || '0');
+    
+    // 2. Fees synced with your Backend (Decimal '119.00')
+    const protectionFee = 119.00; 
+    
+    // 3. Reverse Math to find the original subtotal
+    const itemSubtotal = (finalTotal - protectionFee) + discount;
+
+    let items = [];
     try { items = JSON.parse(card.dataset.items || '[]'); } catch {}
 
+    // Populate header info
     document.getElementById('r-ref').textContent   = `#${String(ordNum).padStart(6,'0')}`;
     document.getElementById('r-date').textContent  = date;
     document.getElementById('r-store').textContent = `🏪 ${store}`;
-    document.getElementById('r-total').textContent = `₱${parseFloat(total).toLocaleString('en-PH',{minimumFractionDigits:2})}`;
+    document.getElementById('r-total').textContent = fmt(finalTotal);
 
-    const badge = document.querySelector('.receipt-badge');
-    badge.textContent = 'Official Receipt';
-    badge.style.cssText = '';
-
-    const dl = document.getElementById('r-deadline-row');
-    if (dl) dl.remove();
-
+    // Setup Status
     const statusEl = document.getElementById('r-status');
     statusEl.textContent = status.toUpperCase();
     statusEl.className = 'r-val';
@@ -1377,19 +431,48 @@ function openReceipt(orderId) {
     else if (status === 'Cancelled') statusEl.style.color = 'var(--red)';
     else statusEl.style.color = 'var(--gold)';
 
+    // Render Products
     const itemsEl = document.getElementById('r-items');
     itemsEl.innerHTML = items.map(it => `
         <div class="r-item">
-            <div class="r-thumb">
-                ${it.img ? `<img src="${it.img}" alt="${it.name}">` : '📦'}
-            </div>
+            <div class="r-thumb">${it.img ? `<img src="${it.img}">` : '📦'}</div>
             <div class="r-item-info">
                 <div class="r-item-name">${it.name}</div>
                 <div class="r-item-qty">x${it.qty}</div>
             </div>
-            <div class="r-item-price">₱${parseFloat(it.price).toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
+            <div class="r-item-price">${fmt(it.price)}</div>
         </div>`).join('');
 
+    // 4. Detailed Breakdown Rows
+    // Remove old dynamic rows if modal was reopened
+    ['r-sub-row', 'r-disc-row', 'r-fee-row'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.remove();
+    });
+
+    const totalBlock = document.querySelector('.r-total-block');
+
+    // Subtotal Row
+    const subRow = document.createElement('div');
+    subRow.className = 'r-row'; subRow.id = 'r-sub-row';
+    subRow.innerHTML = `<span class="r-key">Subtotal</span><span class="r-val">${fmt(itemSubtotal)}</span>`;
+    totalBlock.before(subRow);
+
+    // Voucher Row (Only if discount was applied)
+    if (discount > 0) {
+        const discRow = document.createElement('div');
+        discRow.className = 'r-row'; discRow.id = 'r-disc-row';
+        discRow.innerHTML = `<span class="r-key">Voucher (${vCode})</span><span class="r-val" style="color:var(--gold)">- ${fmt(discount)}</span>`;
+        totalBlock.before(discRow);
+    }
+
+    // Protection Fee Row
+    const feeRow = document.createElement('div');
+    feeRow.className = 'r-row'; feeRow.id = 'r-fee-row';
+    feeRow.innerHTML = `<span class="r-key">Shipping & Protection</span><span class="r-val">${fmt(protectionFee)}</span>`;
+    totalBlock.before(feeRow);
+
+    // Barcode generation
     const bc = document.getElementById('r-barcode');
     const seed = parseInt(String(ordNum).replace(/\D/g,'') || '1');
     bc.innerHTML = Array.from({length: 38}, (_, i) => {
@@ -1397,72 +480,34 @@ function openReceipt(orderId) {
         const w = (i % 3 === 0) ? 2 : ((i % 5 === 0) ? 4 : 3);
         return `<span style="height:${h}px;width:${w}px;"></span>`;
     }).join('');
-    document.getElementById('r-barcode-num').textContent =
-        Array.from({length: 12}, (_, i) => ((seed + i * 7) % 10)).join('').replace(/(.{4})/g,'$1 ').trim();
 
     document.getElementById('receipt-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
-
-function closeReceipt() {
-    document.getElementById('receipt-overlay').classList.remove('open');
-    document.body.style.overflow = '';
-}
-
-function closeReceiptOnBg(e) {
-    if (e.target === document.getElementById('receipt-overlay')) closeReceipt();
-}
-
-function printReceipt() { window.print(); }
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReceipt(); });
-
-/* Actions */
-async function cancelOrder(id) {
-    if (!confirm('Sigurado ka bang gustong kanselahin ang order?')) return;
-    try {
-        const r = await fetch(`/api/orders/${id}/`, {
-            method:'PATCH',
-            headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},
-            body: JSON.stringify({status:'Cancelled'})
-        });
-        if (r.ok) { toast('Order nakansela.'); setTimeout(() => location.reload(), 900); }
-        else toast('Hindi ma-cancel.', 'error');
-    } catch { toast('May error.', 'error'); }
-}
-
-function buyAgain(id) { window.location.href = `/checkout/?product_id=${id}&quantity=1`; }
-function openChat(id) { console.log('chat:', id); }
-
-/* Claim/Reservation Receipt */
+/* ── RECEIPT LOGIC (RESERVATIONS) ── */
 function openClaimReceipt(card) {
     const claimId = card.dataset.claimId || '—';
     const product = card.dataset.product || '—';
-    const store   = card.dataset.store   || '—';
-    const qty     = card.dataset.qty     || '1';
-    const price   = parseFloat(card.dataset.price || '0');
-    const total   = (qty * price).toFixed(2);
-    const img     = card.dataset.img     || '';
+    const store = card.dataset.store || '—';
+    const qty = card.dataset.qty || '1';
+    const price = parseFloat(card.dataset.price || '0');
+    const total = parseFloat(qty) * parseFloat(price);
+    const img = card.dataset.img || '';
     const expires = card.dataset.expires || '';
 
     let expiresStr = '—';
     if (expires) {
-        try {
-            expiresStr = new Date(expires).toLocaleString('en-PH', {
-                month: 'short', day: 'numeric', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            });
-        } catch {}
+        try { expiresStr = new Date(expires).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch {}
     }
 
-    document.getElementById('r-ref').textContent  = `RES-${String(claimId).padStart(5,'0')}`;
+    document.getElementById('r-ref').textContent = `RES-${String(claimId).padStart(5,'0')}`;
     document.getElementById('r-date').textContent = new Date().toLocaleDateString('en-PH', {month:'short',day:'numeric',year:'numeric'});
     document.getElementById('r-store').textContent = `🏪 ${store}`;
-    document.getElementById('r-total').textContent = `₱${parseFloat(total).toLocaleString('en-PH',{minimumFractionDigits:2})}`;
+    document.getElementById('r-total').textContent = fmt(total);
 
-    document.querySelector('.receipt-badge').textContent = 'Reservation Slip';
-    document.querySelector('.receipt-badge').style.cssText =
-        'background:var(--gold-pale);border-color:rgba(193,123,42,0.22);color:var(--gold);';
+    const badge = document.querySelector('.receipt-badge');
+    badge.textContent = 'Reservation Slip';
+    badge.style.cssText = 'background:var(--gold-pale);border-color:rgba(193,123,42,0.22);color:var(--gold);';
 
     const statusEl = document.getElementById('r-status');
     statusEl.textContent = 'ACTIVE RESERVATION';
@@ -1476,38 +521,58 @@ function openClaimReceipt(card) {
                 <div class="r-item-name">${product}</div>
                 <div class="r-item-qty">x${qty}</div>
             </div>
-            <div class="r-item-price">₱${price.toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
+            <div class="r-item-price">${fmt(price)}</div>
         </div>`;
 
-    const existingDeadline = document.getElementById('r-deadline-row');
-    if (!existingDeadline) {
-        const delivRow = document.querySelector('.r-row:last-of-type');
-        if (delivRow) {
-            const deadlineRow = document.createElement('div');
-            deadlineRow.className = 'r-row';
-            deadlineRow.id = 'r-deadline-row';
-            deadlineRow.innerHTML = `<span class="r-key">Pickup Deadline</span><span class="r-val" style="color:var(--warning)">${expiresStr}</span>`;
-            delivRow.after(deadlineRow);
-        }
-    } else {
-        existingDeadline.querySelector('.r-val').textContent = expiresStr;
-    }
+    ['r-sub-row', 'r-disc-row', 'r-fee-row', 'r-deadline-row'].forEach(id => {
+        const el = document.getElementById(id); if(el) el.remove();
+    });
 
-    const seed = parseInt(String(claimId).replace(/\D/g,'') || '99');
-    const bc = document.getElementById('r-barcode');
-    bc.innerHTML = Array.from({length:38},(_,i) => {
-        const h = 10 + ((seed*(i+7)*13)%22);
-        const w = i%3===0?2:i%5===0?4:3;
-        return `<span style="height:${h}px;width:${w}px;"></span>`;
-    }).join('');
-    document.getElementById('r-barcode-num').textContent =
-        Array.from({length:12},(_,i) => ((seed+i*7)%10)).join('').replace(/(.{4})/g,'$1 ').trim();
+    const delivRow = document.querySelector('.r-total-block');
+    const deadlineRow = document.createElement('div');
+    deadlineRow.className = 'r-row'; deadlineRow.id = 'r-deadline-row';
+    deadlineRow.innerHTML = `<span class="r-key">Pickup Deadline</span><span class="r-val" style="color:var(--warning)">${expiresStr}</span>`;
+    delivRow.before(deadlineRow);
 
+    generateBarcode(claimId);
     document.getElementById('receipt-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
 
-/* Toast */
+/* ── UTILS ── */
+function generateBarcode(seedInput) {
+    const seed = parseInt(String(seedInput).replace(/\D/g,'') || '1');
+    const bc = document.getElementById('r-barcode');
+    bc.innerHTML = Array.from({length: 38}, (_, i) => {
+        const h = 10 + ((seed * (i + 7) * 13) % 22);
+        const w = (i % 3 === 0) ? 2 : ((i % 5 === 0) ? 4 : 3);
+        return `<span style="height:${h}px;width:${w}px;"></span>`;
+    }).join('');
+    document.getElementById('r-barcode-num').textContent = Array.from({length:12},(_,i) => ((seed+i*7)%10)).join('').replace(/(.{4})/g,'$1 ').trim();
+}
+
+function closeReceipt() {
+    document.getElementById('receipt-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function closeReceiptOnBg(e) {
+    if (e.target === document.getElementById('receipt-overlay')) closeReceipt();
+}
+
+async function cancelOrder(id) {
+    if (!confirm('Sigurado ka bang gustong kanselahin ang order?')) return;
+    try {
+        const r = await fetch(`/api/orders/${id}/`, {
+            method:'PATCH',
+            headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},
+            body: JSON.stringify({status:'Cancelled'})
+        });
+        if (r.ok) { toast('Order nakansela.'); setTimeout(() => location.reload(), 900); }
+        else toast('Hindi ma-cancel.', 'error');
+    } catch { toast('May error.', 'error'); }
+}
+
 function toast(msg, type = 'success') {
     const t = document.getElementById('toast');
     document.getElementById('toast-msg').textContent = msg;
@@ -1516,7 +581,6 @@ function toast(msg, type = 'success') {
     setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-/* Cookie */
 function cookie(name) {
     for (const c of document.cookie.split(';')) {
         const t = c.trim();
@@ -1524,6 +588,9 @@ function cookie(name) {
     }
     return null;
 }
+
+function buyAgain(id) { window.location.href = `/checkout/?product_id=${id}&quantity=1`; }
+function openChat(id) { console.log('chat:', id); }
+function printReceipt() { window.print(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReceipt(); });
 </script>
-</body>
-</html>

@@ -19,9 +19,13 @@ router.register(r'orders',     views.OrderViewSet,      basename='order')
 router.register(r'reviews',    views.ReviewViewSet,     basename='review')
 router.register(r'cartitems',  views.CartItemViewSet,   basename='cartitem')
 router.register(r'messages',   views.ChatMessageViewSet, basename='chatmessage')
+router.register(r'reservations', views.ReservationViewSet, basename='reservation')
+router.register(r'profiles', views.ProfileViewSet)
+
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('voucher/<int:pk>/', views.validate_voucher, name='validate_voucher'),
     path('checkout/pay/<int:pk>/', views.checkout_pay, name='checkout_pay'),
     path('seller/messages/', views.seller_message_center, name='seller_messages'),
     path('profile/', views.profile_view, name='user_profile'),
@@ -31,6 +35,7 @@ urlpatterns = [
     path('product/<int:product_id>/reserve/', views.reserve_product, name='reserve_product'),
     path('reservation/<int:res_id>/complete/', views.complete_reservation, name='complete_reservation'),
     path('reserve-checkout/<int:pk>/', views.reserve_checkout, name='reserve_checkout'),
+    path('admin-terminal/', views.admin_terminal, name='admin_terminal'),
 
     
 ]
