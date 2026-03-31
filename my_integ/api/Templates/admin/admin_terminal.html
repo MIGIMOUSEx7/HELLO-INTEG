@@ -45,7 +45,6 @@
     <div class="nav-item" data-res="categories" onclick="load('categories',this)"><span class="icon">📂</span>Categories</div>
     <div class="nav-item" data-res="stores" onclick="load('stores',this)"><span class="icon">🏪</span>Stores</div>
     <div class="nav-item" data-res="reservations" onclick="load('reservations',this)"><span class="icon">🔖</span>Reservations</div>
-    <div class="nav-item" data-res="reviews" onclick="load('reviews',this)"><span class="icon">⭐</span>Reviews</div>
     <div class="sidebar-section">Logistics</div>
     <div class="nav-item" data-res="shipments" onclick="load('shipments',this)"><span class="icon">🚚</span>Shipments</div>
     <div class="sidebar-section">Cart</div>
@@ -55,8 +54,7 @@
     <div class="nav-item" data-res="users" onclick="load('users',this)"><span class="icon">👤</span>Users</div>
     <div class="nav-item" data-res="profiles" onclick="load('profiles',this)"><span class="icon">🪪</span>Profiles</div>
     <div class="nav-item" data-res="addresses" onclick="load('addresses',this)"><span class="icon">📍</span>Addresses</div>
-    <div class="sidebar-section">Communication</div>
-    <div class="nav-item" data-res="messages" onclick="load('messages',this)"><span class="icon">💬</span>Messages</div>
+
   </div>
 
   <!-- MAIN -->
@@ -188,17 +186,18 @@ let pendingDetailImages = []; // images staged for a product in detail view
 /* ─── CONFIG ─────────────────────────────────────────────── */
 const CONFIG = {
   orders: {
-    // 'user' will now contain the string "IvanJP" instead of 1
-    cols: ['id', 'user', 'email' ,'status', 'payment_method', 'total_amount', 'order_date'],
+    // 1. Add 'payment' to the columns so you can see the ID in the table
+    cols: ['id', 'user', 'payment', 'status', 'payment_method', 'total_amount', 'order_date'],
     label: 'Orders',
     fields: [
-      // Change type to 'text' if you just want to see/edit the name string
       { key: 'user', label: 'Customer Username', type: 'text', required: true },
-      { key:'email', label:'Email', type:'email' },
-      { key:'status', label:'Status', type:'select', options:['Pending','To Pay','Paid','Shipping','To Receive','Completed','Cancelled','Return/Refund'] },
-      { key:'payment_method', label:'Payment Method', type:'select', options:['COD','GCASH','BANK','CARD'] },
-      { key:'total_amount', label:'Total Amount', type:'number' },
-      { key:'shipping_address', label:'Shipping Address', type:'textarea' },
+      // 2. Add 'payment' here so you can link it in the "Edit" modal
+      { key: 'payment', label: 'Payment ID', type: 'number' }, 
+      { key: 'email', label: 'Email', type: 'email' },
+      { key: 'status', label: 'Status', type: 'select', options: ['Pending', 'To Pay', 'Paid', 'Shipping', 'To Receive', 'Completed', 'Cancelled', 'Return/Refund'] },
+      { key: 'payment_method', label: 'Payment Method', type: 'select', options: ['COD'] },
+      { key: 'total_amount', label: 'Total Amount', type: 'number' },
+      { key: 'shipping_address', label: 'Shipping Address', type: 'textarea' },
     ]
   },
   orderitems: {
@@ -233,17 +232,21 @@ const CONFIG = {
       { key:'parent', label:'Parent Category ID', type:'number' },
     ]
   },
+  
   reservations: {
-    cols: ['id','buyer','product','quantity','status','created_at','expires_at'],
+    // 1. Update 'cols' to use the NAME fields we added to the serializer
+    cols: ['id', 'buyer_name', 'product_name', 'quantity', 'status', 'created_at', 'expires_at'],
     label: 'Reservations',
     fields: [
-      { key:'buyer', label:'Buyer ID', type:'number', required:true },
-      { key:'product', label:'Product ID', type:'number', required:true },
-      { key:'quantity', label:'Quantity', type:'number', required:true },
-      { key:'status', label:'Status', type:'select', options:['Active','Completed','Expired','Cancelled'] },
-      { key:'expires_at', label:'Expires At', type:'datetime-local' },
+      // 2. Update the 'key' to match the name fields
+      { key: 'buyer_name', label: 'Buyer Name', type: 'text', required: true },
+      { key: 'product_name', label: 'Product Name', type: 'text', required: true },
+      { key: 'quantity', label: 'Quantity', type: 'number', required: true },
+      { key: 'status', label: 'Status', type: 'select', options: ['Active', 'Completed', 'Expired', 'Cancelled'] },
+      { key: 'expires_at', label: 'Expires At', type: 'datetime-local' },
     ]
   },
+
   reviews: {
     cols: ['id','user','product','order','rating','comment','created_at'],
     label: 'Reviews',
@@ -266,23 +269,25 @@ const CONFIG = {
     ]
   },
   profiles: {
-    cols: ['id','user','is_seller','phone_number'],
+    cols: ['id', 'user', 'username', 'phone_number', 'is_seller'],
     label: 'Profiles',
     fields: [
-      { key:'user', label:'User ID', type:'number', required:true },
-      { key:'is_seller', label:'Is Seller', type:'select', options:['true','false'] },
-      { key:'phone_number', label:'Phone Number', type:'text' },
-      { key:'bio', label:'Bio', type:'textarea' },
+      { key: 'user', label: 'User ID', type: 'number', required: true },
+      { key: 'phone_number', label: 'Phone Number', type: 'text' },
+      { key: 'is_seller', label: 'Is Seller', type: 'select', options: ['true', 'false'] },
+      { key: 'bio', label: 'Bio', type: 'textarea' },
     ]
   },
   stores: {
-    cols: ['id','store_name','rating','user','created_at'],
+
+    cols: ['id', 'store_name', 'rating', 'owner_name', 'created_at'],
     label: 'Stores',
     fields: [
-      { key:'store_name', label:'Store Name', type:'text', required:true },
-      { key:'user', label:'Owner User ID', type:'number', required:true },
-      { key:'store_description', label:'Description', type:'textarea' },
-      { key:'rating', label:'Rating', type:'number' },
+      { key: 'store_name', label: 'Store Name', type: 'text', required: true },
+      // 2. Change the key here to 'owner_name' for the Edit/Add form
+      { key: 'owner_name', label: 'Owner Name', type: 'text', required: true },
+      { key: 'store_description', label: 'Description', type: 'textarea' },
+      { key: 'rating', label: 'Rating', type: 'number' },
     ]
   },
   shipments: {
@@ -302,7 +307,7 @@ const CONFIG = {
     label: 'Payments',
     fields: [
       { key:'user', label:'User ID', type:'number', required:true },
-      { key:'method', label:'Method', type:'select', options:['COD','GCASH','BANK','CARD'] },
+      { key:'method', label:'Method', type:'select', options:['COD'] },
       { key:'amount', label:'Amount', type:'number', required:true },
       { key:'status', label:'Status', type:'select', options:['Pending','Paid','Failed','Refunded'] },
       { key:'voucher', label:'Voucher ID', type:'number' },
@@ -944,48 +949,53 @@ async function saveModal() {
   const cfg = CONFIG[current];
   if(!cfg) return;
 
-  const body = {};
+  // 1. Use FormData instead of a simple JSON body
+  // This is required for file uploads
+  const formData = new FormData();
+  
   cfg.fields.forEach(f => {
     const el = document.querySelector(`#modal-body [name="${f.key}"]`);
     if(!el) return;
     let v = el.value;
-    if(f.type === 'number') v = v === '' ? null : parseFloat(v);
+    
+    // Convert 'true'/'false' strings to actual booleans for Django
     if(f.type === 'select' && (v === 'true' || v === 'false')) v = v === 'true';
-    body[f.key] = v;
+    
+    formData.append(f.key, v);
   });
 
+  // 2. Attach the Image File (if it's a product)
+  if (current === 'products' && modalStagedImages.length > 0) {
+    const firstImage = modalStagedImages[0];
+    if (firstImage.file) {
+      formData.append('image', firstImage.file);
+    }
+  }
+
   const url = isCreating ? API + current + '/' : API + current + '/' + editingId + '/';
-  const method = isCreating ? 'POST' : 'PATCH';
+  const method = isCreating ? 'POST' : 'PUT'; // Using PUT/PATCH for updates
 
   try {
     const r = await fetch(url, {
       method,
-      headers:{ 'Content-Type':'application/json', 'X-CSRFToken':'{{csrf_token}}' },
-      body: JSON.stringify(body)
+      headers: { 
+        'X-CSRFToken': '{{csrf_token}}' 
+        // NOTE: DO NOT set Content-Type header; browser sets it automatically for FormData
+      },
+      body: formData
     });
+
     if(!r.ok) {
-      const err = await r.json().catch(() => ({}));
+      const err = await r.json();
       throw new Error(JSON.stringify(err));
     }
 
-    const saved = await r.json().catch(() => ({}));
-    const savedId = saved.id || editingId;
-
-    // Persist staged images
-    if(current === 'products' && modalStagedImages.length) {
-      productImages[savedId] = modalStagedImages.map(i => ({ src: i.src }));
-      saveImagesToStorage(savedId);
-      // If your backend supports image upload, send FormData here:
-      // const fd = new FormData();
-      // modalStagedImages.forEach((img,i) => img.file && fd.append('images', img.file));
-      // await fetch(API + 'products/' + savedId + '/images/', { method:'POST', body: fd, headers:{'X-CSRFToken':'{{csrf_token}}'} });
-    }
-
     closeModal();
-    toast('success', isCreating ? 'Record created' : `#${editingId} updated`);
+    toast('success', isCreating ? 'Product Created' : 'Product Updated');
     load(current);
   } catch(e) {
-    toast('error', `Save failed: ${e.message.slice(0,80)}`);
+    console.error(e);
+    toast('error', `Save failed: ${e.message}`);
   }
 }
 

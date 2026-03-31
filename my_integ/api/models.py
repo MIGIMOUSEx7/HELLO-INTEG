@@ -1,7 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django.db.models import Sum, F
 
-# --- User & Location ---
+# ==========================================
+# USER & PROFILE MODELS
+# ==========================================
+
 class Address(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -17,7 +22,20 @@ class Address(models.Model):
     def __str__(self):
         return f"{self.full_name} - {self.city}"
 
-# --- Product Management ---
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    profile_picture = models.ImageField(upload_to='profiles/', null=True, blank=True)
+    bio = models.TextField(max_length=500, blank=True)
+    phone_number = models.CharField(max_length=15, blank=True)
+    is_seller = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.user.username} Profile'
+
+# ==========================================
+# CATALOG & STORE MODELS
+# ==========================================
+
 class Category(models.Model):
     id = models.BigAutoField(primary_key=True)
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
@@ -48,7 +66,7 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField()
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=1500.00)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     stock_quantity = models.IntegerField(default=20) 
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=100, default="Active")
@@ -58,24 +76,14 @@ class Product(models.Model):
     def __str__(self):
         return f"{self.name} (Stock: {self.stock_quantity})"
 
-# --- Communication ---
-class ChatMessage(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='chats')
-    message = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
+# ==========================================
+# VOUCHER & PAYMENT MODELS
+# ==========================================
 
-    def __str__(self):
-        return f"Chat: {self.sender.username} to {self.receiver.username}"
-
-# --- Sales & Logistics ---
 class Voucher(models.Model):
     id = models.BigAutoField(primary_key=True)
     code = models.CharField(max_length=100)
-    discount_type = models.CharField(max_length=100)
+    discount_type = models.CharField(max_length=100) # e.g., 'fixed' or 'percentage'
     discount_value = models.DecimalField(max_digits=10, decimal_places=2)
     min_spend = models.DecimalField(max_digits=10, decimal_places=2)
     start_date = models.DateTimeField()
@@ -83,18 +91,6 @@ class Voucher(models.Model):
 
     def __str__(self):
         return self.code
-
-class Shipment(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    courier = models.CharField(max_length=100)
-    tracking_number = models.CharField(max_length=100)
-    status = models.CharField(max_length=100)
-    shipped_at = models.DateTimeField(null=True, blank=True)
-    delivered_at = models.DateTimeField(null=True, blank=True)
-    return_at = models.DateTimeField(null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.courier} - {self.tracking_number}"
 
 class Payment(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -108,7 +104,22 @@ class Payment(models.Model):
     def __str__(self):
         return f"{self.method}: {self.amount}"
 
-# --- Orders ---
+# ==========================================
+# ORDER & TRANSACTION MODELS
+# ==========================================
+
+class Shipment(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    courier = models.CharField(max_length=100)
+    tracking_number = models.CharField(max_length=100)
+    status = models.CharField(max_length=100)
+    shipped_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    return_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.courier} - {self.tracking_number}"
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
@@ -141,7 +152,34 @@ class Order(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return f"Order #{self.id} by {self.user.username} (Total: {self.total_amount})"
+        return f"Order #{self.id} by {self.user.username}"
+
+    def update_total(self):
+        """
+        Calculates the order total: (Sum of Item Prices * Quantities) - Voucher Discount.
+        """
+        # 1. Sum up subtotal from linked OrderItems
+        subtotal = self.items.aggregate(
+            total=Sum(F('price') * F('quantity'))
+        )['total'] or 0
+
+        # 2. Check for Voucher Discount linked via Payment
+        discount = 0
+        if self.payment and self.payment.voucher:
+            discount = self.payment.voucher.discount_value
+        
+        # 3. Apply math (ensure total never goes below 0)
+        final_total = max(0, subtotal - discount)
+
+        # 4. Use .update() to avoid re-triggering save() signals/recursion
+        Order.objects.filter(id=self.id).update(total_amount=final_total)
+        self.total_amount = final_total
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Recalculate total if the order exists (pk is not None)
+        if self.pk:
+            self.update_total()
 
 class OrderItem(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -153,7 +191,21 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
 
-# --- Shopping Cart ---
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Every time an item is saved/changed, force parent Order to recalculate
+        self.order.update_total()
+
+    def delete(self, *args, **kwargs):
+        order_ref = self.order
+        super().delete(*args, **kwargs)
+        # Recalculate even if an item is removed
+        order_ref.update_total()
+
+# ==========================================
+# ADDITIONAL MODELS
+# ==========================================
+
 class Cart(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
@@ -172,7 +224,6 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
 
-
 class Review(models.Model):
     id = models.BigAutoField(primary_key=True)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='reviews')
@@ -183,18 +234,19 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.product.name} ({self.rating} Stars)"
-    
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    profile_picture = models.ImageField(upload_to='profiles/', null=True, blank=True)
-    bio = models.TextField(max_length=500, blank=True)
-    phone_number = models.CharField(max_length=15, blank=True)
-    is_seller = models.BooleanField(default=False, verbose_name="Is a Shop Owner?")
+        return f"{self.user.username} - {self.product.name}"
+
+class ChatMessage(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='chats')
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'{self.user.username} Profile'
-    
+        return f"Chat: {self.sender.username} to {self.receiver.username}"
 
 class Reservation(models.Model):
     STATUS_CHOICES = [
@@ -209,8 +261,13 @@ class Reservation(models.Model):
     quantity = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active')
     created_at = models.DateTimeField(auto_now_add=True)
-    # Claims typically last 24 hours for fresh produce
     expires_at = models.DateTimeField()
 
     def is_expired(self):
         return timezone.now() > self.expires_at and self.status == 'Active'
+
+    def save(self, *args, **kwargs):
+        # Automatically set expiration to 24 hours if not provided
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timezone.timedelta(hours=24)
+        super().save(*args, **kwargs)

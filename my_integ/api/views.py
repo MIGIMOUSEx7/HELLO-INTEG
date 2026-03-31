@@ -19,6 +19,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 # views.py
 from django_filters.rest_framework import DjangoFilterBackend
+from .models import OrderItem
+from .serializers import OrderItemSerializer
+from rest_framework import viewsets
+from .serializers import ProductSerializer
 
 
 
@@ -39,6 +43,8 @@ from django.contrib.messages import get_messages
 from rest_framework import viewsets
 from .models import Reservation
 from .serializers import ReservationSerializer
+from .models import Product, Store, Category
+from rest_framework import viewsets
 
 
 from .forms import RegisterForm
@@ -51,7 +57,7 @@ from .serializers import (
     ProductSerializer, OrderSerializer, UserSerializer, 
     CategorySerializer, StoreSerializer, VoucherSerializer, 
     ShipmentSerializer, AddressSerializer, PaymentSerializer,
-    CartSerializer, CartItemSerializer, ReviewSerializer, ChatMessageSerializer
+    CartSerializer, CartItemSerializer, ReviewSerializer, ChatMessageSerializer, ReservationSerializer, ProfileSerializer
 )
 
 # ─────────────────────────────────────────
@@ -576,15 +582,72 @@ def checkout_pay(request, pk):
         'total_payment': order.total_amount
     })
 
-# ─────────────────────────────────────────
-#   REST FRAMEWORK VIEWSETS
-# ─────────────────────────────────────────
+class OrderItemViewSet(viewsets.ModelViewSet):
+    queryset = OrderItem.objects.all()
+    serializer_class = OrderItemSerializer
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['category', 'store']
+
+    # A helper function to safely attach the right Store and Category
+    def _fix_store_and_category(self, instance, raw_store, raw_category):
+        # Fix Store
+        if raw_store:
+            if str(raw_store).isdigit():
+                instance.store_id = int(raw_store)
+            else:
+                store_obj = Store.objects.filter(store_name=str(raw_store)).first()
+                if store_obj: 
+                    instance.store = store_obj
+
+        # Fix Category
+        if raw_category:
+            if str(raw_category).isdigit():
+                instance.category_id = int(raw_category)
+            else:
+                cat_obj = Category.objects.filter(category_name=str(raw_category)).first()
+                if cat_obj: 
+                    instance.category = cat_obj
+                    
+        instance.save() # Commit to database
+
+    # Intercept EDIT/SAVE requests (PATCH/PUT)
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # 1. Copy the incoming data so we can modify it
+        data = request.data.copy()
+        
+        # 2. PHYSICALLY DELETE the text strings so the Serializer doesn't crash
+        # (Handles both standard dictionaries and locked QueryDicts)
+        raw_store = data.pop('store', [None])[0] if isinstance(data.get('store'), list) else data.pop('store', None)
+        raw_category = data.pop('category', [None])[0] if isinstance(data.get('category'), list) else data.pop('category', None)
+
+        # 3. Let the Serializer save the normal stuff (Name, Price, Image)
+        serializer = self.get_serializer(instance, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # 4. Manually assign the Store and Category behind the Serializer's back
+        self._fix_store_and_category(instance, raw_store, raw_category)
+        
+        return Response(serializer.data)
+
+    # Intercept NEW requests (POST) just in case you create new products
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        
+        raw_store = data.pop('store', [None])[0] if isinstance(data.get('store'), list) else data.pop('store', None)
+        raw_category = data.pop('category', [None])[0] if isinstance(data.get('category'), list) else data.pop('category', None)
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        
+        self._fix_store_and_category(instance, raw_store, raw_category)
+        
+        return Response(serializer.data)
 
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
@@ -592,50 +655,80 @@ class OrderViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        # If the user is an Admin/Staff, show all orders for the Terminal
         if user.is_superuser or user.is_staff:
             return Order.objects.all().order_by('-order_date')
-        
-        # Regular customers only see their own
         return Order.objects.filter(user=user).order_by('-order_date')
         
     def create(self, request, *args, **kwargs):
-        profile, _ = Profile.objects.get_or_create(user=request.user)
-        if request.user.is_superuser or profile.is_seller:
+        user = request.user
+        profile, _ = Profile.objects.get_or_create(user=user)
+        
+        # 1. Restriction Check
+        if user.is_superuser or profile.is_seller:
             return Response({"error": "Sellers and Admins are restricted from ordering."}, status=status.HTTP_403_FORBIDDEN)
             
-        user = request.user
         data = request.data
         product_id = data.get('product_id') or data.get('product')
-        items_to_process = []
-        calculated_total = Decimal('0.00')
+        voucher_code = data.get('voucher_code') # <--- Get the code from your Checkout JS
         
+        items_to_process = []
+        calculated_subtotal = Decimal('0.00')
+        
+        # 2. Address Handling
         user_address = Address.objects.filter(user=user, is_default=True).first()
         formatted_address = f"{user_address.street}, {user_address.city}" if user_address else data.get('shipping_address', 'Default Address')
         
+        # 3. Item Selection (Direct Buy vs Cart)
         if product_id:
             prod = get_object_or_404(Product, id=product_id)
             qty = int(data.get('quantity', 1))
             items_to_process.append({'product': prod, 'quantity': qty, 'price': prod.price})
-            calculated_total = prod.price * qty
+            calculated_subtotal = prod.price * qty
         else:
             cart_items = CartItem.objects.filter(cart__user=user)
             if not cart_items.exists(): 
                 return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
             for item in cart_items:
                 items_to_process.append({'product': item.product, 'quantity': item.quantity, 'price': item.product.price})
-                calculated_total += item.product.price * item.quantity
+                calculated_subtotal += item.product.price * item.quantity
                 
         try:
             with transaction.atomic():
+                # 4. CREATE THE ORDER
+                # We start with subtotal + standard fees
                 order = Order.objects.create(
                     user=user, 
-                    total_amount=calculated_total + Decimal('119.00'), 
+                    total_amount=calculated_subtotal + Decimal('119.00'), 
                     status='Pending',
                     payment_method=data.get('payment_method', 'COD'), 
                     address=user_address, 
                     shipping_address=formatted_address
                 )
+
+                # 5. LINK VOUCHER (Automatic Logic)
+                applied_voucher = None
+                if voucher_code:
+                    # Look for the code entered by the user
+                    applied_voucher = Voucher.objects.filter(code=voucher_code).first()
+                
+                # Fallback for your demo: if no code but you want a discount applied anyway
+                if not applied_voucher:
+                    applied_voucher = Voucher.objects.filter(id=2).first()
+
+                # 6. CREATE AUTOMATIC PAYMENT
+                new_payment = Payment.objects.create(
+                    user=user,
+                    method=order.payment_method,
+                    amount=order.total_amount,
+                    voucher=applied_voucher,  # <--- Linked voucher here
+                    status='Pending'
+                )
+                
+                # Link Payment to Order and Save
+                order.payment = new_payment
+                order.save() # This triggers the update_total() math in your models
+
+                # 7. CREATE ORDER ITEMS & REDUCE STOCK
                 for item in items_to_process:
                     if item['product'].stock_quantity < item['quantity']: 
                         raise ValueError(f"Not enough stock for {item['product'].name}")
@@ -649,13 +742,14 @@ class OrderViewSet(viewsets.ModelViewSet):
                     item['product'].stock_quantity -= item['quantity']
                     item['product'].save()
                     
+                # 8. CLEANUP
                 if not product_id: 
                     CartItem.objects.filter(cart__user=user).delete()
                     
             return Response(self.get_serializer(order).data, status=status.HTTP_201_CREATED)
+            
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class ChatMessageViewSet(viewsets.ModelViewSet):
     serializer_class = ChatMessageSerializer
@@ -689,7 +783,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = ProfileSerializer 
 
 @api_view(['POST'])
 def validate_voucher(request):

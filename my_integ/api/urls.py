@@ -6,21 +6,22 @@ from django.conf import settings
 
 router = DefaultRouter()
 
-router.register(r'products',   views.ProductViewSet)
-router.register(r'users',      views.UserViewSet)
-router.register(r'categories', views.CategoryViewSet)
-router.register(r'stores',     views.StoreViewSet)
-router.register(r'vouchers',   views.VoucherViewSet)
-router.register(r'shipments',  views.ShipmentViewSet)
-router.register(r'addresses',  views.AddressViewSet)
-router.register(r'payments',   views.PaymentViewSet)
-router.register(r'carts',      views.CartViewSet)
-router.register(r'orders',     views.OrderViewSet,      basename='order')
-router.register(r'reviews',    views.ReviewViewSet,     basename='review')
-router.register(r'cartitems',  views.CartItemViewSet,   basename='cartitem')
-router.register(r'messages',   views.ChatMessageViewSet, basename='chatmessage')
+router.register(r'products',     views.ProductViewSet)
+router.register(r'users',        views.UserViewSet)
+router.register(r'categories',   views.CategoryViewSet)
+router.register(r'stores',       views.StoreViewSet)
+router.register(r'vouchers',     views.VoucherViewSet)
+router.register(r'shipments',    views.ShipmentViewSet)
+router.register(r'addresses',    views.AddressViewSet)
+router.register(r'payments',     views.PaymentViewSet)
+router.register(r'carts',        views.CartViewSet)
+router.register(r'orders',       views.OrderViewSet,       basename='order')
+router.register(r'reviews',      views.ReviewViewSet,      basename='review')
+router.register(r'cartitems',    views.CartItemViewSet,    basename='cartitem')
+router.register(r'messages',     views.ChatMessageViewSet, basename='chatmessage')
 router.register(r'reservations', views.ReservationViewSet, basename='reservation')
-router.register(r'profiles', views.ProfileViewSet)
+router.register(r'profiles',     views.ProfileViewSet)
+router.register(r'orderitems', views.OrderItemViewSet, basename='orderitem')
 
 
 urlpatterns = [
@@ -36,11 +37,7 @@ urlpatterns = [
     path('reservation/<int:res_id>/complete/', views.complete_reservation, name='complete_reservation'),
     path('reserve-checkout/<int:pk>/', views.reserve_checkout, name='reserve_checkout'),
     path('admin-terminal/', views.admin_terminal, name='admin_terminal'),
-
-    
 ]
-
-
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

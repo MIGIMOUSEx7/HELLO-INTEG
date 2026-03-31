@@ -4,7 +4,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 from api import views
 from django.contrib.auth import views as auth_views
-
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
@@ -27,7 +26,7 @@ urlpatterns = [
     path('orders/checkout/pay/<int:pk>/', views.checkout_pay, name='checkout_pay'),
     path('products/<int:pk>/', views.product_detail, name='product_detail'),
 
-    # 🟢 NEW: Reservation System Routes
+    # Reservation System
     path('reserve-checkout/<int:pk>/', views.reserve_checkout, name='reserve_checkout'),
     path('reserve-product/<int:product_id>/', views.reserve_product, name='reserve_product'),
     path('reservation/<int:res_id>/complete/', views.complete_reservation, name='complete_reservation'),
@@ -45,7 +44,6 @@ urlpatterns = [
     path('store/delete-product/<int:pk>/', views.delete_product, name='delete_product'),
     path('store/download-pdf/', views.download_inventory_pdf, name='download_inventory_pdf'),
     
-     
     # Authentication
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
@@ -56,5 +54,6 @@ urlpatterns = [
     path('password-reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
 ]
 
+# CRITICAL: This serves images to the buyer side
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
