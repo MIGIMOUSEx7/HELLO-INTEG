@@ -114,7 +114,7 @@
                     id="order-{{ order.id }}"
 
                     data-order-id="{{ order.id }}"
-                    data-total="{{ order.total_amount|default:'0.00' }}"
+                    data-total="{{ order.total_amount}}"
                     data-subtotal="{{ order.subtotal_amount|default:'0.00' }}"
                     data-shipping="{{ order.shipping_fee|default:'0.00' }}"
                     data-protection="{{ order.protection_amount|default:'0.00' }}"

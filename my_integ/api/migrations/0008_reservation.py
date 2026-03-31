@@ -33,4 +33,11 @@ operations = [
             name='is_surplus',
             field=models.BooleanField(default=False),
         ),
-    ]
+    
+
+        migrations.AlterField(
+            model_name='profile',
+            name='is_seller',
+            field=models.BooleanField(default=False),
+        ),
+]
