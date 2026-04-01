@@ -38,7 +38,7 @@ class StoreSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     store_name = serializers.ReadOnlyField(source='store.store_name')
-    category_name = serializers.ReadOnlyField(source='category.category_name')
+    category_name = serializers.ReadOnlyField(source='category.category_name') 
     image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:

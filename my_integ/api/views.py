@@ -383,6 +383,11 @@ def manage_products(request):
         'reservations': active_claims,
         'pending_orders': pending_standard_orders, # <--- THIS MUST MATCH THE HTML KEY
     })
+    
+class StoreViewSet(viewsets.ModelViewSet):
+    queryset = Store.objects.all()
+    serializer_class = StoreSerializer
+    # This allows the terminal to send 'user' as an ID
 
 @login_required(login_url='login')
 def create_store(request):
