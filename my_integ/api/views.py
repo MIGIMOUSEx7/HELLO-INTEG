@@ -23,6 +23,8 @@ from .models import OrderItem
 from .serializers import OrderItemSerializer
 from rest_framework import viewsets
 from .serializers import ProductSerializer
+from .models import Category, Store, Product
+
 
 
 
@@ -383,7 +385,7 @@ def manage_products(request):
         'reservations': active_claims,
         'pending_orders': pending_standard_orders, # <--- THIS MUST MATCH THE HTML KEY
     })
-    
+
 class StoreViewSet(viewsets.ModelViewSet):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
@@ -590,69 +592,60 @@ def checkout_pay(request, pk):
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
     serializer_class = OrderItemSerializer
-
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+ 
+    # No more _fix_relationships hack — the serializer handles everything.
+    # create() and update() from ModelViewSet just work now.
+ 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        return Response(self.get_serializer(instance).data, status=status.HTTP_201_CREATED)
+ 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        return Response(self.get_serializer(instance).data)
 
-    # A helper function to safely attach the right Store and Category
-    def _fix_store_and_category(self, instance, raw_store, raw_category):
-        # Fix Store
-        if raw_store:
-            if str(raw_store).isdigit():
-                instance.store_id = int(raw_store)
-            else:
-                store_obj = Store.objects.filter(store_name=str(raw_store)).first()
-                if store_obj: 
-                    instance.store = store_obj
-
+    def _fix_relationships(self, instance, raw_store, raw_category):
+        """Helper to link objects by Name if the Serializer failed to do so."""
         # Fix Category
         if raw_category:
             if str(raw_category).isdigit():
                 instance.category_id = int(raw_category)
             else:
                 cat_obj = Category.objects.filter(category_name=str(raw_category)).first()
-                if cat_obj: 
-                    instance.category = cat_obj
-                    
-        instance.save() # Commit to database
+                if cat_obj: instance.category = cat_obj
 
-    # Intercept EDIT/SAVE requests (PATCH/PUT)
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
+        # Fix Store
+        if raw_store:
+            if str(raw_store).isdigit():
+                instance.store_id = int(raw_store)
+            else:
+                store_obj = Store.objects.filter(store_name=str(raw_store)).first()
+                if store_obj: instance.store = store_obj
         
-        # 1. Copy the incoming data so we can modify it
-        data = request.data.copy()
-        
-        # 2. PHYSICALLY DELETE the text strings so the Serializer doesn't crash
-        # (Handles both standard dictionaries and locked QueryDicts)
-        raw_store = data.pop('store', [None])[0] if isinstance(data.get('store'), list) else data.pop('store', None)
-        raw_category = data.pop('category', [None])[0] if isinstance(data.get('category'), list) else data.pop('category', None)
+        instance.save()
 
-        # 3. Let the Serializer save the normal stuff (Name, Price, Image)
-        serializer = self.get_serializer(instance, data=data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        
-        # 4. Manually assign the Store and Category behind the Serializer's back
-        self._fix_store_and_category(instance, raw_store, raw_category)
-        
-        return Response(serializer.data)
+    
 
-    # Intercept NEW requests (POST) just in case you create new products
-    def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-        
-        raw_store = data.pop('store', [None])[0] if isinstance(data.get('store'), list) else data.pop('store', None)
-        raw_category = data.pop('category', [None])[0] if isinstance(data.get('category'), list) else data.pop('category', None)
+class StoreViewSet(viewsets.ModelViewSet):
+    queryset = Store.objects.all()
+    serializer_class = StoreSerializer
 
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-        
-        self._fix_store_and_category(instance, raw_store, raw_category)
-        
-        return Response(serializer.data)
+    def perform_create(self, serializer):
+        # Allow linking owner by ID if provided, otherwise default to current user
+        user_id = self.request.data.get('user')
+        if user_id and str(user_id).isdigit():
+            serializer.save(user_id=int(user_id))
+        else:
+            serializer.save(user=self.request.user) 
 
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer

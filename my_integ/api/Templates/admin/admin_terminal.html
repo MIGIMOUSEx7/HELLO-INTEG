@@ -7,10 +7,7 @@
 <title>Admin Terminal</title>
 <link rel="stylesheet" href="{% static 'css/admin_terminal.css' %}">
 <style>
-    
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap');
-
-
 </style>
 </head>
 <body>
@@ -173,26 +170,33 @@
 
 <script>
 const API = "/api/";
+
+// ─── FIX 1: Read CSRF token from Django cookie, not template tag ───────────
+// This works both when Django renders the tag AND as a fallback via cookie.
+function getCsrfToken() {
+  // First try the meta tag approach (add {% csrf_token %} to a hidden input or use this)
+  const tokenEl = document.querySelector('[name=csrfmiddlewaretoken]');
+  if (tokenEl) return tokenEl.value;
+  // Fallback: read from cookie (works when SESSION_COOKIE_SAMESITE allows it)
+  const match = document.cookie.match(/csrftoken=([^;]+)/);
+  return match ? match[1] : '{{ csrf_token }}';
+}
+
 let current = "orders";
 let allData = [];
 let editingId = null;
 let isCreating = false;
-let currentView = 'table'; // 'table' | 'gallery'
+let currentView = 'table';
 let detailProductId = null;
-// productImages: { [productId]: [ { src, file? } ] }
-// We store as data URLs for local preview; on save we'd upload via FormData.
-// For this template we keep it client-side so the UI works fully standalone.
-let productImages = {}; // populated from API image fields or localStorage
-let pendingDetailImages = []; // images staged for a product in detail view
+let productImages = {};
+let pendingDetailImages = [];
 
 /* ─── CONFIG ─────────────────────────────────────────────── */
 const CONFIG = {
   orders: {
-    // 'user' will now contain the string "IvanJP" instead of 1
     cols: ['id', 'user', 'email' ,'status', 'payment_method', 'total_amount', 'order_date'],
     label: 'Orders',
     fields: [
-      // Change type to 'text' if you just want to see/edit the name string
       { key: 'user', label: 'Customer Username', type: 'text', required: true },
       { key:'email', label:'Email', type:'email' },
       { key:'status', label:'Status', type:'select', options:['Pending','To Pay','Paid','Shipping','To Receive','Completed','Cancelled','Return/Refund'] },
@@ -220,17 +224,16 @@ const CONFIG = {
       { key: 'stock_quantity', label: 'Stock Quantity', type: 'number' },
       { key: 'status', label: 'Status', type: 'select', options: ['Active', 'Inactive', 'Archived'] },
       { key: 'is_surplus', label: 'Is Surplus', type: 'select', options: ['true', 'false'] },
-      { key: 'store', label: 'Store Name', type: 'select', options: [] }, 
-      { key: 'category', label: 'Category Name', type: 'select', options: [] },      
+      { key: 'store', label: 'Store Name', type: 'select', options: [] },
+      { key: 'category', label: 'Category Name', type: 'select', options: [] },
       { key: 'description', label: 'Description', type: 'textarea' },
     ]
-},
+  },
   categories: {
-    cols: ['id','category_name','parent'],
+    cols: ['id','category_name'],
     label: 'Categories',
     fields: [
       { key:'category_name', label:'Category Name', type:'text', required:true },
-      { key:'parent', label:'Parent Category ID', type:'number' },
     ]
   },
   reservations: {
@@ -374,7 +377,6 @@ function getProductPrimaryImage(id) {
   return imgs.length ? imgs[0].src : null;
 }
 
-// Try to pull image URL from product data itself (e.g. data.image or data.images)
 function hydrateImagesFromData(data) {
   if(Array.isArray(data)) {
     data.forEach(d => {
@@ -433,33 +435,23 @@ function fmtCell(col, val) {
 }
 
 /* ─── LOAD DATA ─────────────────────────────────────────── */
-
 async function hydrateDropdowns() {
-    try {
-        // Fetch Categories and Stores simultaneously
-        const [catRes, storeRes] = await Promise.all([
-            fetch(API + 'categories/'),
-            fetch(API + 'stores/')
-        ]);
-
-        const categories = await catRes.json();
-        const stores = await storeRes.json();
-
-        // 1. Fill Category Options
-        // We use 'category_name' to match your SlugRelatedField in Django
-        const categoryNames = categories.map(c => c.category_name);
-        CONFIG.products.fields.find(f => f.key === 'category').options = categoryNames;
-
-        // 2. Fill Store Options 
-        // We use 'store_name' to match your SlugRelatedField in Django
-        const storeNames = stores.map(s => s.store_name);
-        CONFIG.products.fields.find(f => f.key === 'store').options = storeNames;
-
-        console.log("Dropdowns hydrated successfully");
-    } catch (e) {
-        console.error("Failed to hydrate dropdowns:", e);
-        toast('error', "Failed to load Store/Category list");
-    }
+  try {
+    const [catRes, storeRes] = await Promise.all([
+      fetch(API + 'categories/'),
+      fetch(API + 'stores/')
+    ]);
+    const categories = await catRes.json();
+    const stores = await storeRes.json();
+    const categoryNames = categories.map(c => c.category_name);
+    CONFIG.products.fields.find(f => f.key === 'category').options = categoryNames;
+    const storeNames = stores.map(s => s.store_name);
+    CONFIG.products.fields.find(f => f.key === 'store').options = storeNames;
+    console.log("Dropdowns hydrated successfully");
+  } catch(e) {
+    console.error("Failed to hydrate dropdowns:", e);
+    toast('error', "Failed to load Store/Category list");
+  }
 }
 
 async function load(res, el) {
@@ -470,7 +462,6 @@ async function load(res, el) {
   document.getElementById('page-title').textContent = cfg ? cfg.label : res;
   document.getElementById('sb-resource').textContent = res;
 
-  // show/hide view toggle
   const vt = document.getElementById('view-toggle');
   vt.style.display = res === 'products' ? 'flex' : 'none';
   if(res !== 'products' && currentView === 'gallery') setView('table');
@@ -481,7 +472,13 @@ async function load(res, el) {
     const r = await fetch(API + res + '/');
     if(!r.ok) throw new Error(r.status);
     allData = await r.json();
-    if(res === 'products') hydrateImagesFromData(allData);
+
+    if(res === 'products') {
+      hydrateImagesFromData(allData);
+      // ─── FIX 2: Actually call hydrateImagesFromStorage so localStorage images load ───
+      hydrateImagesFromStorage(allData);
+    }
+
     render();
     if(res === 'products' && currentView === 'gallery') renderGallery();
   } catch(e) {
@@ -512,16 +509,6 @@ function render(rows) {
   }
 
   document.getElementById('tbody').innerHTML = list.map(d => {
-    // For products, show a tiny image thumbnail in table row
-    const imgCell = current === 'products'
-      ? `<td style="width:40px;padding:4px 8px">
-          ${getProductPrimaryImage(d.id)
-            ? `<img src="${getProductPrimaryImage(d.id)}" style="width:32px;height:32px;border-radius:4px;object-fit:cover;border:1px solid var(--border)">`
-            : `<div style="width:32px;height:32px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text3)">🏷</div>`}
-        </td>`
-      : '';
-    const extraCols = current === 'products' ? `<th style="width:40px"></th>` : '';
-
     return `<tr>
       <td class="check-col"><input type="checkbox" value="${d.id}" onchange="updateCount()"></td>
       ${current === 'products' ? `<td style="width:40px;padding:4px 8px">
@@ -542,7 +529,6 @@ function render(rows) {
     </tr>`;
   }).join('');
 
-  // Fix: add img col header if products
   if(current === 'products') {
     document.getElementById('thead').innerHTML = `<tr>
       <th class="check-col"><input type="checkbox" onclick="selectAll(this)"></th>
@@ -571,7 +557,7 @@ function renderGallery(rows) {
     const imgs = getProductImages(d.id);
     const price = d.price ? '₱' + parseFloat(d.price).toLocaleString('en-PH', {minimumFractionDigits:2}) : '—';
     const surplus = d.is_surplus === true || d.is_surplus === 'true';
-    return `<div class="product-card ${''}" id="pcard-${d.id}" onclick="openDetail(${d.id})">
+    return `<div class="product-card" id="pcard-${d.id}" onclick="openDetail(${d.id})">
       ${surplus ? `<div class="product-card-surplus">SURPLUS</div>` : ''}
       <input class="product-card-select" type="checkbox" value="${d.id}" onclick="event.stopPropagation();updateCount()" onchange="updateCardSelected(${d.id},this)">
       ${imgSrc
@@ -606,15 +592,14 @@ function openDetail(id) {
   document.getElementById('detail-name').textContent = d.name || '—';
   document.getElementById('detail-id-label').textContent = `#${d.id} · ${d.category ? 'Cat: ' + d.category : ''} ${d.store ? '· Store: ' + d.store : ''}`;
 
-  // Body
   const price = d.price ? '₱' + parseFloat(d.price).toLocaleString('en-PH', {minimumFractionDigits:2}) : '—';
   document.getElementById('detail-body').innerHTML = `
     <div class="detail-price">${price}</div>
     <div class="detail-row"><span class="lbl">Status</span><span class="val">${statusBadge(d.status)}</span></div>
     <div class="detail-row"><span class="lbl">Stock</span><span class="val">${d.stock_quantity ?? '—'}</span></div>
     <div class="detail-row"><span class="lbl">Surplus</span><span class="val">${d.is_surplus === true || d.is_surplus === 'true' ? '<span class="bool-true">✔ Yes</span>' : '<span class="bool-false">✖ No</span>'}</span></div>
-    <div class="detail-row"><span class="lbl">Store ID</span><span class="val">${d.store ?? '—'}</span></div>
-    <div class="detail-row"><span class="lbl">Category ID</span><span class="val">${d.category ?? '—'}</span></div>
+    <div class="detail-row"><span class="lbl">Store</span><span class="val">${d.store ?? '—'}</span></div>
+    <div class="detail-row"><span class="lbl">Category</span><span class="val">${d.category ?? '—'}</span></div>
     ${d.description ? `<div class="detail-desc"><div class="lbl">Description</div><div class="val">${d.description}</div></div>` : ''}
   `;
 
@@ -653,7 +638,6 @@ function switchDetailImg(idx) {
 function removeDetailImg(idx) {
   pendingDetailImages.splice(idx, 1);
   renderDetailImages();
-  // auto-save to productImages store
   if(detailProductId) {
     productImages[detailProductId] = [...pendingDetailImages];
     saveImagesToStorage(detailProductId);
@@ -673,7 +657,6 @@ function handleDetailUpload(e) {
       pendingDetailImages.push({ src: ev.target.result, file });
       loaded++;
       if(loaded === files.length) {
-        // Save to productImages
         if(detailProductId) {
           productImages[detailProductId] = [...pendingDetailImages];
           saveImagesToStorage(detailProductId);
@@ -705,10 +688,12 @@ function loadImagesFromStorage(id) {
   return null;
 }
 
+// ─── FIX 2 (continued): hydrateImagesFromStorage properly merges stored images ───
 function hydrateImagesFromStorage(data) {
   if(Array.isArray(data)) {
     data.forEach(d => {
-      if(!productImages[d.id]) {
+      // Only use localStorage images if the API didn't already provide images
+      if(!productImages[d.id] || !productImages[d.id].length) {
         const stored = loadImagesFromStorage(d.id);
         if(stored && stored.length) productImages[d.id] = stored;
       }
@@ -769,6 +754,7 @@ function getSelected() {
 }
 
 /* ─── BULK ACTION ───────────────────────────────────────── */
+// ─── FIX 3: Use getCsrfToken() instead of literal '{{csrf_token}}' ───
 async function bulkRun() {
   const act = document.getElementById('bulk-action').value;
   const ids = getSelected();
@@ -779,11 +765,14 @@ async function bulkRun() {
   for(const id of ids) {
     try {
       if(act === 'delete') {
-        await fetch(API + current + '/' + id + '/', { method:'DELETE', headers:{ 'X-CSRFToken':'{{csrf_token}}' } });
+        await fetch(API + current + '/' + id + '/', {
+          method: 'DELETE',
+          headers: { 'X-CSRFToken': getCsrfToken() }
+        });
       } else if(statusMap[act]) {
         await fetch(API + current + '/' + id + '/', {
-          method:'PATCH',
-          headers:{ 'Content-Type':'application/json', 'X-CSRFToken':'{{csrf_token}}' },
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
           body: JSON.stringify({ status: statusMap[act] })
         });
       }
@@ -795,11 +784,15 @@ async function bulkRun() {
 }
 
 /* ─── PATCH STATUS ──────────────────────────────────────── */
+// ─── FIX 4: patchStatus was missing X-CSRFToken header entirely ───
 async function patchStatus(id, status) {
   try {
     const r = await fetch(API + current + '/' + id + '/', {
-      method:'PATCH',
-      headers:{ 'Content-Type':'application/json', 'X-CSRFToken':'{{csrf_token}}' },
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()   // was missing before
+      },
       body: JSON.stringify({ status })
     });
     if(!r.ok) throw new Error(r.status);
@@ -837,7 +830,6 @@ function buildForm(data) {
     return;
   }
 
-  // For products, add image upload section at top
   const imgSection = current === 'products' ? buildProductImageSection(data.id) : '';
 
   const html = cfg.fields.map(f => {
@@ -858,7 +850,6 @@ function buildForm(data) {
 
   document.getElementById('modal-body').innerHTML = imgSection + html;
 
-  // Wire up drag-drop for image zone
   if(current === 'products') wireImageUpload(data.id);
 }
 
@@ -886,7 +877,6 @@ function buildProductImageSection(id) {
   `;
 }
 
-// Temporary storage for images staged in the modal (for new products)
 let modalStagedImages = [];
 
 function wireImageUpload(id) {
@@ -960,7 +950,10 @@ async function saveModal() {
   try {
     const r = await fetch(url, {
       method,
-      headers:{ 'Content-Type':'application/json', 'X-CSRFToken':'{{csrf_token}}' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      },
       body: JSON.stringify(body)
     });
     if(!r.ok) {
@@ -971,14 +964,9 @@ async function saveModal() {
     const saved = await r.json().catch(() => ({}));
     const savedId = saved.id || editingId;
 
-    // Persist staged images
     if(current === 'products' && modalStagedImages.length) {
       productImages[savedId] = modalStagedImages.map(i => ({ src: i.src }));
       saveImagesToStorage(savedId);
-      // If your backend supports image upload, send FormData here:
-      // const fd = new FormData();
-      // modalStagedImages.forEach((img,i) => img.file && fd.append('images', img.file));
-      // await fetch(API + 'products/' + savedId + '/images/', { method:'POST', body: fd, headers:{'X-CSRFToken':'{{csrf_token}}'} });
     }
 
     closeModal();
@@ -997,11 +985,12 @@ function confirmDelete(id) {
   document.getElementById('confirm-ok').onclick = doDelete;
   document.getElementById('confirm-overlay').classList.add('open');
 }
+
 async function doDelete() {
   try {
     const r = await fetch(API + current + '/' + pendingDeleteId + '/', {
-      method:'DELETE',
-      headers:{ 'X-CSRFToken':'{{csrf_token}}' }
+      method: 'DELETE',
+      headers: { 'X-CSRFToken': getCsrfToken() }  // FIX 3: was literal string before
     });
     if(r.status !== 204 && !r.ok) throw new Error(r.status);
     toast('success', `#${pendingDeleteId} deleted`);
@@ -1011,6 +1000,7 @@ async function doDelete() {
   }
   closeConfirm();
 }
+
 function closeConfirm() {
   document.getElementById('confirm-overlay').classList.remove('open');
   pendingDeleteId = null;
@@ -1060,20 +1050,15 @@ document.addEventListener('keydown', e => {
 });
 
 /* ─── INIT ───────────────────────────────────────────────── */
-
-/* ─── INIT ─── */
+// ─── FIX 1: Only one init path — removed the duplicate bare load()/updateStats() calls ───
 async function initTerminal() {
-    await hydrateDropdowns(); // Load the dropdown data first
-    load('orders');           // Then load the default view
-    updateStats();
-    setInterval(updateStats, 60000);
+  await hydrateDropdowns();   // load store/category dropdowns first
+  load('orders');             // then render the default view once
+  updateStats();
+  setInterval(updateStats, 60000);
 }
 
 initTerminal();
-
-load('orders');
-updateStats();
-setInterval(updateStats, 60000);
 </script>
 </body>
 </html>

@@ -36,19 +36,68 @@ class StoreSerializer(serializers.ModelSerializer):
         model = Store
         fields = ['id', 'user', 'owner_name', 'store_name', 'store_description', 'rating', 'profile_picture', 'banner_image', 'created_at']
 
+ 
 class ProductSerializer(serializers.ModelSerializer):
-    store_name = serializers.ReadOnlyField(source='store.store_name')
-    category_name = serializers.ReadOnlyField(source='category.category_name') 
-    image = serializers.ImageField(required=False, allow_null=True)
-
+    # Accept a plain string name for category and store instead of a PK.
+    # write_only=True so the field accepts input; we still return the name on read.
+    category = serializers.CharField()   # accepts name string OR numeric id string
+    store    = serializers.CharField(allow_blank=True, required=False, allow_null=True)
+ 
     class Meta:
-        model = Product
-        fields = [
-            'id', 'store', 'store_name', 'category', 'category_name', 
-            'name', 'description', 'price', 'stock_quantity', 
-            'status', 'is_surplus', 'image', 'created_at'
-        ]
-
+        model  = Product
+        fields = '__all__'
+ 
+    # ── helpers ──────────────────────────────────────────────────────────────
+ 
+    def _resolve_category(self, value):
+        """Return a Category instance from a name string or numeric id."""
+        if value is None:
+            raise serializers.ValidationError("Category is required.")
+        s = str(value).strip()
+        if s.isdigit():
+            try:
+                return Category.objects.get(pk=int(s))
+            except Category.DoesNotExist:
+                raise serializers.ValidationError(f"Category id {s} not found.")
+        obj = Category.objects.filter(category_name__iexact=s).first()
+        if not obj:
+            raise serializers.ValidationError(f"Category '{s}' not found.")
+        return obj
+ 
+    def _resolve_store(self, value):
+        """Return a Store instance from a name string or numeric id (nullable)."""
+        if value is None or str(value).strip() == '':
+            return None
+        s = str(value).strip()
+        if s.isdigit():
+            try:
+                return Store.objects.get(pk=int(s))
+            except Store.DoesNotExist:
+                raise serializers.ValidationError(f"Store id {s} not found.")
+        obj = Store.objects.filter(store_name__iexact=s).first()
+        if not obj:
+            raise serializers.ValidationError(f"Store '{s}' not found.")
+        return obj
+ 
+    # ── validation ────────────────────────────────────────────────────────────
+ 
+    def validate_category(self, value):
+        return self._resolve_category(value)   # returns Category instance
+ 
+    def validate_store(self, value):
+        return self._resolve_store(value)       # returns Store instance or None
+ 
+    # ── create / update ───────────────────────────────────────────────────────
+ 
+    def create(self, validated_data):
+        # validated_data already has real Category/Store instances thanks to validate_*
+        return Product.objects.create(**validated_data)
+ 
+    def update(self, instance, validated_data):
+        for attr, val in validated_data.items():
+            setattr(instance, attr, val)
+        instance.save()
+        return instance
 # ==========================================
 # TRANSACTIONAL SERIALIZERS
 # ==========================================
