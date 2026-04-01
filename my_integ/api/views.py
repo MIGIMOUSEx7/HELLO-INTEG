@@ -639,13 +639,13 @@ class StoreViewSet(viewsets.ModelViewSet):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
 
-    def perform_create(self, serializer):
-        # Allow linking owner by ID if provided, otherwise default to current user
-        user_id = self.request.data.get('user')
-        if user_id and str(user_id).isdigit():
-            serializer.save(user_id=int(user_id))
-        else:
-            serializer.save(user=self.request.user) 
+    # def perform_create(self, serializer):
+    #     # Allow linking owner by ID if provided, otherwise default to current user 
+    #     user_id = self.request.data.get('user')
+    #     if user_id and str(user_id).isdigit():
+    #         serializer.save(user_id=int(user_id))
+    #     else:
+    #         serializer.save(user=self.request.user) 
 
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer

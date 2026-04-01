@@ -19,8 +19,10 @@ class ProfileSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
     class Meta:
-        model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile']
+        model  = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile', 'is_staff', 'is_active', 'date_joined']
+
+        
 
 # ==========================================
 # CATALOG & STORE SERIALIZERS
@@ -31,10 +33,28 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'category_name', 'parent']
 
 class StoreSerializer(serializers.ModelSerializer):
-    owner_name = serializers.ReadOnlyField(source='user.username')
+    # Accept user as a plain numeric ID string from the admin terminal.
+    # The default PrimaryKeyRelatedField already does this, but we make it
+    # explicit and allow null so the serializer never crashes on a missing user.
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+ 
     class Meta:
-        model = Store
-        fields = ['id', 'user', 'owner_name', 'store_name', 'store_description', 'rating', 'profile_picture', 'banner_image', 'created_at']
+        model  = Store
+        fields = '__all__'
+ 
+    def validate_user(self, value):
+        # value is already a User instance resolved by PrimaryKeyRelatedField.
+        # If the terminal sent nothing, fall back to the request user.
+        if value is None:
+            request = self.context.get('request')
+            if request and request.user.is_authenticated:
+                return request.user
+            raise serializers.ValidationError("A valid user is required.")
+        return value
 
  
 class ProductSerializer(serializers.ModelSerializer):
